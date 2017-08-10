@@ -31,14 +31,6 @@ def stack_conv(prev: layers.Layer, param: Tuple[str, int, int]):
     )(prev)
 
 
-def stack_lstm(prev: layers.Layer, param: Tuple[str, int, float, float],
-               bidirectional: bool, stateful: bool):
-    name, units, indrop, recdrop = param
-    layer = layers.LSTM(units, dropout=indrop, recurrent_dropout=recdrop,
-                        return_sequences=True, stateful=stateful)
-    return (layers.Bidirectional(layer) if bidirectional else layer)(prev)
-
-
 def build_conv(incomming,
                filters: Optional[Sequence[int]],
                kernels: Optional[Sequence[int]]):
@@ -51,26 +43,34 @@ def build_conv(incomming,
     return conv
 
 
-def build_rec(incomming,
-              nchar: int,
-              maxlen: int,
-              nsteps: Optional[Sequence[int]],
+def stack_lstm(prev: layers.Layer, param: Tuple[str, int, float, float],
+               bidirectional: bool, stateful: bool):
+    name, units, indrop, recdrop = param
+    layer = layers.LSTM(units, dropout=indrop, recurrent_dropout=recdrop,
+                        return_sequences=True, stateful=stateful)
+    return (layers.Bidirectional(layer) if bidirectional else layer)(prev)
+
+
+def build_rec(nsteps: Optional[Sequence[int]],
               lstm_inp_drop: Optional[Sequence[float]],
               lstm_rec_drop: Optional[Sequence[float]],
               bidirectional=True,
               stateful=False):
+
     nsteps = nsteps or []
     lstm_inp_drop = lstm_inp_drop or []
     lstm_rec_drop = lstm_rec_drop or []
     assert len(nsteps) == len(lstm_rec_drop) == len(lstm_inp_drop)
 
-    repeat = layers.RepeatVector(maxlen, name="repeat")(incomming)
-    rec_names = ("rec_{}".format(i) for i in range(1, len(nsteps)+1))
-    recur = reduce(
-        F(stack_lstm, bidirectional=bidirectional, stateful=stateful),
-        zip(rec_names, nsteps, lstm_inp_drop, lstm_rec_drop),
-        repeat
-    )
-    return layers.TimeDistributed(
-        layers.Dense(nchar, activation="softmax"), name="decoded"
-    )(recur)
+    def rec(incomming):
+        rec_names = ("rec_{}".format(i) for i in range(1, len(nsteps)+1))
+        recur = reduce(
+            F(stack_lstm, bidirectional=bidirectional, stateful=stateful),
+            zip(rec_names, nsteps, lstm_inp_drop, lstm_rec_drop),
+            incomming
+        )
+        return layers.TimeDistributed(
+            layers.Dense(nchar, activation="softmax"), name="decoded"
+        )(recur)
+
+    return rec

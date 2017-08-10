@@ -74,11 +74,3 @@ def build_rec(incomming,
     return layers.TimeDistributed(
         layers.Dense(nchar, activation="softmax"), name="decoded"
     )(recur)
-
-
-@click.command()
-@click.option()
-def main():
-    pass
-    l_in = layers.Input(shape=(maxlen, nchar), name="input")
-

@@ -132,7 +132,7 @@ def join_tokens_in_samples(samples, classes):
     return samples_joined, classes_joined
 
 
-def pad(samples, classes):
+def pad(samples, classes, maxlen=None):
     """
     :type samples: List[List[int]]
     :type classes: List[List[bool]]
@@ -151,7 +151,7 @@ def pad(samples, classes):
     """
     if len(samples) != len(classes):
         raise ValueError
-    maxlen = max(map(len, samples))
+    maxlen = maxlen or max(map(len, samples))
     padded_samples = np.zeros(shape=(len(samples), maxlen), dtype=np.int32)
     padded_classes = np.zeros(shape=(len(samples), maxlen), dtype=np.int32)
     masks = np.zeros(shape=(len(samples), maxlen), dtype=bool)

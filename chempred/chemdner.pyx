@@ -2,6 +2,7 @@
 
 """
 
+from collections import Iterator
 from itertools import groupby
 import operator as op
 import re
@@ -21,6 +22,7 @@ cdef str BODY = "A"
 
 def read_abstracts(str path):
     """
+    Read chemdner abstracts
     :type path: str
     :rtype: list[(int, str, str)]
     :return: [(abstract id, title, body)]
@@ -33,6 +35,7 @@ def read_abstracts(str path):
 
 def read_annotations(str path):
     """
+    Read chemdner annotations
     :type path: str
     :rtype: list[tuple[int, list[(str, int, int, str, str)]]
     :return: [(abstract_id, (source, start, end, text, type))]
@@ -47,8 +50,9 @@ def read_annotations(str path):
 
 cpdef list tokenise(str text):
     """
+    Extract tokens separated by any white-space character.
     :param text: 
-    :return: [start, end, text]
+    :return: [(start, end, text)]
     :rtype: list[(int, int, str)]
     """
     cdef list matched = [m.span() for m in TOKEN_PATT.finditer(text)]
@@ -56,6 +60,14 @@ cpdef list tokenise(str text):
 
 
 cdef inline pybool_t intersects(tuple token, tuple annotation):
+    """
+    Check whether a token intersects with an annotated region
+    :param token: (start, end, text)
+    :type token: (int, int, str)
+    :param annotation: (source, start, end, text, type)
+    :type annotation: (str, int, int, str, str)
+    :rtype: bool
+    """
     cdef int token_start = token[0]
     cdef int token_end = token[1]
     cdef int anno_start = annotation[1]
@@ -65,10 +77,12 @@ cdef inline pybool_t intersects(tuple token, tuple annotation):
 
 cdef inline pybool_t appears_after(tuple token, tuple annotation):
     """
-    Does the token appears after the annotated region
-    :param token: 
-    :param annotation: 
-    :return: 
+    Check whether a token appears after an annotated region
+    :param token: (start, end, text)
+    :type token: (int, int, str)
+    :param annotation: (source, start, end, text, type)
+    :type annotation: (str, int, int, str, str)
+    :rtype: bool
     """
     cdef int token_start = token[0]
     cdef int anno_end = annotation[2]
@@ -76,6 +90,15 @@ cdef inline pybool_t appears_after(tuple token, tuple annotation):
 
 
 cpdef list annotate_text(str text, str source, list annotations):
+    """
+    Tokenise text and annotate the tokens
+    :type text: str
+    :type source: str
+    :param annotations: list[(source, start, end, text, type)]
+    :type annotations: list[(str, int, int, str, str)]
+    :return: list[(source, start, end, text, type)]
+    :rtype: list[(str, int, int, str, str)]
+    """
     cdef list tokens = tokenise(text)
     cdef list types = [OTHER] * (len(tokens))
     anno_it = iter(annotations)
@@ -92,12 +115,14 @@ cpdef list annotate_text(str text, str source, list annotations):
             for (start, end, text), type_ in zip(tokens, types)]
 
 
-cpdef str mask_text(str text, list annotations):
+cpdef str mask_annotated_regions(str text, list annotations):
     """
     Replace annotated regions with white space
-    :param text: 
-    :param annotations: (src, start, end, text, type)
-    :return: 
+    :type text: str
+    :param annotations: (source, start, end, text, type)
+    :type annotations: (str, int, int, str, str)
+    :return: masked `text`
+    :rtype: str
     """
     charcodes = np.array([ord(ch) for ch in text], dtype=int)
     mask = np.zeros(len(text), dtype=bool)
@@ -108,16 +133,17 @@ cpdef str mask_text(str text, list annotations):
 
 
 cpdef list annotate_abstract(tuple abstract, tuple abstract_annotation,
-                             pybool_t guided=False):
-    # TODO
+                             pybool_t guided=True):
     """
     :param abstract: (abstract id, title, body)
     :type abstract: (int, str, str)
     :param abstract_annotation: (abstract id, [(src, start, end, type)])
     :type abstract_annotation: (int, [(str, int, int, str)])
     :type guided: bool
-    :param guided: use guided (masked) tokenisation
-    :return: 
+    :param guided: use guided (masked) tokenisation; uses `abstract_annotation`
+    to guide tokenisation (preserves correct segmentation of annotated tokens)
+    :return: a sorted list of annotated tokens, i.e. [(source, start, end, text, type)]
+    :rtype: list[(str, int, int, str, str)]
     """
     # check whether abstract ids match
     cdef int anno_id = abstract_annotation[0]
@@ -138,8 +164,8 @@ cpdef list annotate_abstract(tuple abstract, tuple abstract_annotation,
             raise ValueError("Unknown source")
 
     # mask text if needed
-    cdef str title = mask_text(abstract[1], title_anno) if guided else abstract[1]
-    cdef str body = mask_text(abstract[2], body_anno) if guided else abstract[2]
+    cdef str title = mask_annotated_regions(abstract[1], title_anno) if guided else abstract[1]
+    cdef str body = mask_annotated_regions(abstract[2], body_anno) if guided else abstract[2]
 
     # tokenise, annotate and sort tokens
     cdef list title_tokens = annotate_text(title, TITLE, title_anno)
@@ -150,16 +176,19 @@ cpdef list annotate_abstract(tuple abstract, tuple abstract_annotation,
     return sorted(title_tokens) + sorted(body_tokens)
 
 
-
-def pair(list abstacts, list abstact_annotations):
-    # todo
+def align_abstracts_and_annotations(list abstacts, list abstact_annotations):
     """
-    :param abstacts:
-    :param abstact_annotations:
-    :return:
+    Align abstracts and annotations (i.e. match abstract ids)
+    :param abstacts: parsed abstracts (e.g. produces by `read_abstracts`)
+    :type abstacts: list[(int, str, str)]
+    :param abstact_annotations: parsed annotations (e.g. produces by
+    `read_annotations`)
+    :type abstact_annotations: list[tuple[int, list[(str, int, int, str, str)]]
+    :rtype: Iterator[(list[(int, str, str)], list[tuple[int, list[(str, int, int, str, str)]])]
+    :return: Iterator[(parsed abstract, parsed annotation)]
     """
     cdef dict id_anno_mapping = dict(abstact_annotations)
     cdef list abstact_annotations_extented = [
         (abst[0], id_anno_mapping.get(abst[0], [])) for abst in abstacts
     ]
-    return abstact_annotations_extented
+    return zip(abstacts, abstact_annotations_extented)

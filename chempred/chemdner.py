@@ -2,7 +2,7 @@
 
 """
 
-from typing import NamedTuple, List, Tuple, Iterator, Mapping, Iterable
+from typing import NamedTuple, List, Tuple, Iterator
 from collections import deque
 from functools import reduce
 from itertools import groupby

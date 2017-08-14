@@ -1,191 +1,141 @@
+"""
+
+"""
+
+
+from typing import List, Tuple, Mapping, Callable
+from chempred.chemdner import Annotation, Interval
 from itertools import chain
 
 import numpy as np
 
 
-SPACE = ord(" ")
+PADDING_VAL = 0
+MAXCHAR = 127
+Sampler = Callable[[int, List[Annotation]], List[List[Annotation]]]
 
 
-def join_lists(sep, lists):
+def slide(center: int, width: int, lastpos: int, flanking: bool) \
+        -> List[Interval]:
     """
-    :type sep: object
-    :type lists: List[List]
-    :return: List
-    >>> join_lists(3, [[1, 2], [4, 5]])
-    [1, 2, 3, 4, 5]
-    >>> join_lists(0, [[1], [2], [3]])
-    [1, 0, 2, 0, 3]
-    """
-    lst_it = iter(lists)
-    it = (next(lst_it) if not i % 2 else [sep] for i in range(len(lists)*2 - 1))
-    return list(chain.from_iterable(it))
-
-
-def enumerate_positive_classes(annotated_tokens, positive_classes):
-    """
-    :type annotated_tokens: List[Tuple[str, int, int, str, str]]
-    :param annotated_tokens:
-    :type positive_classes: Set[str]
-    :rtype: List[int]
-    """
-    return [i for i, token in enumerate(annotated_tokens) if token[-1] in positive_classes]
-
-
-def slide_through(tokens, central_idx, width, flanking=False):
-    """
-    :type tokens: List[Any]
-    :param central_idx: central points to slide around
-    :type window: int
-    :type minlen: int
-    :rtype: List[List[Any]]
-    >>> from pprint import pprint
-    >>> tokens = list(range(10))
-    >>> pprint(slide_through(tokens, [3], 3, True))
-    [[0, 1, 2], [1, 2, 3], [2, 3, 4], [3, 4, 5], [4, 5, 6]]
-    >>> pprint(slide_through(tokens, [3], 5, True))
-    [[0, 1, 2, 3, 4],
-     [1, 2, 3, 4, 5],
-     [2, 3, 4, 5, 6],
-     [3, 4, 5, 6, 7],
-     [4, 5, 6, 7, 8]]
-    >>> pprint(slide_through(tokens, [5], 3, True))
-    [[2, 3, 4], [3, 4, 5], [4, 5, 6], [5, 6, 7], [6, 7, 8]]
-    >>> pprint(slide_through(tokens, [5], 3, False))
-    [[3, 4, 5], [4, 5, 6], [5, 6, 7]]
-    >>> pprint(slide_through(tokens, [], 3, True))
+    :param center:
+    :param width:
+    :param lastpos:
+    :param flanking:
+    >>> slide(-1, 3, 10, True)
+    [(0, 3)]
+    >>> slide(0, 3, 10, False)
+    [(0, 3)]
+    >>> slide(0, 3, 10, True)
+    [(0, 3), (1, 4)]
+    >>> slide(8, 3, 10, False)
+    [(6, 9), (7, 10)]
+    >>> slide(8, 3, 10, True)
+    [(5, 8), (6, 9), (7, 10)]
+    >>> slide(10, 3, 10, False)
     []
-    >>> pprint(slide_through(tokens, [10], 3, True))
-    [[7, 8, 9]]
-
-    """
-    width_corr, end_corr = (width, 2) if flanking else (width - 1, 1)
-    maxidx = len(tokens) - width + 1
-    windows = [[(i, i + width) for i in range(max(0, idx-width_corr),
-                                              min(idx+end_corr, maxidx))]
-               for idx in central_idx]
-    return [tokens[start:end] for start, end in chain.from_iterable(windows)]
-
-
-def generate_training_samples(tokenised_abstracts, positive_classes, window=5,
-                              flanking=False):
-    """
-    :type tokenised_abstracts: List[List[Tuple[str, int, int, str, str]]]
-    :param tokenised_abstracts: abstracts tokenised by chempred.chemdner.annotate_abstract
-    :type positive_classes: Set[str]
-    :param positive_classes: a list of token classes to regard as positive
-    :rtype: List[List[str]], List[List[bool]]
-    :return: sampled windows, token is positive
-    >>> from pprint import pprint
-    >>> positive_classes = {"a", "b"}
-    >>> tokens = [("src", 0, 1, "text1", "c"),
-    ...           ("src", 1, 2, "text2", "a"),
-    ...           ("src", 3, 4, "text3", "c"),
-    ...           ("src", 5, 6, "text4", "b"),
-    ...           ("src", 7, 8, "text5", "c")]
-    >>> abstracts = [tokens, tokens[:-2]]
-    >>> pprint(generate_training_samples(abstracts, positive_classes, 3, True))
-    ([['text1', 'text2', 'text3'],
-      ['text2', 'text3', 'text4'],
-      ['text3', 'text4', 'text5'],
-      ['text1', 'text2', 'text3'],
-      ['text2', 'text3', 'text4'],
-      ['text3', 'text4', 'text5'],
-      ['text1', 'text2', 'text3']],
-     [[False, True, False],
-      [True, False, True],
-      [False, True, False],
-      [False, True, False],
-      [True, False, True],
-      [False, True, False],
-      [False, True, False]])
-    """
-    positive = [enumerate_positive_classes(tokens, positive_classes)
-                for tokens in tokenised_abstracts]
-    windows = [slide_through(tokens, pos, window, flanking)
-               for tokens, pos in zip(tokenised_abstracts, positive)]
-    # flatten structures (i.e. merge abstracts)
-    windows_flat = list(chain.from_iterable(windows))
-    # split tokens into text and annotation
-    text = [[token[3]for token in window] for window in windows_flat]
-    classes = [[token[-1] in positive_classes for token in window] for window in windows_flat]
-    return text, classes
-
-
-def join_tokens_in_samples(samples, classes):
-    """
-    :type text: List[List[str]]
-    :type classes: List[List[bool]]
-    :rtype: List[List[int]], List[List[bool]]
-    >>> from pprint import pprint
-    >>> samples = [['a', 'b', 'c'],
-    ...            ['d', 'e', 'Å']]
-    >>> classes = [[False, True, False],
-    ...            [False, True, True]]
-    >>> pprint(join_tokens_in_samples(samples, classes))
-    ([[97, 32, 98, 32, 99], [100, 32, 101, 32, 195, 133]],
-     [[False, False, True, False, False], [False, False, True, False, True, True]])
-    """
-    encoded = [[list(t.encode("utf-8")) for t in sample] for sample in samples]
-    classes_joined = [join_lists(False, [[t_cls] * len(t) for t_cls, t in zip(s_cls, s_encoded)])
-                      for s_cls, s_encoded in zip(classes, encoded)]
-    samples_joined = [join_lists(SPACE, s_encoded) for s_encoded in encoded]
-    return samples_joined, classes_joined
-
-
-def pad(samples, classes):
-    """
-    :type samples: List[List[int]]
-    :type classes: List[List[bool]]
-    :rtype: np.array[int], np.array[bool], np.array[bool]
-    :return: padded samples, padded classes, mask
-    >>> samples = [[97, 32, 98, 32, 99], [100, 32, 101, 32, 195, 133]]
-    >>> classes = [[False, False, True, False, False],
-    ...            [False, False, True, False, True, True]]
-    >>> psamp, pcls, mask = pad(samples, classes)
-    >>> (psamp == np.array([[97, 32, 98, 32, 99, 0], [100, 32, 101, 32, 195, 133]])).all()
+    >>> slide(10, 3, 10, True)
+    [(7, 10)]
+    >>> slide(0, 10, 10, False) == slide(0, 10, 10, True) == [(0, 10)]
     True
-    >>> (pcls == np.array([[0, 0, 1, 0, 0, 0], [0, 0, 1, 0, 1, 1]])).all()
-    True
-    >>> (mask == np.array([[1, 1, 1, 1, 1, 0], [1, 1, 1, 1, 1, 1]])).all()
+    >>> slide(0, 11, 10, False) == slide(0, 11, 10, True) == []
     True
     """
-    if len(samples) != len(classes):
-        raise ValueError
-    maxlen = max(map(len, samples))
-    padded_samples = np.zeros(shape=(len(samples), maxlen), dtype=np.int32)
-    padded_classes = np.zeros(shape=(len(samples), maxlen), dtype=np.int32)
-    masks = np.zeros(shape=(len(samples), maxlen), dtype=bool)
-    for i, (sample, cls) in enumerate(zip(samples, classes)):
-        if len(sample) != len(cls):
-            raise ValueError
-        padded_samples[i, :len(sample)] = sample
-        padded_classes[i, :len(sample)] = cls
-        masks[i, :len(sample)] = True
-    return padded_samples, padded_classes, masks
+    first = max(center - (width if flanking else width - 1), 0)
+    last = min(center + 2 if flanking else center + 1, lastpos - width + 1)
+    return [(i, i + width) for i in range(first, last)]
 
 
-def encode_one_hot(arr, ncls=None):
+def make_sampler(width: int, maxlen: int, flanking: bool) \
+        -> Sampler:
     """
-    :type arr: np.ndarray[int]
-    :param arr: an integer 1D/2D-numpy array
-    :rtype: np.ndarray[int]
-    :return: a one-hot encoded array
+    :type width: int
+    :param width: the desired number of context tokens to sample; e.g. for a
+    positive token at index `i` and window `3` the function will try to create
+    samples [(i-2, i-1, i), (i-1, i, i+1), (i, i+1, i+2)] if flanking == False
+    :param maxlen: the maximum length of a sample in unicode codes.
+    :type flanking: bool
+    :param flanking: include windows adjacent to central words; note that
+    each positive token is an independent central word
+    >>> text = "abcdefjhijklmnop"
+    >>> extractor = lambda x: text[x[0].start: x[-1].end]
+    >>> annotations = [Annotation(None, 0, 4, None, None),
+    ...                Annotation(None, 5, 8, None, None),
+    ...                Annotation(None, 8, 10, None, None),
+    ...                Annotation(None, 11, 12, None, None),
+    ...                Annotation(None, 13, 16, None, None)]
+    >>> sampler1 = make_sampler(3, len(text), flanking=False)
+    >>> len(sampler1(0, annotations)) == 1
+    True
+    >>> len(sampler1(2, annotations)) == 3
+    True
+    >>> extractor(sampler1(0, annotations)[0]) == text[0:10]
+    True
+    >>> make_sampler(3, 8, flanking=False)(0, annotations)
+    []
+    >>> len(make_sampler(3, 8, flanking=False)(2, annotations)) == 2
+    True
+    >>> len(make_sampler(3, 7, flanking=False)(2, annotations)) == 1
+    True
+    >>> len(make_sampler(3, 6, flanking=False)(2, annotations)) == 0
+    True
     """
-    return np.eye(ncls or arr.max()+1, dtype=np.int32)[arr]
+    def sampler(target: int, annotations: List[Annotation]) \
+            -> List[List[Annotation]]:
+        windows = slide(target, width, len(annotations), flanking)
+        samples = [annotations[first:last] for first, last in windows]
+        lens = [annotations[last-1].end - annotations[first].start
+                for first, last in windows]
+        return [sample for sample, length in zip(samples, lens)
+                if length <= maxlen]
+
+    return sampler
 
 
-def mask_array(arr, mask, value=0):
+def sample_windows(targets: List[int], annotations: List[Annotation],
+                   sampler: Sampler) \
+        -> Tuple[List[List[Annotation]], List[Annotation]]:
     """
-    Mask `False` positions
-    :type arr: np.ndarray
-    :param arr:
-    :param mask: a boolean 1D array
-    :param value:
-    :return:
+    Sample context windows around positive tokens.
+    :return: (list[sampled windows], list[failed target words]);
+    failed target words – positive words with no samples of length <= `maxlen`
     """
-    arr_cp = arr.copy()
-    arr_cp[~mask] = value
-    return arr_cp
+    samples = [sampler(i, annotations) for i in targets]
+    failed_targets = [annotations[i] for i, samples in zip(targets, samples)
+                      if not samples]
+    return list(chain.from_iterable(samples)), failed_targets
+
+
+def encode_samples(text: str, samples: List[List[Annotation]], length: int) \
+        -> np.ndarray:
+    encoded_samples = np.zeros((len(samples), length), dtype=np.int64)
+    for i, sample in enumerate(samples):
+        start, end = sample[0].start, sample[-1].end
+        sample_length = end - start
+        if sample_length > length:
+            raise ValueError("Sample exceeds the length limit")
+        encoded_samples[i, :length] = list(map(ord, text[start:end]))
+    encoded_samples[encoded_samples > (MAXCHAR - 1)] = MAXCHAR
+    return encoded_samples.astype(np.int16)
+
+
+def encode_classes(mapping: Mapping[str, int], samples: List[List[Annotation]],
+                   length: int,) -> np.ndarray:
+    if 0 in mapping.values():
+        raise ValueError("0 is an invalid class mapping")
+    encoded_classes = np.zeros((len(samples), length), dtype=np.int16)
+    try:
+        for i, sample in enumerate(samples):
+            offset = sample[0].start
+            codes = (mapping[anno.cls] for anno in sample)
+            intervals = ((anno.start - offset, anno.end - offset)
+                         for anno in sample)
+            for code, (start, end) in zip(codes, intervals):
+                encoded_classes[i, start:end] = code
+    except KeyError:
+        raise ValueError("Missing a class in the mapping")
+
+    return encoded_classes
 
 
 if __name__ == "__main__":

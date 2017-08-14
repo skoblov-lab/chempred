@@ -3,11 +3,15 @@
 """
 
 
-from typing import List, Tuple, Iterator, Mapping, Iterable, Callable, Any
-from chempred.chemdner import Annotation, Interval, TITLE, BODY, OTHER
+from typing import List, Tuple, Mapping, Callable
+from chempred.chemdner import Annotation, Interval
 from itertools import chain
 
+import numpy as np
 
+
+PADDING_VAL = 0
+MAXCHAR = 127
 Sampler = Callable[[int, List[Annotation]], List[List[Annotation]]]
 
 
@@ -73,6 +77,8 @@ def make_sampler(width: int, maxlen: int, flanking: bool) \
     True
     >>> len(make_sampler(3, 7, flanking=False)(2, annotations)) == 1
     True
+    >>> len(make_sampler(3, 6, flanking=False)(2, annotations)) == 0
+    True
     """
     def sampler(target: int, annotations: List[Annotation]) \
             -> List[List[Annotation]]:
@@ -86,24 +92,50 @@ def make_sampler(width: int, maxlen: int, flanking: bool) \
     return sampler
 
 
-def generate_samples(text: str, annotations: List[Annotation],
-                     positive: Mapping[str, int], sampler: Sampler):
+def sample_windows(targets: List[int], annotations: List[Annotation],
+                   sampler: Sampler) \
+        -> Tuple[List[List[Annotation]], List[Annotation]]:
     """
     Sample context windows around positive tokens.
-    :type annotations: list[(str, int, int, str, str)]
-    :param annotations: list[(source, start, end, text, type)], e.g.
-    the output from `chemdner.tokenise_abstracts`
-    :type positive: dict[str, int]
-    :param positive: a mapping from type strings to integer-encoded classes;
-    any unspecified type string is mapped into 0, hence the mapping must contain
-    no keys with zero values
-    :return: (list[sample boundaries], list[samples], list[sample classes],
-    list[failed centered words]); failed centered words – positive words with no
-     samples of length
-    <= `maxlen` with at least `mincontext` context tokens
-    :rtype: (list[(int, int)], list[list[int]], list[list[int]], list[str])
+    :return: (list[sampled windows], list[failed target words]);
+    failed target words – positive words with no samples of length <= `maxlen`
     """
-    pass
+    samples = [sampler(i, annotations) for i in targets]
+    failed_targets = [annotations[i] for i, samples in zip(targets, samples)
+                      if not samples]
+    return list(chain.from_iterable(samples)), failed_targets
+
+
+def encode_samples(text: str, samples: List[List[Annotation]], length: int) \
+        -> np.ndarray:
+    encoded_samples = np.zeros((len(samples), length), dtype=np.int64)
+    for i, sample in enumerate(samples):
+        start, end = sample[0].start, sample[-1].end
+        sample_length = end - start
+        if sample_length > length:
+            raise ValueError("Sample exceeds the length limit")
+        encoded_samples[i, :length] = list(map(ord, text[start:end]))
+    encoded_samples[encoded_samples > (MAXCHAR - 1)] = MAXCHAR
+    return encoded_samples.astype(np.int16)
+
+
+def encode_classes(mapping: Mapping[str, int], samples: List[List[Annotation]],
+                   length: int,) -> np.ndarray:
+    if 0 in mapping.values():
+        raise ValueError("0 is an invalid class mapping")
+    encoded_classes = np.zeros((len(samples), length), dtype=np.int16)
+    try:
+        for i, sample in enumerate(samples):
+            offset = sample[0].start
+            codes = (mapping[anno.cls] for anno in sample)
+            intervals = ((anno.start - offset, anno.end - offset)
+                         for anno in sample)
+            for code, (start, end) in zip(codes, intervals):
+                encoded_classes[i, start:end] = code
+    except KeyError:
+        raise ValueError("Missing a class in the mapping")
+
+    return encoded_classes
 
 
 if __name__ == "__main__":

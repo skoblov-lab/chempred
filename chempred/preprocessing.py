@@ -185,8 +185,9 @@ def one_hot(array: np.ndarray) -> np.ndarray:
     """
     One-hot encode an integer array; the output inherits the array's dtype.
     """
-    if not issubclass(array.dtype, Integral):
-        raise ValueError("`array.dtype` must be integral")
+    # TODO return check
+    # if not issubclass(array.dtype, Integral):
+    #     raise ValueError("`array.dtype` must be integral")
     vectors = np.eye(array.max(), dtype=array.dtype)
     return vectors[array]
 

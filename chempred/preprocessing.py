@@ -196,7 +196,7 @@ def maskfalse(array: np.ndarray, mask: np.ndarray) -> np.ndarray:
     """
     Replace False-masked items with zeros.
     """
-    if np.issubdtype(mask.dtype, np.bool):
+    if not np.issubdtype(mask.dtype, np.bool):
         raise ValueError("Masks are supposed to be boolean")
     copy = array.copy()
     copy[~mask] = 0

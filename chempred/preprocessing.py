@@ -3,7 +3,7 @@
 """
 
 
-from typing import List, Tuple, Mapping, Callable
+from typing import List, Tuple, Mapping, Callable, Set, Union
 from numbers import Integral
 from chempred.chemdner import Annotation, Interval
 from itertools import chain
@@ -81,6 +81,12 @@ def make_sampler(width: int, maxlen: int, flanking: bool) \
     >>> len(make_sampler(3, 6, flanking=False)(2, annotations)) == 0
     True
     """
+    # TODO although flanking sampling is implemented, the feautre is
+    # TODO deliberately disabled, because `sample_windows` (see below)
+    # TODO doesn't handle it properly, yet
+    if flanking:
+        raise NotImplemented("`flanking` is deliberately disabled")
+
     def sampler(target: int, annotations: List[Annotation]) \
             -> List[List[Annotation]]:
         windows = slide(target, width, len(annotations), flanking)
@@ -102,14 +108,32 @@ def sample_windows(targets: List[int], annotations: List[Annotation],
     failed target words – positive words with no samples of length <= `maxlen`
     """
     samples = [sampler(i, annotations) for i in targets]
+    # TODO flanking=True breaks this check; see make_sampler
     failed_targets = [annotations[i] for i, samples in zip(targets, samples)
                       if not samples]
     return list(chain.from_iterable(samples)), failed_targets
 
 
+def sample_targets(positive_classes: Union[Set[str], Mapping[str, int]],
+                   annotations: List[Annotation], nonpos: int) -> List[int]:
+    """
+    :param positive_classes:
+    :param annotations:
+    :param nonpos: the maximum number of nonpositive targets to sample
+    :return:
+    """
+    indices = np.arange(len(annotations))
+    mask = np.array([anno.cls in positive_classes for anno in annotations])
+    positive = indices[mask]
+    other = indices[~positive]
+    nonpos_sample = np.random.choice(
+        other, nonpos if nonpos <= len(other) else len(other), False)
+    return list(positive) + list(nonpos_sample)
+
+
 def encode_text(text: str, sample: List[Annotation], dtype=np.int32) \
         -> np.ndarray:
-    if not isinstance(dtype, Integral):
+    if not issubclass(dtype, Integral):
         raise ValueError("`dtype` must be integral")
     start, end = sample[0].start, sample[-1].end
     length = end - start
@@ -121,7 +145,7 @@ def encode_text(text: str, sample: List[Annotation], dtype=np.int32) \
 def encode_classes(mapping: Mapping[str, int], sample: List[Annotation],
                    dtype=np.int32) \
         -> np.array:
-    if not isinstance(dtype, Integral):
+    if not issubclass(dtype, Integral):
         raise ValueError("`dtype` must be integral")
     try:
         offset = sample[0].start
@@ -142,7 +166,7 @@ def join(arrays: List[np.ndarray], dtype=np.int32) \
     :return: (joined and padded arrays, boolean array masks); masks are
     positive, i.e. padded regions are False
     """
-    if not isinstance(dtype, Integral):
+    if not issubclass(dtype, Integral):
         raise ValueError("`dtype` must be integral")
 
     ndim = set(map(np.ndarray.ndim, arrays))
@@ -161,7 +185,7 @@ def one_hot(array: np.ndarray) -> np.ndarray:
     """
     One-hot encode an integer array; the output inherits the array's dtype.
     """
-    if not isinstance(array.dtype, Integral):
+    if not issubclass(array.dtype, Integral):
         raise ValueError("`array.dtype` must be integral")
     vectors = np.eye(array.max(), dtype=array.dtype)
     return vectors[array]

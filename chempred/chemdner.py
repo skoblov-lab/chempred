@@ -23,7 +23,7 @@ Interval = Tuple[int, int]
 Annotation = NamedTuple("Annotation", [("source", str), ("start", int),
                                        ("end", int), ("text", str),
                                        ("cls", str)])
-Annotations = Tuple[int, List[Annotation], List[Annotation]]
+AbstractAnnotation = Tuple[int, List[Annotation], List[Annotation]]
 Abstract = Tuple[int, str, str]
 
 
@@ -198,7 +198,8 @@ def align_abstracts_and_annotations(
     `read_annotations`)
     :return: Iterator[(parsed abstract, parsed annotation)]
     """
-    id_anno_mapping = dict(abstract_annotations)
+    id_anno_mapping = {id_: (title_anno, body_anno)
+                       for id_, title_anno, body_anno in abstract_annotations}
     aligned_anno = (
         (abst[0], id_anno_mapping.get(abst[0], ([], []))) for abst in abstacts
     )
@@ -207,15 +208,16 @@ def align_abstracts_and_annotations(
     return zip(abstacts, flattened_aligned_anno)
 
 
-def flatten_aligned_pair(pair: Tuple[Abstract, Annotations]) \
-        -> List[Tuple[int, str, List[Annotation]]]:
+def flatten_aligned_pair(pair: Tuple[Abstract, AbstractAnnotation]) \
+        -> List[Tuple[int, str, str, List[Annotation]]]:
     """
-    :return: list[(abstract id, text, token annotations)]
+    :return: list[(abstract id, source, text, token annotations)]
     """
     (abstract_id, title, body), (anno_id, title_anno, body_anno) = pair
     if abstract_id != anno_id:
         raise ValueError("Abstract ids do not match")
-    return [(abstract_id, title, title_anno), (abstract_id, body, body_anno)]
+    return [(abstract_id, TITLE, title, title_anno),
+            (abstract_id, BODY, body, body_anno)]
 
 
 if __name__ == "__main__":

@@ -188,7 +188,7 @@ def one_hot(array: np.ndarray) -> np.ndarray:
     # TODO return check
     # if not issubclass(array.dtype, Integral):
     #     raise ValueError("`array.dtype` must be integral")
-    vectors = np.eye(array.max(), dtype=array.dtype)
+    vectors = np.eye(array.max()+1, dtype=array.dtype)
     return vectors[array]
 
 

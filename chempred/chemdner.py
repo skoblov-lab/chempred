@@ -23,7 +23,8 @@ Interval = Tuple[int, int]
 Annotation = NamedTuple("Annotation", [("source", str), ("start", int),
                                        ("end", int), ("text", str),
                                        ("cls", str)])
-# Annotations = List[Annotation]
+Annotations = Tuple[int, List[Annotation], List[Annotation]]
+Abstract = Tuple[int, str, str]
 
 
 def read_abstracts(path: str) -> List[Tuple[int, str, str]]:
@@ -201,8 +202,20 @@ def align_abstracts_and_annotations(
     aligned_anno = (
         (abst[0], id_anno_mapping.get(abst[0], ([], []))) for abst in abstacts
     )
-    return zip(abstacts,
-               ((id_, title, body) for id_, (title, body) in aligned_anno))
+    flattened_aligned_anno = ((id_, title, body)
+                              for id_, (title, body) in aligned_anno)
+    return zip(abstacts, flattened_aligned_anno)
+
+
+def flatten_aligned_pair(pair: Tuple[Abstract, Annotations]) \
+        -> List[Tuple[int, str, List[Annotation]]]:
+    """
+    :return: list[(abstract id, text, token annotations)]
+    """
+    (abstract_id, title, body), (anno_id, title_anno, body_anno) = pair
+    if abstract_id != anno_id:
+        raise ValueError("Abstract ids do not match")
+    return [(abstract_id, title, title_anno), (abstract_id, body, body_anno)]
 
 
 if __name__ == "__main__":

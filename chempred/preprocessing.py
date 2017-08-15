@@ -177,7 +177,7 @@ def join(arrays: List[np.ndarray], dtype=np.int32) \
     masks = np.zeros((len(arrays), maxlen), dtype=bool)
     for i, arr in enumerate(arrays):
         joined[i, :len(arr)] = arr
-        maxlen[i, :len(arr)] = True
+        masks[i, :len(arr)] = True
     return joined, masks
 
 

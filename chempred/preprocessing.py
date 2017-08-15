@@ -4,6 +4,7 @@
 
 
 from typing import List, Tuple, Mapping, Callable
+from numbers import Integral
 from chempred.chemdner import Annotation, Interval
 from itertools import chain
 
@@ -106,36 +107,75 @@ def sample_windows(targets: List[int], annotations: List[Annotation],
     return list(chain.from_iterable(samples)), failed_targets
 
 
-def encode_samples(text: str, samples: List[List[Annotation]], length: int) \
+def encode_text(text: str, sample: List[Annotation], dtype=np.int32) \
         -> np.ndarray:
-    encoded_samples = np.zeros((len(samples), length), dtype=np.int64)
-    for i, sample in enumerate(samples):
-        start, end = sample[0].start, sample[-1].end
-        sample_length = end - start
-        if sample_length > length:
-            raise ValueError("Sample exceeds the length limit")
-        encoded_samples[i, :length] = list(map(ord, text[start:end]))
-    encoded_samples[encoded_samples > (MAXCHAR - 1)] = MAXCHAR
-    return encoded_samples.astype(np.int16)
+    if not isinstance(dtype, Integral):
+        raise ValueError("`dtype` must be integral")
+    start, end = sample[0].start, sample[-1].end
+    length = end - start
+    encoded = np.fromiter(map(ord, text[start:end]), dtype, length)
+    encoded[encoded > (MAXCHAR - 1)] = MAXCHAR
+    return encoded
 
 
-def encode_classes(mapping: Mapping[str, int], samples: List[List[Annotation]],
-                   length: int,) -> np.ndarray:
-    if 0 in mapping.values():
-        raise ValueError("0 is an invalid class mapping")
-    encoded_classes = np.zeros((len(samples), length), dtype=np.int16)
+def encode_classes(mapping: Mapping[str, int], sample: List[Annotation],
+                   dtype=np.int32) \
+        -> np.array:
+    if not isinstance(dtype, Integral):
+        raise ValueError("`dtype` must be integral")
     try:
-        for i, sample in enumerate(samples):
-            offset = sample[0].start
-            codes = (mapping[anno.cls] for anno in sample)
-            intervals = ((anno.start - offset, anno.end - offset)
-                         for anno in sample)
-            for code, (start, end) in zip(codes, intervals):
-                encoded_classes[i, start:end] = code
-    except KeyError:
-        raise ValueError("Missing a class in the mapping")
+        offset = sample[0].start
+        length = sample[-1].end - offset
+        encoded = np.zeros(length, dtype=dtype)
+        for _, start, end, _, cls in sample:
+            encoded[start-offset:end-offset] = mapping[cls]
+        return encoded
+    except KeyError as err:
+        raise ValueError("Missing a key in the mapping: {}".format(err))
 
-    return encoded_classes
+
+def join(arrays: List[np.ndarray], dtype=np.int32) \
+        -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Join 1D arrays. The function uses zero-padding to bring all arrays to the
+    same length. The dtypes will be coerced to `dtype`
+    :return: (joined and padded arrays, boolean array masks); masks are
+    positive, i.e. padded regions are False
+    """
+    if not isinstance(dtype, Integral):
+        raise ValueError("`dtype` must be integral")
+
+    ndim = set(map(np.ndarray.ndim, arrays))
+    if ndim != {1}:
+        raise ValueError("`arrays` must be a nonempty list of 1D numpy arrays")
+    maxlen = max(map(len, arrays))
+    joined = np.zeros((len(arrays), maxlen), dtype=dtype)
+    masks = np.zeros((len(arrays), maxlen), dtype=bool)
+    for i, arr in enumerate(arrays):
+        joined[i, :len(arr)] = arr
+        maxlen[i, :len(arr)] = True
+    return joined, masks
+
+
+def one_hot(array: np.ndarray) -> np.ndarray:
+    """
+    One-hot encode an integer array; the output inherits the array's dtype.
+    """
+    if not isinstance(array.dtype, Integral):
+        raise ValueError("`array.dtype` must be integral")
+    vectors = np.eye(array.max(), dtype=array.dtype)
+    return vectors[array]
+
+
+def maskfalse(array: np.ndarray, mask: np.ndarray) -> np.ndarray:
+    """
+    Replace False-masked items with zeros.
+    """
+    if np.issubdtype(mask.dtype, np.bool):
+        raise ValueError("Masks are supposed to be boolean")
+    copy = array.copy()
+    copy[~mask] = 0
+    return copy
 
 
 if __name__ == "__main__":

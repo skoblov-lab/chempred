@@ -169,7 +169,7 @@ def join(arrays: List[np.ndarray], dtype=np.int32) \
     if not issubclass(dtype, Integral):
         raise ValueError("`dtype` must be integral")
 
-    ndim = set(map(np.ndarray.ndim, arrays))
+    ndim = set(arr.ndim for arr in arrays)
     if ndim != {1}:
         raise ValueError("`arrays` must be a nonempty list of 1D numpy arrays")
     maxlen = max(map(len, arrays))

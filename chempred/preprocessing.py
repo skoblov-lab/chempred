@@ -184,6 +184,11 @@ def join(arrays: List[np.ndarray], dtype=np.int32) \
 def one_hot(array: np.ndarray) -> np.ndarray:
     """
     One-hot encode an integer array; the output inherits the array's dtype.
+    >>> nclasses = 10
+    >>> permutations = np.vstack([np.random.permutation(nclasses)
+    ...                           for _ in range(nclasses)])
+    >>> (one_hot(permutations).argmax(permutations.ndim) == permutations).all()
+    True
     """
     # TODO return check
     # if not issubclass(array.dtype, Integral):
@@ -195,6 +200,13 @@ def one_hot(array: np.ndarray) -> np.ndarray:
 def maskfalse(array: np.ndarray, mask: np.ndarray) -> np.ndarray:
     """
     Replace False-masked items with zeros.
+    >>> array = np.arange(10)
+    >>> mask = np.random.binomial(1, 0.5, len(array)).astype(bool)
+    >>> masked = maskfalse(array, mask)
+    >>> (masked[mask] == array[mask]).all()
+    True
+    >>> (masked[~mask] == 0).all()
+    True
     """
     if not np.issubdtype(mask.dtype, np.bool):
         raise ValueError("Masks are supposed to be boolean")

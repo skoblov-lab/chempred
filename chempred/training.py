@@ -106,7 +106,7 @@ def process_data(abstracts: List[Abstract],
         -> Tuple[List[int], List[Sample],  List[Failure],
                  np.ndarray, np.ndarray, np.ndarray]:
     # TODO update docs
-    # TODO tests
+    # TODO more tests
     """
     :param abstracts:
     :param annotations:
@@ -210,8 +210,9 @@ def training(rootdir: str, name: str):
     training_dir = os.path.join(rootdir, "{}-training".format(name))
     weights_template = os.path.join(training_dir,
                                     "{epoch:02d}-{val_acc:.3f}.hdf5")
-    w_destination = os.path.join(training_dir, "{}-weights.hdf5".format(name))
-    model_destination = os.path.join(training_dir, "{}.json".format(name))
+    w_destination = os.path.join(rootdir, "{}-weights.hdf5".format(name))
+    model_destination = os.path.join(rootdir, "{}.json".format(name))
+    os.makedirs(training_dir)
     try:
         yield model_destination, weights_template
     finally:

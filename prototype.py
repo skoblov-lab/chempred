@@ -67,6 +67,8 @@ def train(ctx, tagger, detector):
                                   config.maxlen, config.nonpositive,
                                   config.mapping, config.positive)
         )
+        train_y_onehot = pp.one_hot(train_y)
+        test_y_onehot = pp.one_hot(test_y)
         # build the model
         l_in = layers.Input(shape=(config.maxlen,), name="l_in")
         l_emb = layers.Embedding(NCHAR, EMBED, mask_zero=True,
@@ -88,11 +90,57 @@ def train(ctx, tagger, detector):
             checkpoint = callbacks.ModelCheckpoint(weights, monitor="val_acc",
                                                    verbose=1, mode="max",
                                                    save_best_only=True)
-            detector_model.fit(train_x, train_y, callbacks=[checkpoint],
-                               validation_data=(test_x, test_y), verbose=1,
-                               epochs=config.epochs, batch_size=config.batchsize)
+            detector_model.fit(train_x, train_y_onehot, callbacks=[checkpoint],
+                               validation_data=(test_x, test_y_onehot),
+                               verbose=1, epochs=config.epochs,
+                               batch_size=config.batchsize)
     if tagger:
-        raise NotImplemented
+        config = training.read_config(tagger)
+        ncls = len(set(config.mapping.values()))
+
+        # read training data
+        train_abstracts = chemdner.read_abstracts(config.train_data[ABSTRACTS])
+        train_anno = chemdner.read_annotations(config.train_data[ANNOTATIONS])
+        train_ids, train_samples, train_fail, train_x, train_y, train_mask = (
+            training.process_data(train_abstracts, train_anno, config.window,
+                                  config.maxlen, config.nonpositive,
+                                  config.mapping, config.positive)
+        )
+        # read testing data
+        test_abstracts = chemdner.read_abstracts(config.test_data[ABSTRACTS])
+        test_anno = chemdner.read_annotations(config.test_data[ANNOTATIONS])
+        test_ids, test_samples, test_fail, test_x, test_y, test_mask = (
+            training.process_data(test_abstracts, test_anno, config.window,
+                                  config.maxlen, config.nonpositive,
+                                  config.mapping, config.positive)
+        )
+        train_y_onehot = pp.one_hot(train_y)
+        test_y_onehot = pp.one_hot(test_y)
+        # build the model
+        l_in = layers.Input(shape=(config.maxlen,), name="l_in")
+        l_emb = layers.Embedding(NCHAR, EMBED, mask_zero=True,
+                                 input_length=config.maxlen)(l_in)
+        l_rec = model.build_rec(config.nsteps, config.in_drop,
+                                config.rec_drop)(l_emb)
+        # l_out = layers.TimeDistributed(
+        #     layers.Dense(ncls, activation='softmax'), name="l_out")(l_rec)
+        detector_model = models.Model(l_in, l_out)
+        detector_model.compile(optimizer="Adam", loss="binary_crossentropy",
+                               metrics=["accuracy"])
+
+        # train the model
+        with training.training(models_dir, TAGGER) as (destination, weights):
+            # save architecture
+            detector_json = detector_model.to_json()
+            with open(destination, "w") as json_file:
+                json_file.write(detector_json)
+            checkpoint = callbacks.ModelCheckpoint(weights, monitor="val_acc",
+                                                   verbose=1, mode="max",
+                                                   save_best_only=True)
+            detector_model.fit(train_x, train_y_onehot, callbacks=[checkpoint],
+                               validation_data=(test_x, test_y_onehot),
+                               verbose=1, epochs=config.epochs,
+                               batch_size=config.batchsize)
 
 
 @chempred.group("annotate")

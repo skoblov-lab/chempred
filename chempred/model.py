@@ -5,7 +5,7 @@ their predictions
 
 """
 
-from typing import Sequence, Tuple, Optional, List, Union
+from typing import Sequence, Tuple, Optional, List, Union, Callable
 from functools import reduce
 from itertools import chain
 
@@ -39,12 +39,12 @@ from chempred.chemdner import Interval
 #
 #
 
-@runtime_validation
+
 def build_rec(nsteps: Sequence[int],
               lstm_inp_drop: Optional[Union[float, Sequence[float]]]=None,
               lstm_rec_drop: Optional[Union[float, Sequence[float]]]=None,
               bidirectional: Union[bool, Sequence[bool]]=False,
-              stateful=False):
+              stateful=False) -> Callable:
     # TODO extend documentation
     """
     :param nsteps:

@@ -16,27 +16,28 @@ import numpy as np
 from chempred.chemdner import Interval
 
 
-# TODO convolutional API is outdated – update it
-@runtime_validation
-def stack_conv(prev, param: Tuple[str, int, int]):
-    name, nfilt, kern_size = param
-    return layers.Convolution1D(
-        nfilt, kern_size, activation="relu", name=name,
-    )(prev)
-
-
-@runtime_validation
-def build_conv(incomming,
-               filters: Optional[Sequence[int]],
-               kernels: Optional[Sequence[int]]):
-    filters = filters or []
-    kernels = kernels or []
-    assert len(filters) == len(kernels)
-
-    conv_names = ("conv_{}".format(i) for i in range(1, len(kernels)+1))
-    conv = reduce(stack_conv, zip(conv_names, filters, kernels), incomming)
-    return conv
-
+# # TODO convolutional API is outdated – update it
+# @runtime_validation
+# def stack_conv(prev, param: Tuple[str, int, int]):
+#     name, nfilt, kern_size = param
+#     return layers.Convolution1D(
+#         nfilt, kern_size, activation="relu", name=name,
+#     )(prev)
+#
+#
+# @runtime_validation
+# def build_conv(incomming,
+#                filters: Optional[Sequence[int]],
+#                kernels: Optional[Sequence[int]]):
+#     filters = filters or []
+#     kernels = kernels or []
+#     assert len(filters) == len(kernels)
+#
+#     conv_names = ("conv_{}".format(i) for i in range(1, len(kernels)+1))
+#     conv = reduce(stack_conv, zip(conv_names, filters, kernels), incomming)
+#     return conv
+#
+#
 
 @runtime_validation
 def build_rec(nsteps: Sequence[int],
@@ -84,7 +85,6 @@ def build_rec(nsteps: Sequence[int],
     return rec
 
 
-@runtime_validation
 def merge_predictions(intervals: List[Interval], predictions: np.ndarray) \
         -> np.ndarray:
     """
@@ -92,7 +92,7 @@ def merge_predictions(intervals: List[Interval], predictions: np.ndarray) \
     :param predictions:
     :return:
     >>> randints = np.random.randint(0, 1000, size=20)
-    >>> intervals = sorted([sorted(randints[i:i+2])
+    >>> intervals = sorted([tuple(sorted(randints[i:i+2]))
     ...                     for i in range(0, len(randints), 2)])
     >>> maxlen = max(end - start for start, end in intervals)
     >>> predictions = np.zeros((len(intervals), maxlen), dtype=float)

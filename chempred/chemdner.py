@@ -4,7 +4,7 @@ Parsers, preprocessors and type annotations for the chemdner dataset.
 
 """
 
-from typing import NamedTuple, List, Tuple, Iterator
+from typing import NamedTuple, List, Tuple, Iterator, Text
 from collections import deque
 from functools import reduce
 from itertools import groupby
@@ -20,13 +20,12 @@ OTHER = "OTHER"
 TITLE = "T"
 BODY = "A"
 
-
 Interval = Tuple[int, int]
-Annotation = NamedTuple("Annotation", [("source", str), ("start", int),
-                                       ("end", int), ("text", str),
-                                       ("cls", str)])
+Annotation = NamedTuple("Annotation", [("source", Text), ("start", int),
+                                       ("end", int), ("text", Text),
+                                       ("cls", Text)])
 AbstractAnnotation = Tuple[int, List[Annotation], List[Annotation]]
-Abstract = Tuple[int, str, str]
+Abstract = Tuple[int, Text, Text]
 
 
 def read_abstracts(path: str) -> List[Tuple[int, str, str]]:

@@ -9,6 +9,7 @@ from typing import List, Tuple, Mapping, Callable, Set, Union
 from chempred.chemdner import Annotation, Interval
 from itertools import chain
 
+from enforce import runtime_validation
 import numpy as np
 
 
@@ -180,6 +181,7 @@ def encode_classes(mapping: Mapping[str, int], sample: List[Annotation],
         raise ValueError("Missing a key in the mapping: {}".format(err))
 
 
+@runtime_validation
 def join(arrays: List[np.ndarray], dtype=np.int32) \
         -> Tuple[np.ndarray, np.ndarray]:
     """
@@ -209,6 +211,7 @@ def join(arrays: List[np.ndarray], dtype=np.int32) \
     return joined, masks
 
 
+@runtime_validation
 def one_hot(array: np.ndarray) -> np.ndarray:
     """
     One-hot encode an integer array; the output inherits the array's dtype.
@@ -224,6 +227,7 @@ def one_hot(array: np.ndarray) -> np.ndarray:
     return vectors[array]
 
 
+@runtime_validation
 def maskfalse(array: np.ndarray, mask: np.ndarray) -> np.ndarray:
     """
     Replace False-masked items with zeros.

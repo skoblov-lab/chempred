@@ -109,6 +109,7 @@ def make_sampler(width: int, maxlen: int, flanking: bool) \
 def sample_windows(targets: List[int], annotations: List[Annotation],
                    sampler: Sampler) \
         -> Tuple[List[List[Annotation]], List[Annotation]]:
+    # TODO tests
     """
     Sample context windows around positive tokens.
     :return: (list[sampled windows], list[failed target words]);
@@ -123,6 +124,7 @@ def sample_windows(targets: List[int], annotations: List[Annotation],
 
 def sample_targets(positive_classes: Union[Set[str], Mapping[str, int]],
                    annotations: List[Annotation], nonpos: int) -> List[int]:
+    # TODO tests
     """
     Extract all positions of positive annotations and add `nonpos` randomly
     selected non-positive annotations
@@ -142,6 +144,7 @@ def sample_targets(positive_classes: Union[Set[str], Mapping[str, int]],
 
 def encode_text(text: str, sample: List[Annotation], dtype=np.int32) \
         -> np.ndarray:
+    # TODO tests
     """
     Encode text cahracters at each position of the sample
     :param text: the complete text from which the sample was drawn
@@ -161,6 +164,7 @@ def encode_text(text: str, sample: List[Annotation], dtype=np.int32) \
 def encode_classes(mapping: Mapping[str, int], sample: List[Annotation],
                    dtype=np.int32) \
         -> np.array:
+    # TODO tests
     """
     Encode classes at each position of the sample
     :param mapping: a mapping from string classes into integers

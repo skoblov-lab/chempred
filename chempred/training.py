@@ -1,7 +1,10 @@
 import glob
+import json
 from contextlib import contextmanager
+from functools import reduce
 from itertools import chain, starmap
-from typing import Tuple, List, Mapping, Set
+from typing import Tuple, List, Mapping, Set, NamedTuple, Optional, Union, \
+    Sequence
 
 import numpy as np
 import operator as op
@@ -12,36 +15,97 @@ from fn import F
 
 from chempred import preprocessing as pp
 from chempred import chemdner
+from chempred.chemdner import Annotation, Abstract, AbstractAnnotation
 
 
-Sample = List[chemdner.Annotation]
-Failure = Tuple[int, chemdner.Annotation]
+# configuration fields
+TRAINING_DATA = "training_data"
+TESTING_DATA = "testing_data"
+ARCHITECTURE = "architecture"
+NSTEPS = "nsteps"
+INPUT_DROP = "input_dropout"
+REC_DROP = "recurrent_dropout"
+BIDIRECTIONAL = "bidirectional"
+STATEFUL = "stateful"
+TRAINING = "training"
+EPOCHS = "epochs"
+BATCHSIZE = "batchsize"
+VAL_SPLIT = "validation_split"
+MAPPING = "class_mapping"
+POSITIVE = "positive"
+TRAINING_FIELDS = (EPOCHS, BATCHSIZE, VAL_SPLIT)
+ARCHITECTURE_FIELDS = (NSTEPS, INPUT_DROP, REC_DROP, BIDIRECTIONAL, STATEFUL)
+
+Data = Union[Mapping[str, str], Sequence[str]]
+Configurations = NamedTuple("Configurations",
+                            [("train_data", Data),
+                             ("test_data", Optional[Data]),
+                             ("nsteps", int),
+                             ("in_drop", float),
+                             ("rec_drop", float),
+                             ("bidir", bool),
+                             ("stateful", bool),
+                             ("epochs", int),
+                             ("batchsize", int),
+                             ("val_split", float),
+                             ("mapping", Mapping[str, int]),
+                             ("positive", Set[str])])
+Sample = List[Annotation]
+Failure = Tuple[int, Annotation]
 
 
-def prepare_training_data(abstracts: str, annotations: str, window: int,
-                          maxlen: int, nonpositive: int,
-                          mapping: Mapping[str, int],
-                          positive_classes: Set[str]) \
+def read_config(path: str) -> Configurations:
+    # TODO docs
+    # TODO tests
+    """
+
+    :param path:
+    :return:
+    """
+    config = json.load(path)[0]
+    try:
+        train_data = config[TRAINING_DATA]
+        test_data = config.get(TESTING_DATA)
+        nsteps, in_drop, rec_drop, bidir, stateful = (
+            reduce(op.getitem, [ARCHITECTURE, field], config)
+            for field in ARCHITECTURE_FIELDS
+        )
+        epochs, batchsize, val_split = (
+            reduce(op.getitem, [ARCHITECTURE, field], config)
+            for field in TRAINING_FIELDS
+        )
+        mapping = config[MAPPING]
+        positive = set(config[POSITIVE])
+        return Configurations(train_data, test_data, nsteps, in_drop, rec_drop,
+                              bidir, stateful, epochs, batchsize, val_split,
+                              mapping, positive)
+    except KeyError:
+        raise ValueError("Missing a required configuration field")
+
+
+def prepare_training_data(abstracts: List[Abstract],
+                          annotations: List[AbstractAnnotation],
+                          window: int, maxlen: int, nonpositive: int,
+                          mapping: Mapping[str, int], positive: Set[str]) \
         -> Tuple[List[int], List[Sample],  List[Failure],
                  np.ndarray, np.ndarray, np.ndarray]:
+    # TODO update docs
+    # TODO tests
     """
-    :param abstracts: a path to chemdner-formatted abstracts
-    :param annotations: a path to chemdner-formatted annotations
+    :param abstracts:
+    :param annotations:
     :param window: context window width (in tokens)
     :param maxlen: maximum sample length (in characters)
     :param nonpositive: the number of non-positive target words per abstract
     :param mapping: сlass mapping
-    :param positive_classes: a set of positive classes
+    :param positive: a set of positive classes
     :return: abstract ids (one per sample), samples, failed targets (abstract
     ids and token annotations), encoded and padded text, encoded and padded
     classes, padding masks.
     """
-    abstracts = chemdner.read_abstracts(abstracts)
-    abstract_annotations = chemdner.read_annotations(annotations)
-
     # align pairs, flatten and remove texts with no annotations
     aligned = list(chemdner.align_abstracts_and_annotations(abstracts,
-                                                            abstract_annotations))
+                                                            annotations))
     data = (F(map, chemdner.flatten_aligned_pair)
             >> chain.from_iterable
             >> list)(aligned)
@@ -54,7 +118,7 @@ def prepare_training_data(abstracts: str, annotations: str, window: int,
     text_annotations = [chemdner.annotate_text(text, annotations, src, True)
                         for _, src, text, annotations in nonempty]
 
-    targets = [pp.sample_targets(positive_classes, annotations, nonpositive)
+    targets = [pp.sample_targets(positive, annotations, nonpositive)
                for annotations in text_annotations]
     sampler = pp.make_sampler(maxlen=maxlen, width=window, flanking=False)
     samples_and_failures = (F(zip)
@@ -92,6 +156,7 @@ def prepare_training_data(abstracts: str, annotations: str, window: int,
 
 
 def pick_best(filenames: List[str]) -> Tuple[str, Tuple[int, float]]:
+    # TODO import docs
     """
     >>> fnames = ["rootdir/name/weights-improvement-16-0.99.hdf5",
     ...           "rootdir/name/weights-improvement-25-0.99.hdf5",
@@ -109,6 +174,12 @@ def pick_best(filenames: List[str]) -> Tuple[str, Tuple[int, float]]:
 
 @contextmanager
 def training(rootdir: str, name: str):
+    # TODO docs
+    """
+    :param rootdir:
+    :param name:
+    :return:
+    """
     training_dir = os.path.join(rootdir, "{}-training".format(name))
     weights_template = os.path.join(training_dir,
                                     "{epoch:02d}-{val_acc:.3f}.hdf5")

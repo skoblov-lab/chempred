@@ -1,13 +1,11 @@
 {
-  "data": {
-    "training": {
-      "abstracts": "fp",
-      "annotations": "fp"
-    },
-    "testing": {
-      "abstracts": "fp",
-      "annotations": "fp"
-    }
+  "training_data": {
+    "abstracts": "chemdner_corpus/training.abstracts.txt",
+    "annotations": "chemdner_corpus/training.annotations.txt"
+  },
+  "testing_data": {
+    "abstracts": "chemdner_corpus/evaluation.abstracts.txt",
+    "annotations": "chemdner_corpus/evaluation.annotations.txt"
   },
   "architecture": {
     "nsteps": [200, 200],
@@ -20,6 +18,18 @@
     "epochs": 30,
     "batchsize": 400,
     "validation_split": 0.0
-  }
-
+  },
+  "class_mapping": {
+    "OTHER": 0,
+    "ABBREVIATION": 1,
+    "FAMILY": 1,
+    "FORMULA": 1,
+    "IDENTIFIER": 1,
+    "MULTIPLE": 1,
+    "NO CLASS": 1,
+    "SYSTEMATIC": 1,
+    "TRIVIAL": 1
+  },
+  "positive": ["ABBREVIATION", "FAMILY", "FORMULA", "IDENTIFIER", "MULTIPLE",
+               "NO CLASS", "SYSTEMATIC", "TRIVIAL"]
 }

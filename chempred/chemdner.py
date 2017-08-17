@@ -192,6 +192,7 @@ def align_abstracts_and_annotations(
         abstract_annotations: List[Tuple[int, List[Annotation], List[Annotation]]]) \
         -> Iterator[Tuple[Tuple[int, str, str],
                           Tuple[int, List[Annotation], List[Annotation]]]]:
+    # TODO tests
     """
     Align abstracts and annotations (i.e. match abstract ids)
     :param abstacts: parsed abstracts (e.g. produces by `read_abstracts`)
@@ -211,6 +212,7 @@ def align_abstracts_and_annotations(
 
 def flatten_aligned_pair(pair: Tuple[Abstract, AbstractAnnotation]) \
         -> List[Tuple[int, str, str, List[Annotation]]]:
+    # TODO tests
     """
     :return: list[(abstract id, source, text, token annotations)]
     """

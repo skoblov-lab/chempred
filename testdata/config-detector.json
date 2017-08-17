@@ -14,10 +14,14 @@
     "bidirectional": true,
     "stateful": false
   },
+  "sampling": {
+    "window": 5,
+    "maxlen": 500,
+    "nonpositive": 3
+  },
   "training": {
-    "epochs": 30,
-    "batchsize": 400,
-    "validation_split": 0.0
+    "nepochs": 30,
+    "batchsize": 400
   },
   "class_mapping": {
     "OTHER": 0,

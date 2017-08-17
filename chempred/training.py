@@ -3,8 +3,7 @@ import json
 from contextlib import contextmanager
 from functools import reduce
 from itertools import chain, starmap
-from typing import Tuple, List, Mapping, Set, NamedTuple, Optional, Union, \
-    Sequence
+from typing import Tuple, List, Mapping, Set, NamedTuple, Union, Sequence
 
 import numpy as np
 import operator as op
@@ -21,33 +20,43 @@ from chempred.chemdner import Annotation, Abstract, AbstractAnnotation
 # configuration fields
 TRAINING_DATA = "training_data"
 TESTING_DATA = "testing_data"
+
 ARCHITECTURE = "architecture"
 NSTEPS = "nsteps"
 INPUT_DROP = "input_dropout"
 REC_DROP = "recurrent_dropout"
 BIDIRECTIONAL = "bidirectional"
 STATEFUL = "stateful"
+ARCHITECTURE_FIELDS = (NSTEPS, INPUT_DROP, REC_DROP, BIDIRECTIONAL, STATEFUL)
+
+SAMPLING = "sampling"
+WINDOW = "window"
+MAXLEN = "maxlen"
+NONPOS = "nonpositive"
+SAMPLING_FIELDS = (WINDOW, MAXLEN, NONPOS)
+
 TRAINING = "training"
-EPOCHS = "epochs"
+EPOCHS = "nepochs"
 BATCHSIZE = "batchsize"
-VAL_SPLIT = "validation_split"
 MAPPING = "class_mapping"
 POSITIVE = "positive"
-TRAINING_FIELDS = (EPOCHS, BATCHSIZE, VAL_SPLIT)
-ARCHITECTURE_FIELDS = (NSTEPS, INPUT_DROP, REC_DROP, BIDIRECTIONAL, STATEFUL)
+TRAINING_FIELDS = (EPOCHS, BATCHSIZE)
+
 
 Data = Union[Mapping[str, str], Sequence[str]]
 Configurations = NamedTuple("Configurations",
                             [("train_data", Data),
-                             ("test_data", Optional[Data]),
+                             ("test_data", Data),
                              ("nsteps", int),
                              ("in_drop", float),
                              ("rec_drop", float),
                              ("bidir", bool),
                              ("stateful", bool),
+                             ("window", int),
+                             ("maxlen", int),
+                             ("nonpositive", int),
                              ("epochs", int),
                              ("batchsize", int),
-                             ("val_split", float),
                              ("mapping", Mapping[str, int]),
                              ("positive", Set[str])])
 Sample = List[Annotation]
@@ -62,31 +71,38 @@ def read_config(path: str) -> Configurations:
     :param path:
     :return:
     """
-    config = json.load(path)[0]
+    with open(path) as buffer:
+        config = json.load(buffer)
     try:
         train_data = config[TRAINING_DATA]
-        test_data = config.get(TESTING_DATA)
+        test_data = config[TESTING_DATA]
         nsteps, in_drop, rec_drop, bidir, stateful = (
             reduce(op.getitem, [ARCHITECTURE, field], config)
             for field in ARCHITECTURE_FIELDS
         )
-        epochs, batchsize, val_split = (
-            reduce(op.getitem, [ARCHITECTURE, field], config)
+        window, maxlen, nonpos = (
+            reduce(op.getitem, [SAMPLING, field], config)
+            for field in SAMPLING_FIELDS
+        )
+
+        epochs, batchsize = (
+            reduce(op.getitem, [TRAINING, field], config)
             for field in TRAINING_FIELDS
         )
+
         mapping = config[MAPPING]
         positive = set(config[POSITIVE])
         return Configurations(train_data, test_data, nsteps, in_drop, rec_drop,
-                              bidir, stateful, epochs, batchsize, val_split,
-                              mapping, positive)
-    except KeyError:
-        raise ValueError("Missing a required configuration field")
+                              bidir, stateful, window, maxlen, nonpos, epochs,
+                              batchsize, mapping, positive)
+    except KeyError as err:
+        raise ValueError("Not all fields are present: {}".format(err))
 
 
-def prepare_training_data(abstracts: List[Abstract],
-                          annotations: List[AbstractAnnotation],
-                          window: int, maxlen: int, nonpositive: int,
-                          mapping: Mapping[str, int], positive: Set[str]) \
+def process_data(abstracts: List[Abstract],
+                 annotations: List[AbstractAnnotation],
+                 window: int, maxlen: int, nonpositive: int,
+                 mapping: Mapping[str, int], positive: Set[str]) \
         -> Tuple[List[int], List[Sample],  List[Failure],
                  np.ndarray, np.ndarray, np.ndarray]:
     # TODO update docs
@@ -176,6 +192,7 @@ def pick_best(filenames: List[str]) -> Tuple[str, Tuple[int, float]]:
 def training(rootdir: str, name: str):
     # TODO docs
     """
+    Initialise training temporary directories and cleanup upon completion
     :param rootdir:
     :param name:
     :return:
@@ -183,14 +200,15 @@ def training(rootdir: str, name: str):
     training_dir = os.path.join(rootdir, "{}-training".format(name))
     weights_template = os.path.join(training_dir,
                                     "{epoch:02d}-{val_acc:.3f}.hdf5")
-    destination = os.path.join(training_dir, "{}-weights.hdf5".format(name))
+    w_destination = os.path.join(training_dir, "{}-weights.hdf5".format(name))
+    model_destination = os.path.join(training_dir, "{}.json".format(name))
     try:
-        yield weights_template
+        yield model_destination, weights_template
     finally:
         all_weights = glob.glob(os.path.join(training_dir, "*.hdf5"))
         if all_weights:
             best_weights, stats = pick_best(all_weights)
-            shutil.move(best_weights, destination)
+            shutil.move(best_weights, w_destination)
         shutil.rmtree(training_dir)
 
 

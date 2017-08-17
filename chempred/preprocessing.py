@@ -15,13 +15,14 @@ MAXCHAR = 127
 Sampler = Callable[[int, List[Annotation]], List[List[Annotation]]]
 
 
-def slide(center: int, width: int, lastpos: int, flanking: bool) \
+def slide(center: int, width: int, lastpos: int=None, flanking: bool=False) \
         -> List[Interval]:
     """
+    Slide through the `center` index and return the resulting intervals
     :param center:
-    :param width:
-    :param lastpos:
-    :param flanking:
+    :param width: sliding-window's length
+    :param lastpos: the end position
+    :param flanking: include the flanking windows
     >>> slide(-1, 3, 10, True)
     [(0, 3)]
     >>> slide(0, 3, 10, False)
@@ -32,6 +33,8 @@ def slide(center: int, width: int, lastpos: int, flanking: bool) \
     [(6, 9), (7, 10)]
     >>> slide(8, 3, 10, True)
     [(5, 8), (6, 9), (7, 10)]
+    >>> slide(8, 3, None, True)
+    [(5, 8), (6, 9), (7, 10), (8, 11)]
     >>> slide(10, 3, 10, False)
     []
     >>> slide(10, 3, 10, True)
@@ -41,20 +44,20 @@ def slide(center: int, width: int, lastpos: int, flanking: bool) \
     >>> slide(0, 11, 10, False) == slide(0, 11, 10, True) == []
     True
     """
+    lastpos_ = lastpos or center + width
     first = max(center - (width if flanking else width - 1), 0)
-    last = min(center + 2 if flanking else center + 1, lastpos - width + 1)
+    last = min(center + 2 if flanking else center + 1, lastpos_ - width + 1)
     return [(i, i + width) for i in range(first, last)]
 
 
 def make_sampler(width: int, maxlen: int, flanking: bool) \
         -> Sampler:
     """
-    :type width: int
+    Create a context-sampler.
     :param width: the desired number of context tokens to sample; e.g. for a
     positive token at index `i` and window `3` the function will try to create
     samples [(i-2, i-1, i), (i-1, i, i+1), (i, i+1, i+2)] if flanking == False
     :param maxlen: the maximum length of a sample in unicode codes.
-    :type flanking: bool
     :param flanking: include windows adjacent to central words; note that
     each positive token is an independent central word
     >>> text = "abcdefjhijklmnop"
@@ -88,6 +91,9 @@ def make_sampler(width: int, maxlen: int, flanking: bool) \
 
     def sampler(target: int, annotations: List[Annotation]) \
             -> List[List[Annotation]]:
+        """
+        Samples context windows around the target
+        """
         windows = slide(target, width, len(annotations), flanking)
         samples = [annotations[first:last] for first, last in windows]
         lens = [annotations[last-1].end - annotations[first].start
@@ -116,10 +122,12 @@ def sample_windows(targets: List[int], annotations: List[Annotation],
 def sample_targets(positive_classes: Union[Set[str], Mapping[str, int]],
                    annotations: List[Annotation], nonpos: int) -> List[int]:
     """
-    :param positive_classes:
-    :param annotations:
+    Extract all positions of positive annotations and add `nonpos` randomly
+    selected non-positive annotations
+    :param positive_classes: a set of class strings to be considered positive
+    :param annotations: a list of annotations (usually from a sample)
     :param nonpos: the maximum number of nonpositive targets to sample
-    :return:
+    :return: extracted indices
     """
     indices = np.arange(len(annotations))
     mask = np.array([anno.cls in positive_classes for anno in annotations])
@@ -132,6 +140,13 @@ def sample_targets(positive_classes: Union[Set[str], Mapping[str, int]],
 
 def encode_text(text: str, sample: List[Annotation], dtype=np.int32) \
         -> np.ndarray:
+    """
+    Encode text cahracters at each position of the sample
+    :param text: the complete text from which the sample was drawn
+    :param sample: a list of annotations
+    :param dtype: output data type; it must be an integral numpy dtype
+    :return: an integer array
+    """
     if not np.issubdtype(dtype, np.int):
         raise ValueError("`dtype` must be integral")
     start, end = sample[0].start, sample[-1].end
@@ -144,6 +159,13 @@ def encode_text(text: str, sample: List[Annotation], dtype=np.int32) \
 def encode_classes(mapping: Mapping[str, int], sample: List[Annotation],
                    dtype=np.int32) \
         -> np.array:
+    """
+    Encode classes at each position of the sample
+    :param mapping: a mapping from string classes into integers
+    :param sample: a list of annotations
+    :param dtype: output data type; it must be an integral numpy dtype
+    :return: an integer array
+    """
     if not np.issubdtype(dtype, np.int):
         raise ValueError("`dtype` must be integral")
     try:

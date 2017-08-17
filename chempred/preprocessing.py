@@ -1,5 +1,7 @@
 """
 
+Data preprocessing routines
+
 """
 
 
@@ -10,7 +12,6 @@ from itertools import chain
 import numpy as np
 
 
-PADDING_VAL = 0
 MAXCHAR = 127
 Sampler = Callable[[int, List[Annotation]], List[List[Annotation]]]
 

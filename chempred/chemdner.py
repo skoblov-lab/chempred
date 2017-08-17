@@ -1,5 +1,7 @@
 """
 
+Parsers, preprocessors and type annotations for the chemdner dataset.
+
 """
 
 from typing import NamedTuple, List, Tuple, Iterator

@@ -1,6 +1,7 @@
 """
 
-
+Utility functions for creating ChemPred deep learning models and working with
+their predictions
 
 """
 

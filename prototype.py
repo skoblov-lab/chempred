@@ -14,6 +14,7 @@ from fn import F
 
 from chempred import chemdner
 from chempred import preprocessing as pp
+from chempred import model
 
 
 Sample = List[chemdner.Annotation]

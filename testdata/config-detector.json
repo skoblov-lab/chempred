@@ -1,11 +1,11 @@
 {
   "training_data": {
-    "abstracts": "chemdner_corpus/training.abstracts.txt",
-    "annotations": "chemdner_corpus/training.annotations.txt"
+    "abstracts": "testdata/abstracts.txt",
+    "annotations": "testdata/annotations.txt"
   },
   "testing_data": {
-    "abstracts": "chemdner_corpus/evaluation.abstracts.txt",
-    "annotations": "chemdner_corpus/evaluation.annotations.txt"
+    "abstracts": "testdata/abstracts.txt",
+    "annotations": "testdata/annotations.txt"
   },
   "architecture": {
     "nsteps": [200, 200],

@@ -47,25 +47,21 @@ def train(ctx, tagger, detector):
 
     if detector:
         config = training.read_config(detector)
-        ncls = config.mapping.values()
-        if set(config.mapping.values) != {0, 1}:
+        if set(config.mapping.values()) != {0, 1}:
             raise ValueError("The detector's mapping must be binary")
+        ncls = 2
 
         # read training data
-        train_abstracts = chemdner.read_abstracts(
-            config.train_data[ABSTRACTS])
-        train_anno = chemdner.read_annotations(
-            config.train_data[ANNOTATIONS])
+        train_abstracts = chemdner.read_abstracts(config.train_data[ABSTRACTS])
+        train_anno = chemdner.read_annotations(config.train_data[ANNOTATIONS])
         train_ids, train_samples, train_fail, train_x, train_y, train_mask = (
             training.process_data(train_abstracts, train_anno, config.window,
                                   config.maxlen, config.nonpositive,
                                   config.mapping, config.positive)
         )
         # read testing data
-        test_abstracts = chemdner.read_abstracts(
-            config.test_data[ABSTRACTS])
-        test_anno = chemdner.read_annotations(
-            config.test_data[ANNOTATIONS])
+        test_abstracts = chemdner.read_abstracts(config.test_data[ABSTRACTS])
+        test_anno = chemdner.read_annotations(config.test_data[ANNOTATIONS])
         test_ids, test_samples, test_fail, test_x, test_y, test_mask = (
             training.process_data(test_abstracts, test_anno, config.window,
                                   config.maxlen, config.nonpositive,

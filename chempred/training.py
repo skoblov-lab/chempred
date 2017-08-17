@@ -118,6 +118,16 @@ def process_data(abstracts: List[Abstract],
     :return: abstract ids (one per sample), samples, failed targets (abstract
     ids and token annotations), encoded and padded text, encoded and padded
     classes, padding masks.
+    >>> config_path = "testdata/config-detector.json"
+    >>> config = read_config(config_path)
+    >>> ncls = len(set(config.mapping.values()))
+    >>> abstracts = chemdner.read_abstracts(config.train_data["abstracts"])
+    >>> anno = chemdner.read_annotations(config.train_data["annotations"])
+    >>> ids, samples, failures, x, y, mask = (
+    ...     process_data(abstracts, anno, config.window,
+    ...                  config.maxlen, config.nonpositive,
+    ...                  config.mapping, config.positive)
+    ... )
     """
     # align pairs, flatten and remove texts with no annotations
     aligned = list(chemdner.align_abstracts_and_annotations(abstracts,
@@ -152,23 +162,23 @@ def process_data(abstracts: List[Abstract],
     encoded_texts = [[pp.encode_text(text, sample) for sample in samples_]
                      for text, samples_ in zip(texts, samples)]
     ids = [[id_] * len(samples_)
-           for id_, samples_ in zip(encoded_texts, nonempty_ids)]
+           for id_, samples_ in zip(nonempty_ids, encoded_texts)]
     encoded_classes = [
         [pp.encode_classes(mapping, sample) for sample in samples_]
         for text, samples_ in zip(texts, samples)]
 
-    joined_texts, masks_text = pp.join(
-        list(chain.from_iterable(encoded_texts)))
-    joined_classes, masks_classes = pp.join(
-        list(chain.from_iterable(encoded_classes)))
+    joined_texts, masks_text = pp.join(list(chain.from_iterable(encoded_texts)),
+                                       maxlen)
+    joined_cls, masks_cls = pp.join(list(chain.from_iterable(encoded_classes)),
+                                    maxlen)
     flattened_ids = list(chain.from_iterable(ids))
 
     # sanity checks
-    assert (masks_text == masks_classes).all()
+    assert (masks_text == masks_cls).all()
     assert len(flattened_ids) == len(joined_texts)
 
     return (flattened_ids, samples, flattened_failures, joined_texts,
-            joined_classes, masks_text)
+            joined_cls, masks_text)
 
 
 def pick_best(filenames: List[str]) -> Tuple[str, Tuple[int, float]]:

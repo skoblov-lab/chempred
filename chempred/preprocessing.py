@@ -186,7 +186,7 @@ def encode_classes(mapping: Mapping[str, int], sample: List[Annotation],
 
 
 @runtime_validation
-def join(arrays: List[np.ndarray], dtype=np.int32) \
+def join(arrays: List[np.ndarray], length: int, dtype=np.int32) \
         -> Tuple[np.ndarray, np.ndarray]:
     """
     Join 1D arrays. The function uses zero-padding to bring all arrays to the
@@ -206,9 +206,10 @@ def join(arrays: List[np.ndarray], dtype=np.int32) \
     ndim = set(arr.ndim for arr in arrays)
     if ndim != {1}:
         raise ValueError("`arrays` must be a nonempty list of 1D numpy arrays")
-    maxlen = max(map(len, arrays))
-    joined = np.zeros((len(arrays), maxlen), dtype=dtype)
-    masks = np.zeros((len(arrays), maxlen), dtype=bool)
+    if length < max(map(len, arrays)):
+        raise ValueError("Some arrays are longer than `length`")
+    joined = np.zeros((len(arrays), length), dtype=dtype)
+    masks = np.zeros((len(arrays), length), dtype=bool)
     for i, arr in enumerate(arrays):
         joined[i, :len(arr)] = arr
         masks[i, :len(arr)] = True

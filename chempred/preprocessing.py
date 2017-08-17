@@ -4,7 +4,6 @@
 
 
 from typing import List, Tuple, Mapping, Callable, Set, Union
-from numbers import Integral
 from chempred.chemdner import Annotation, Interval
 from itertools import chain
 
@@ -133,7 +132,7 @@ def sample_targets(positive_classes: Union[Set[str], Mapping[str, int]],
 
 def encode_text(text: str, sample: List[Annotation], dtype=np.int32) \
         -> np.ndarray:
-    if not issubclass(dtype, Integral):
+    if not np.issubdtype(dtype, np.int):
         raise ValueError("`dtype` must be integral")
     start, end = sample[0].start, sample[-1].end
     length = end - start
@@ -145,7 +144,7 @@ def encode_text(text: str, sample: List[Annotation], dtype=np.int32) \
 def encode_classes(mapping: Mapping[str, int], sample: List[Annotation],
                    dtype=np.int32) \
         -> np.array:
-    if not issubclass(dtype, Integral):
+    if not np.issubdtype(dtype, np.int):
         raise ValueError("`dtype` must be integral")
     try:
         offset = sample[0].start
@@ -165,8 +164,14 @@ def join(arrays: List[np.ndarray], dtype=np.int32) \
     same length. The dtypes will be coerced to `dtype`
     :return: (joined and padded arrays, boolean array masks); masks are
     positive, i.e. padded regions are False
+    >>> import random
+    >>> arrays = [np.random.randint(0, 127, size=random.randint(1, 101))
+    ...           for _ in range(100)]
+    >>> joined, masks = join(arrays)
+    >>> all((arr == j[m]).all() for arr, j, m in zip(arrays, joined, masks))
+    True
     """
-    if not issubclass(dtype, Integral):
+    if not np.issubdtype(dtype, np.int):
         raise ValueError("`dtype` must be integral")
 
     ndim = set(arr.ndim for arr in arrays)
@@ -190,9 +195,8 @@ def one_hot(array: np.ndarray) -> np.ndarray:
     >>> (one_hot(permutations).argmax(permutations.ndim) == permutations).all()
     True
     """
-    # TODO return check
-    # if not issubclass(array.dtype, Integral):
-    #     raise ValueError("`array.dtype` must be integral")
+    if not np.issubdtype(array.dtype, np.int):
+        raise ValueError("`array.dtype` must be integral")
     vectors = np.eye(array.max()+1, dtype=array.dtype)
     return vectors[array]
 

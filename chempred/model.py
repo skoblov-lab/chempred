@@ -71,7 +71,9 @@ def merge_predictions(intervals: List[Interval], predictions: np.ndarray) \
     :param intervals: intervals (non-inclusive on the right side)
     :param predictions:
     :return:
-    >>> intervals = [(0, 5), (2, 6), (8, 10)]
+    >>> randints = np.random.randint(0, 1000, size=20)
+    >>> intervals = sorted([sorted(randints[i:i+2])
+    ...                     for i in range(0, len(randints), 2)])
     >>> maxlen = max(end - start for start, end in intervals)
     >>> predictions = np.zeros((len(intervals), maxlen), dtype=float)
     >>> for i, (start, end) in enumerate(intervals):

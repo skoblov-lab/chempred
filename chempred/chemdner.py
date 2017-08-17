@@ -27,21 +27,6 @@ Annotation = NamedTuple("Annotation", [("source", Text), ("start", int),
 AbstractAnnotation = Tuple[int, List[Annotation], List[Annotation]]
 Abstract = Tuple[int, Text, Text]
 
-CLASS_MAPPING = {
-    "OTHER": 0,
-    "ABBREVIATION": 1,
-    "FAMILY": 2,
-    "FORMULA": 3,
-    "IDENTIFIER": 4,
-    "MULTIPLE": 5,
-    "NO CLASS": 6,
-    "SYSTEMATIC": 7,
-    "TRIVIAL": 8
-}
-BINARY_MAPPING = {cls: 0 if cls == "OTHER" else 1 for cls in CLASS_MAPPING}
-POSITIVE_CLASSES = {cls for cls in CLASS_MAPPING if cls != "OTHER"}
-
-
 
 def read_abstracts(path: str) -> List[Tuple[int, str, str]]:
     """

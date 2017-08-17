@@ -1,0 +1,25 @@
+{
+  "data": {
+    "training": {
+      "abstracts": "fp",
+      "annotations": "fp"
+    },
+    "testing": {
+      "abstracts": "fp",
+      "annotations": "fp"
+    }
+  },
+  "architecture": {
+    "nsteps": [200, 200],
+    "input_dropout": [0.0, 0.1],
+    "recurrent_dropout": [0.0, 0.1],
+    "bidirectional": true,
+    "stateful": false
+  },
+  "training": {
+    "epochs": 30,
+    "batchsize": 400,
+    "validation_split": 0.0
+  }
+
+}

@@ -91,24 +91,34 @@ def prepare_training_data(abstracts: str, annotations: str, window: int,
             joined_classes, masks_text)
 
 
+def pick_best(filenames: List[str]) -> Tuple[str, Tuple[int, float]]:
+    """
+    >>> fnames = ["rootdir/name/weights-improvement-16-0.99.hdf5",
+    ...           "rootdir/name/weights-improvement-25-0.99.hdf5",
+    ...           "rootdir/name/weights-improvement-20-0.99.hdf5"]
+    >>> pick_best(fnames)
+    ('rootdir/name/weights-improvement-25-0.99.hdf5', (25, 0.99))
+    """
+    pattern = re.compile("([0-9]+)-([0-9.]+)\.hdf5")
+    stats = (F(map, pattern.findall)
+             >> (map, op.itemgetter(0))
+             >> (starmap, lambda epoch, acc: (int(epoch), float(acc)))
+             )(filenames)
+    return max(zip(filenames, stats), key=op.itemgetter(1))
+
+
 @contextmanager
 def training(rootdir: str, name: str):
-    def pick_best(filenames: List[str]) -> str:
-        pattern = re.compile("([0-9]+)-([0-9.]+)")
-        stats = [(int(epoch), float(acc))
-                 for epoch, acc in map(pattern.findall, filenames)]
-        return max(zip(filenames, stats), key=op.itemgetter(1))[0]
-
     training_dir = os.path.join(rootdir, "{}-training".format(name))
     weights_template = os.path.join(training_dir,
-                                    "{epoch:02d}-{val_acc:.2f}.hdf5")
+                                    "{epoch:02d}-{val_acc:.3f}.hdf5")
     destination = os.path.join(training_dir, "{}-weights.hdf5".format(name))
     try:
         yield weights_template
     finally:
         all_weights = glob.glob(os.path.join(training_dir, "*.hdf5"))
         if all_weights:
-            best_weights = pick_best(all_weights)
+            best_weights, stats = pick_best(all_weights)
             shutil.move(best_weights, destination)
         shutil.rmtree(training_dir)
 

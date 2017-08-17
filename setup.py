@@ -8,11 +8,13 @@ import os
 
 setup(
     name="chempred",
-    # ext_modules=cythonize(["chempred/chemdner.py"]),
+    # ext_modules=cythonize(["chempred/chemdner.pyx"]),
     packages=find_packages("./"),
     requires=["numpy",
+              "h5py",
               # "cython",
               "fn",
               "enforce",
-              "pyrsistent"]
+              "pyrsistent",
+              "keras"]
 )

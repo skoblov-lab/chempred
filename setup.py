@@ -13,5 +13,6 @@ setup(
     requires=["numpy",
               # "cython",
               "fn",
+              "enforce",
               "pyrsistent"]
 )

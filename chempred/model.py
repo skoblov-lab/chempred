@@ -5,24 +5,27 @@ their predictions
 
 """
 
-from typing import Sequence, Tuple, Optional, List
+from typing import Sequence, Tuple, Optional, List, Union
 from functools import reduce
 from itertools import chain
-from fn import F
 
+from enforce import runtime_validation
 from keras import layers
 import numpy as np
 
 from chempred.chemdner import Interval
 
 
-def stack_conv(prev: layers.Layer, param: Tuple[str, int, int]):
+# TODO convolutional API is outdated – update it
+@runtime_validation
+def stack_conv(prev, param: Tuple[str, int, int]):
     name, nfilt, kern_size = param
     return layers.Convolution1D(
         nfilt, kern_size, activation="relu", name=name,
     )(prev)
 
 
+@runtime_validation
 def build_conv(incomming,
                filters: Optional[Sequence[int]],
                kernels: Optional[Sequence[int]]):
@@ -35,37 +38,53 @@ def build_conv(incomming,
     return conv
 
 
-def stack_lstm(prev: layers.Layer, param: Tuple[str, int, float, float],
-               bidirectional: bool, stateful: bool):
-    name, units, indrop, recdrop = param
-    layer = layers.LSTM(units, dropout=indrop, recurrent_dropout=recdrop,
-                        return_sequences=True, stateful=stateful)
-    return (layers.Bidirectional(layer) if bidirectional else layer)(prev)
-
-
-def build_rec(nsteps: Optional[Sequence[int]],
-              lstm_inp_drop: Optional[Sequence[float]],
-              lstm_rec_drop: Optional[Sequence[float]],
-              bidirectional=True,
+@runtime_validation
+def build_rec(nsteps: Sequence[int],
+              lstm_inp_drop: Optional[Union[float, Sequence[float]]]=None,
+              lstm_rec_drop: Optional[Union[float, Sequence[float]]]=None,
+              bidirectional: Union[bool, Sequence[bool]]=False,
               stateful=False):
+    # TODO extend documentation
+    """
+    :param nsteps:
+    :param lstm_inp_drop:
+    :param lstm_rec_drop:
+    :param bidirectional:
+    :param stateful: use stateful LSTM-cells
+    :return:
+    """
 
-    nsteps = nsteps or []
-    lstm_inp_drop = lstm_inp_drop or []
-    lstm_rec_drop = lstm_rec_drop or []
-    assert len(nsteps) == len(lstm_rec_drop) == len(lstm_inp_drop)
+    def stack_lstm(prev, param: Tuple[str, int, float, float, bool]):
+        """
+        :param prev: incomming keras layer
+        :param param: [layer name, steps, input dropout, recurrent dropout,
+        bidirectional]
+        """
+        name, steps, indrop, recdrop, bidir = param
+        layer = layers.LSTM(steps, dropout=indrop, recurrent_dropout=recdrop,
+                            return_sequences=True, stateful=stateful)
+        return (layers.Bidirectional(layer) if bidir else layer)(prev)
+
+    bi = (bidirectional if isinstance(bidirectional, Sequence) else
+          [bidirectional] * len(nsteps))
+    inp_drop = (lstm_inp_drop if isinstance(lstm_inp_drop, Sequence) else
+                [lstm_inp_drop or 0] * len(nsteps))
+    rec_drop = (lstm_rec_drop if isinstance(lstm_rec_drop, Sequence) else
+                [lstm_rec_drop or 0] * len(nsteps))
+
+    if not len(nsteps) == len(rec_drop) == len(inp_drop) == len(bi):
+        raise ValueError("Parameter sequences have different length")
 
     def rec(incomming):
         rec_names = ("rec_{}".format(i) for i in range(1, len(nsteps)+1))
-        recur = reduce(
-            F(stack_lstm, bidirectional=bidirectional, stateful=stateful),
-            zip(rec_names, nsteps, lstm_inp_drop, lstm_rec_drop),
-            incomming
-        )
+        parameters = zip(rec_names, nsteps, inp_drop, rec_drop, bi)
+        recur = reduce(stack_lstm, parameters, incomming)
         return recur
 
     return rec
 
 
+@runtime_validation
 def merge_predictions(intervals: List[Interval], predictions: np.ndarray) \
         -> np.ndarray:
     """

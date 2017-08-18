@@ -142,7 +142,7 @@ def sample_targets(positive_classes: Union[Set[str], Mapping[str, int]],
     return list(positive) + list(nonpos_sample)
 
 
-def encode_text(text: str, sample: List[Annotation], dtype=np.int32) \
+def encode_sample_text(text: str, sample: List[Annotation], dtype=np.int32) \
         -> np.ndarray:
     # TODO tests
     """
@@ -161,8 +161,8 @@ def encode_text(text: str, sample: List[Annotation], dtype=np.int32) \
     return encoded
 
 
-def encode_classes(mapping: Mapping[str, int], sample: List[Annotation],
-                   dtype=np.int32) \
+def encode_sample_classes(mapping: Mapping[str, int], sample: List[Annotation],
+                          dtype=np.int32) \
         -> np.array:
     # TODO tests
     """

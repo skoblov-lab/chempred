@@ -159,12 +159,12 @@ def process_data(abstracts: List[Abstract],
 
     # extract each sample window's text and encode it as char-codes;
     # join encoded text (using zero-padding to match lengths)
-    encoded_texts = [[pp.encode_text(text, sample) for sample in samples_]
+    encoded_texts = [[pp.encode_sample_text(text, sample) for sample in samples_]
                      for text, samples_ in zip(texts, samples)]
     ids = [[id_] * len(samples_)
            for id_, samples_ in zip(nonempty_ids, encoded_texts)]
     encoded_classes = [
-        [pp.encode_classes(mapping, sample) for sample in samples_]
+        [pp.encode_sample_classes(mapping, sample) for sample in samples_]
         for text, samples_ in zip(texts, samples)]
 
     joined_texts, masks_text = pp.join(list(chain.from_iterable(encoded_texts)),

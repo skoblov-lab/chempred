@@ -1,3 +1,10 @@
+"""
+
+
+
+"""
+
+
 from typing import List, Mapping, Tuple
 
 import numpy as np
@@ -9,7 +16,7 @@ from chempred.chemdner import Annotation
 MAXCHAR = 127
 
 
-def encode_sample_text(text: str, sample: List[Annotation], dtype=np.int32) \
+def encode_sample_chars(text: str, sample: List[Annotation], dtype=np.int32) \
         -> np.ndarray:
     # TODO tests
     """
@@ -123,3 +130,7 @@ def maskfalse(array: np.ndarray, mask: np.ndarray) -> np.ndarray:
     copy = array.copy()
     copy[~mask] = 0
     return copy
+
+
+if __name__ == "__main__":
+    raise RuntimeError

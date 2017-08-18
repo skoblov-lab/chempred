@@ -12,6 +12,7 @@ import numpy as np
 
 from chempred.chemdner import Annotation, Interval
 
+
 Sampler = Callable[[int, List[Annotation]], List[List[Annotation]]]
 
 

@@ -109,7 +109,7 @@ def process_data_detector(abstracts: List[Abstract],
 
     # extract each sample window's text and encode it as char-codes;
     # join encoded text (using zero-padding to match lengths)
-    encoded_texts = [[chempred.encoding.encode_sample_text(text, sample) for sample in samples_]
+    encoded_texts = [[chempred.encoding.encode_sample_chars(text, sample) for sample in samples_]
                      for text, samples_ in zip(texts, samples)]
     ids = [[id_] * len(samples_)
            for id_, samples_ in zip(nonempty_ids, encoded_texts)]

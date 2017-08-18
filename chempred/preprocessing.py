@@ -157,7 +157,7 @@ def encode_sample_text(text: str, sample: List[Annotation], dtype=np.int32) \
     start, end = sample[0].start, sample[-1].end
     length = end - start
     encoded = np.fromiter(map(ord, text[start:end]), dtype, length)
-    encoded[encoded > (MAXCHAR - 1)] = MAXCHAR
+    encoded[encoded >= MAXCHAR] = MAXCHAR
     return encoded
 
 
@@ -183,6 +183,16 @@ def encode_sample_classes(mapping: Mapping[str, int], sample: List[Annotation],
         return encoded
     except KeyError as err:
         raise ValueError("Missing a key in the mapping: {}".format(err))
+
+
+def encode_annotation(mapping: Mapping[str, int], anno: Annotation) \
+        -> Tuple[np.ndarray, np.ndarray]:
+    # TODO docs
+    # TODO tests
+    txt = np.fromiter(map(ord, anno.text), dtype=np.int32, count=len(anno.text))
+    txt[txt >= MAXCHAR] = MAXCHAR
+    cls = np.array([mapping[anno.cls]] * len(anno.text), dtype=np.int32)
+    return txt, cls
 
 
 @runtime_validation

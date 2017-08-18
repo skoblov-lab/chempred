@@ -12,7 +12,8 @@ import re
 import shutil
 from fn import F
 
-from chempred import preprocessing as pp
+import chempred.encoding
+from chempred import sampling as pp
 from chempred import chemdner
 from chempred.chemdner import Annotation, Abstract, AbstractAnnotation
 
@@ -44,72 +45,21 @@ TRAINING_FIELDS = (EPOCHS, BATCHSIZE)
 
 
 Data = Union[Mapping[str, str], Sequence[str]]
-Configurations = NamedTuple("Configurations",
-                            [("train_data", Data),
-                             ("test_data", Data),
-                             ("nsteps", int),
-                             ("in_drop", float),
-                             ("rec_drop", float),
-                             ("bidir", bool),
-                             ("stateful", bool),
-                             ("window", int),
-                             ("maxlen", int),
-                             ("nonpositive", int),
-                             ("epochs", int),
-                             ("batchsize", int),
-                             ("mapping", Mapping[str, int]),
-                             ("positive", Set[str])])
 Sample = List[Annotation]
 Failure = Tuple[int, Annotation]
 
 
-def read_config(path: str) -> Configurations:
-    # TODO docs
-    # TODO tests
-    """
-
-    :param path:
-    :return:
-    """
-    with open(path) as buffer:
-        config = json.load(buffer)
-    try:
-        train_data = config[TRAINING_DATA]
-        test_data = config[TESTING_DATA]
-        nsteps, in_drop, rec_drop, bidir, stateful = (
-            reduce(op.getitem, [ARCHITECTURE, field], config)
-            for field in ARCHITECTURE_FIELDS
-        )
-        window, maxlen, nonpos = (
-            reduce(op.getitem, [SAMPLING, field], config)
-            for field in SAMPLING_FIELDS
-        )
-
-        epochs, batchsize = (
-            reduce(op.getitem, [TRAINING, field], config)
-            for field in TRAINING_FIELDS
-        )
-
-        mapping = config[MAPPING]
-        positive = set(config[POSITIVE])
-        return Configurations(train_data, test_data, nsteps, in_drop, rec_drop,
-                              bidir, stateful, window, maxlen, nonpos, epochs,
-                              batchsize, mapping, positive)
-    except KeyError as err:
-        raise ValueError("Not all fields are present: {}".format(err))
-
-
-def process_data(abstracts: List[Abstract],
-                 annotations: List[AbstractAnnotation],
-                 window: int, maxlen: int, nonpositive: int,
-                 mapping: Mapping[str, int], positive: Set[str]) \
+def process_data_detector(abstracts: List[Abstract],
+                          abstract_annotations: List[AbstractAnnotation],
+                          window: int, maxlen: int, nonpositive: int,
+                          mapping: Mapping[str, int], positive: Set[str]) \
         -> Tuple[List[int], List[Sample],  List[Failure],
                  np.ndarray, np.ndarray, np.ndarray]:
     # TODO update docs
     # TODO more tests
     """
     :param abstracts:
-    :param annotations:
+    :param abstract_annotations:
     :param window: context window width (in tokens)
     :param maxlen: maximum sample length (in characters)
     :param nonpositive: the number of non-positive target words per abstract
@@ -124,14 +74,14 @@ def process_data(abstracts: List[Abstract],
     >>> abstracts = chemdner.read_abstracts(config.train_data["abstracts"])
     >>> anno = chemdner.read_annotations(config.train_data["annotations"])
     >>> ids, samples, failures, x, y, mask = (
-    ...     process_data(abstracts, anno, config.window,
+    ...     process_data_detector(abstracts, anno, config.window,
     ...                  config.maxlen, config.nonpositive,
     ...                  config.mapping, config.positive)
     ... )
     """
     # align pairs, flatten and remove texts with no annotations
     aligned = list(chemdner.align_abstracts_and_annotations(abstracts,
-                                                            annotations))
+                                                            abstract_annotations))
     data = (F(map, chemdner.flatten_aligned_pair)
             >> chain.from_iterable
             >> list)(aligned)
@@ -159,18 +109,18 @@ def process_data(abstracts: List[Abstract],
 
     # extract each sample window's text and encode it as char-codes;
     # join encoded text (using zero-padding to match lengths)
-    encoded_texts = [[pp.encode_sample_text(text, sample) for sample in samples_]
+    encoded_texts = [[chempred.encoding.encode_sample_text(text, sample) for sample in samples_]
                      for text, samples_ in zip(texts, samples)]
     ids = [[id_] * len(samples_)
            for id_, samples_ in zip(nonempty_ids, encoded_texts)]
     encoded_classes = [
-        [pp.encode_sample_classes(mapping, sample) for sample in samples_]
+        [chempred.encoding.encode_sample_classes(mapping, sample) for sample in samples_]
         for text, samples_ in zip(texts, samples)]
 
-    joined_texts, masks_text = pp.join(list(chain.from_iterable(encoded_texts)),
-                                       maxlen)
-    joined_cls, masks_cls = pp.join(list(chain.from_iterable(encoded_classes)),
-                                    maxlen)
+    joined_texts, masks_text = chempred.encoding.join(list(chain.from_iterable(encoded_texts)),
+                                                      maxlen)
+    joined_cls, masks_cls = chempred.encoding.join(list(chain.from_iterable(encoded_classes)),
+                                                   maxlen)
     flattened_ids = list(chain.from_iterable(ids))
 
     # sanity checks
@@ -196,6 +146,12 @@ def pick_best(filenames: List[str]) -> Tuple[str, Tuple[int, float]]:
              >> (starmap, lambda epoch, acc: (int(epoch), float(acc)))
              )(filenames)
     return max(zip(filenames, stats), key=op.itemgetter(1))
+
+
+def process_data_tagger(mapping: Mapping[str, int],
+                        abstract_annotations: List[AbstractAnnotation],
+                        maxlen: int) -> Tuple[np.ndarray, np.ndarray]:
+    pass
 
 
 @contextmanager

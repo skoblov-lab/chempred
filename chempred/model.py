@@ -16,28 +16,25 @@ import numpy as np
 from chempred.chemdner import Interval
 
 
-# # TODO convolutional API is outdated – update it
-# @runtime_validation
-# def stack_conv(prev, param: Tuple[str, int, int]):
-#     name, nfilt, kern_size = param
-#     return layers.Convolution1D(
-#         nfilt, kern_size, activation="relu", name=name,
-#     )(prev)
-#
-#
-# @runtime_validation
-# def build_conv(incomming,
-#                filters: Optional[Sequence[int]],
-#                kernels: Optional[Sequence[int]]):
-#     filters = filters or []
-#     kernels = kernels or []
-#     assert len(filters) == len(kernels)
-#
-#     conv_names = ("conv_{}".format(i) for i in range(1, len(kernels)+1))
-#     conv = reduce(stack_conv, zip(conv_names, filters, kernels), incomming)
-#     return conv
-#
-#
+@runtime_validation
+def stack_conv(prev, param: Tuple[str, int, int]):
+    name, nfilt, kern_size = param
+    return layers.Convolution1D(
+        nfilt, kern_size, activation="relu", name=name,
+    )(prev)
+
+
+
+def build_conv(incomming,
+               filters: Optional[Sequence[int]],
+               kernels: Optional[Sequence[int]]):
+    filters = filters or []
+    kernels = kernels or []
+    assert len(filters) == len(kernels)
+
+    conv_names = ("conv_{}".format(i) for i in range(1, len(kernels)+1))
+    conv = reduce(stack_conv, zip(conv_names, filters, kernels), incomming)
+    return conv
 
 
 def build_rec(nsteps: Sequence[int],
@@ -55,6 +52,7 @@ def build_rec(nsteps: Sequence[int],
     :return:
     """
 
+    @runtime_validation
     def stack_lstm(prev, param: Tuple[str, int, float, float, bool]):
         """
         :param prev: incomming keras layer

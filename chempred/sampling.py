@@ -5,13 +5,12 @@ Data preprocessing routines
 """
 
 
-from itertools import chain
 from typing import List, Tuple, Mapping, Callable, Set, Union
+from itertools import chain
 
 import numpy as np
 
 from chempred.chemdner import Annotation, Interval
-
 
 Sampler = Callable[[int, List[Annotation]], List[List[Annotation]]]
 
@@ -133,10 +132,10 @@ def sample_targets(positive_classes: Union[Set[str], Mapping[str, int]],
     :return: extracted indices
     """
     indices = np.arange(len(annotations))
-    mask = np.array([anno.cls in positive_classes for anno in annotations])
-    positive = indices[mask]
-    other = indices[~positive]
-    nonpos_sample = np.random.choice(
+    positive_mask = np.array([anno.cls in positive_classes for anno in annotations])
+    positive = indices[positive_mask]
+    other = indices[~positive_mask]
+    nonpos_sample = [] if not len(other) else np.random.choice(
         other, nonpos if nonpos <= len(other) else len(other), False)
     return list(positive) + list(nonpos_sample)
 

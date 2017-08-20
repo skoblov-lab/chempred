@@ -4,16 +4,15 @@ Parsers, preprocessors and type annotations for the chemdner dataset.
 
 """
 
-from typing import NamedTuple, List, Tuple, Iterator, Text
-from collections import deque
-from functools import reduce
-from itertools import groupby
 import operator as op
 import re
-
+from typing import NamedTuple, List, Tuple, Iterator, Text
+from itertools import groupby
+from collections import deque
+from functools import reduce
 from pyrsistent import pvector
-import numpy as np
 
+import numpy as np
 
 TOKEN_PATT = re.compile("\S+")
 OTHER = "OTHER"

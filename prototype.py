@@ -4,19 +4,17 @@ ChemPred prototype
 
 """
 
-from typing import List, Tuple, Mapping
 import click
 import os
-
-from keras import models
-from keras import layers
 from keras import callbacks
+from keras import layers
+from keras import models
 
 from chempred import chemdner
-from chempred import model
 from chempred import encoding
+from chempred import model
 from chempred import training
-
+from chempred.util import parse_mapping
 
 MODELS = "models"
 TRAIN = "Train"
@@ -31,7 +29,6 @@ TAGGER = "tagger"
 
 NCHAR = encoding.MAXCHAR + 1
 EMBED = 50
-DETECTOR_NCLS = 2
 DEF_POSITIVE_CLS = ("ABBREVIATION", "FAMILY", "FORMULA", "IDENTIFIER",
                     "MULTIPLE", "NO CLASS", "SYSTEMATIC", "TRIVIAL")
 # TODO extensive doc update
@@ -40,13 +37,6 @@ DEF_MAPPING = ("ABBREVIATION:1", "FAMILY:1", "FORMULA:1",
                "IDENTIFIER:1", "MULTIPLE:1", "NO CLASS:1", "SYSTEMATIC:1",
                "TRIVIAL:1")
 
-
-def parse_mapping(classmaps: List[str]) -> Mapping[str, int]:
-    try:
-        return {cls: int(val)
-                for cls, val in [classmap.split(":") for classmap in classmaps]}
-    except ValueError as err:
-        raise ValueError("Badly formatted mapping: {}".format(err))
 
 @click.group("chemdpred", help=__doc__)
 @click.option("-d", "--directory",
@@ -121,6 +111,7 @@ def detector(ctx, lstm_steps, bidirectional, input_dropout, rec_dropout, maxlen,
                    rec_dropout)
     positive = set(positive)
     mapping = parse_mapping(mapping)
+    ncls = len(set(mapping.values()) | {0})
 
     if set(mapping.values()) != {0, 1}:
         raise ValueError("The detector's mapping must be binary")
@@ -147,7 +138,7 @@ def detector(ctx, lstm_steps, bidirectional, input_dropout, rec_dropout, maxlen,
     l_rec = model.build_rec(lstm_steps, input_dropout, rec_dropout,
                             bidirectional)(l_emb)
     l_out = layers.TimeDistributed(
-        layers.Dense(DETECTOR_NCLS, activation='softmax'), name="l_out")(l_rec)
+        layers.Dense(ncls, activation='softmax'), name="l_out")(l_rec)
     detector_model = models.Model(l_in, l_out)
     detector_model.compile(optimizer="Adam", loss="binary_crossentropy",
                            metrics=["accuracy"])

@@ -1,47 +1,24 @@
-import glob
-import json
-from contextlib import contextmanager
-from functools import reduce
-from itertools import chain, starmap
-from typing import Tuple, List, Mapping, Set, NamedTuple, Union, Sequence
-
-import numpy as np
 import operator as op
+import shutil
+import glob
 import os
 import re
-import shutil
+from contextlib import contextmanager
+from itertools import chain, starmap
+from typing import Tuple, List, Mapping, Set, Union, Sequence
+
+import numpy as np
 from fn import F
 
 import chempred.encoding
-from chempred import sampling as pp
+import chempred.util
 from chempred import chemdner
+from chempred import sampling as pp
 from chempred.chemdner import Annotation, Abstract, AbstractAnnotation
-
 
 # configuration fields
 TRAINING_DATA = "training_data"
 TESTING_DATA = "testing_data"
-
-ARCHITECTURE = "architecture"
-NSTEPS = "nsteps"
-INPUT_DROP = "input_dropout"
-REC_DROP = "recurrent_dropout"
-BIDIRECTIONAL = "bidirectional"
-STATEFUL = "stateful"
-ARCHITECTURE_FIELDS = (NSTEPS, INPUT_DROP, REC_DROP, BIDIRECTIONAL, STATEFUL)
-
-SAMPLING = "sampling"
-WINDOW = "window"
-MAXLEN = "maxlen"
-NONPOS = "nonpositive"
-SAMPLING_FIELDS = (WINDOW, MAXLEN, NONPOS)
-
-TRAINING = "training"
-EPOCHS = "nepochs"
-BATCHSIZE = "batchsize"
-MAPPING = "class_mapping"
-POSITIVE = "positive"
-TRAINING_FIELDS = (EPOCHS, BATCHSIZE)
 
 
 Data = Union[Mapping[str, str], Sequence[str]]
@@ -52,7 +29,8 @@ Failure = Tuple[int, Annotation]
 def process_data_detector(abstracts: List[Abstract],
                           abstract_annotations: List[AbstractAnnotation],
                           window: int, maxlen: int, nonpositive: int,
-                          mapping: Mapping[str, int], positive: Set[str]) \
+                          mapping: Mapping[str, int],
+                          positive: Union[Mapping[str, int], Set[str]]) \
         -> Tuple[List[int], List[Sample],  List[Failure],
                  np.ndarray, np.ndarray, np.ndarray]:
     # TODO update docs
@@ -68,15 +46,12 @@ def process_data_detector(abstracts: List[Abstract],
     :return: abstract ids (one per sample), samples, failed targets (abstract
     ids and token annotations), encoded and padded text, encoded and padded
     classes, padding masks.
-    >>> config_path = "testdata/config-detector.json"
-    >>> config = read_config(config_path)
-    >>> ncls = len(set(config.mapping.values()))
-    >>> abstracts = chemdner.read_abstracts(config.train_data["abstracts"])
-    >>> anno = chemdner.read_annotations(config.train_data["annotations"])
+    >>> mapping = {}
+    >>> abstracts = chemdner.read_abstracts("testdata/abstracts.txt")
+    >>> anno = chemdner.read_annotations("testdata/annotations.txt")
     >>> ids, samples, failures, x, y, mask = (
-    ...     process_data_detector(abstracts, anno, config.window,
-    ...                  config.maxlen, config.nonpositive,
-    ...                  config.mapping, config.positive)
+    ...     process_data_detector(abstracts, anno, window=5, maxlen=100,
+    ...                           nonpositive=3, mapping=mapping, positive={})
     ... )
     """
     # align pairs, flatten and remove texts with no annotations
@@ -117,10 +92,10 @@ def process_data_detector(abstracts: List[Abstract],
         [chempred.encoding.encode_sample_classes(mapping, sample) for sample in samples_]
         for text, samples_ in zip(texts, samples)]
 
-    joined_texts, masks_text = chempred.encoding.join(list(chain.from_iterable(encoded_texts)),
-                                                      maxlen)
-    joined_cls, masks_cls = chempred.encoding.join(list(chain.from_iterable(encoded_classes)),
-                                                   maxlen)
+    joined_texts, masks_text = chempred.util.join(list(chain.from_iterable(encoded_texts)),
+                                                  maxlen)
+    joined_cls, masks_cls = chempred.util.join(list(chain.from_iterable(encoded_classes)),
+                                               maxlen)
     flattened_ids = list(chain.from_iterable(ids))
 
     # sanity checks

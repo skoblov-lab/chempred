@@ -72,6 +72,7 @@ def maskfalse(array: np.ndarray, mask: np.ndarray) -> np.ndarray:
     return copy
 
 
+@runtime_validation
 def parse_mapping(classmaps: List[str]) -> Mapping[str, int]:
     """
     :param classmaps:

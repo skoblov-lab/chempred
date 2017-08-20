@@ -32,10 +32,11 @@ EMBED = 50
 DEF_POSITIVE_CLS = ("ABBREVIATION", "FAMILY", "FORMULA", "IDENTIFIER",
                     "MULTIPLE", "NO CLASS", "SYSTEMATIC", "TRIVIAL")
 # TODO extensive doc update
+# TODO check that data contains > 1 cls
 # Any class not in mapping is mapped into 0
-DEF_MAPPING = ("ABBREVIATION:1", "FAMILY:1", "FORMULA:1",
-               "IDENTIFIER:1", "MULTIPLE:1", "NO CLASS:1", "SYSTEMATIC:1",
-               "TRIVIAL:1")
+DEF_MAPPING_DETECTOR = ("ABBREVIATION:1", "FAMILY:1", "FORMULA:1",
+                        "IDENTIFIER:1", "MULTIPLE:1", "NO CLASS:1",
+                        "SYSTEMATIC:1", "TRIVIAL:1")
 
 
 @click.group("chemdpred", help=__doc__)
@@ -100,7 +101,7 @@ def detector(ctx, lstm_steps, bidirectional, input_dropout, rec_dropout, maxlen,
     test_anno = ctx.obj[TEST + ANNO]
 
     if not train_abstracts or not test_abstracts:
-        raise ValueError("Training and testing require abstracts")
+        raise ValueError("You must pass abstracts to train a detector")
 
     # process arguments
     bidirectional = (bidirectional[0] if len(bidirectional) == 1 else
@@ -113,7 +114,7 @@ def detector(ctx, lstm_steps, bidirectional, input_dropout, rec_dropout, maxlen,
     mapping = parse_mapping(mapping)
     ncls = len(set(mapping.values()) | {0})
 
-    if set(mapping.values()) != {0, 1}:
+    if set(mapping.values()) | {0} != {0, 1}:
         raise ValueError("The detector's mapping must be binary")
 
     # encode data

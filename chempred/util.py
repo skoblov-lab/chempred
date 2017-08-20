@@ -1,4 +1,4 @@
-from typing import List, Tuple, Mapping, Sequence
+from typing import List, Tuple, Mapping, Union
 
 import numpy as np
 from enforce import runtime_validation
@@ -73,7 +73,7 @@ def maskfalse(array: np.ndarray, mask: np.ndarray) -> np.ndarray:
 
 
 @runtime_validation
-def parse_mapping(classmaps: Sequence[str]) -> Mapping[str, int]:
+def parse_mapping(classmaps: Union[List[str], Tuple[str]]) -> Mapping[str, int]:
     """
     :param classmaps:
     :return:

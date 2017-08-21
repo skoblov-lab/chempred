@@ -25,7 +25,6 @@ EPOCHS = "epochs"
 BATCHSIZE = "batchsize"
 
 DETECTOR = "detector"
-TAGGER = "tagger"
 
 NCHAR = encoding.MAXCHAR + 1
 EMBED = 50
@@ -37,9 +36,11 @@ DEF_POSITIVE_CLS = ("ABBREVIATION", "FAMILY", "FORMULA", "IDENTIFIER",
 DEF_MAPPING_DETECTOR = ("ABBREVIATION:1", "FAMILY:1", "FORMULA:1",
                         "IDENTIFIER:1", "MULTIPLE:1", "NO CLASS:1",
                         "SYSTEMATIC:1", "TRIVIAL:1")
+DEF_EPOCHS = 30
+DEF_BATCHSIZE = 400
+DEF_MAXLEN = 300
 
-
-@click.group("chemdpred", help=__doc__)
+@click.group("chemdpred", chain=True, help=__doc__)
 @click.option("-d", "--directory",
               help="Path to a directory with ChemPred models.")
 @click.pass_context
@@ -47,16 +48,14 @@ def chempred(ctx, directory):
     ctx[MODELS] = os.path.abspath(directory)
 
 
-@chempred.group("train")
+@chempred.command("train")
 @click.option("--train_abstracts", type=str)
 @click.option("--train_annotations", type=str)
 @click.option("--test_abstracts", type=str)
 @click.option("--test_annotations", type=str)
-@click.option("--epochs", type=int, default=30)
-@click.option("--batchsize", type=int, default=400)
 @click.pass_context
 def train(ctx, train_abstracts, train_annotations, test_abstracts,
-          test_annotations, epochs, batchsize):
+          test_annotations):
     # read data
     train_abstracts = (None if train_abstracts is None else
                        chemdner.read_abstracts(os.path.abspath(train_abstracts)))
@@ -70,11 +69,9 @@ def train(ctx, train_abstracts, train_annotations, test_abstracts,
     ctx[TRAIN + ANNO] = train_anno
     ctx[TEST + ABSTRACTS] = test_abstracts
     ctx[TEST + ANNO] = test_anno
-    ctx[EPOCHS] = epochs
-    ctx[BATCHSIZE] = batchsize
 
 
-@train.command("detector")
+@chempred.command("detector")
 @click.option("-l", "--lstm_steps", type=int, multiple=True,
               default=(200, 200))
 @click.option("-b", "--bidirectional", type=bool,
@@ -92,9 +89,11 @@ def train(ctx, train_abstracts, train_annotations, test_abstracts,
 @click.option("-p", "--positive", type=str, multiple=True,
               default=DEF_POSITIVE_CLS)
 @click.option("-c", "--mapping", type=str, multiple=True)
+@click.option("--epochs", type=int, default=30)
+@click.option("--batchsize", type=int, default=400)
 @click.pass_context
 def detector(ctx, lstm_steps, bidirectional, input_dropout, rec_dropout, maxlen,
-             window, n_nonpositive, positive, mapping):
+             window, n_nonpositive, positive, mapping, epochs, batchsize):
     train_abstracts = ctx.obj[TRAIN + ABSTRACTS]
     train_anno = ctx.obj[TRAIN + ANNO]
     test_abstracts = ctx.obj[TEST + ABSTRACTS]

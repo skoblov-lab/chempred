@@ -1,13 +1,10 @@
 {
-  "training_data": {
-    "abstracts": "testdata/abstracts.txt",
-    "annotations": "testdata/annotations.txt"
+  "embed": 50,
+  "conv": {
+    "width": [5, 5],
+    "nfilters": [30 ,30]
   },
-  "testing_data": {
-    "abstracts": "testdata/abstracts.txt",
-    "annotations": "testdata/annotations.txt"
-  },
-  "architecture": {
+  "lstm": {
     "nsteps": [200, 200],
     "input_dropout": [0.0, 0.1],
     "recurrent_dropout": [0.0, 0.1],
@@ -18,10 +15,6 @@
     "window": 5,
     "maxlen": 500,
     "nonpositive": 3
-  },
-  "training": {
-    "nepochs": 30,
-    "batchsize": 400
   },
   "class_mapping": {
     "OTHER": 0,
@@ -34,6 +27,6 @@
     "SYSTEMATIC": 1,
     "TRIVIAL": 1
   },
-  "positive": ["ABBREVIATION", "FAMILY", "FORMULA", "IDENTIFIER", "MULTIPLE",
-               "NO CLASS", "SYSTEMATIC", "TRIVIAL"]
+  "positive_cls": ["ABBREVIATION", "FAMILY", "FORMULA", "IDENTIFIER",
+                   "MULTIPLE", "NO CLASS", "SYSTEMATIC", "TRIVIAL"]
 }

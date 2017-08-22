@@ -4,8 +4,9 @@ Utility functions for creating ChemPred deep learning models and working with
 their predictions
 
 """
-
-from typing import Sequence, Tuple, Optional, List, Union, Callable
+import json
+from typing import Sequence, Tuple, Optional, List, Union, Callable, Mapping
+from io import TextIOWrapper
 from functools import reduce
 from itertools import chain
 
@@ -13,7 +14,49 @@ from enforce import runtime_validation
 from keras import layers
 import numpy as np
 
+
 from chempred.chemdner import Interval
+
+
+class Config(dict):
+    """
+    Model configurations
+    """
+    def __init__(self, config: Union[TextIOWrapper, Mapping]):
+        """
+        :param config: an opened json file or a mapping
+        """
+        super(Config, self).__init__(config if isinstance(config, Mapping) else
+                                     json.load(config))
+
+    def __getitem__(self, item):
+        retval = self.get(item)
+        if not retval:
+            raise KeyError("Not {} configuration".format(item))
+        return retval
+
+    def get(self, item, default=None):
+        """
+        :param item: item to search for
+        :param default: default value
+        :return:
+        >>> config = Config(open("testdata/config-detector.json"))
+        >>> config["bidirectional"]
+        True
+        >>> config.get("epochs")
+        >>> from_dict = Config(json.load(open("testdata/config-detector.json")))
+        >>> from_mapping = Config(from_dict)
+        >>> from_mapping["nsteps"]
+        [200, 200]
+        """
+        to_visit = list(self.items())
+        while to_visit:
+            key, value = to_visit.pop()
+            if key == item:
+                return value
+            if isinstance(value, Mapping):
+                to_visit.extend(value.items())
+        return default
 
 
 @runtime_validation
@@ -22,7 +65,6 @@ def stack_conv(prev, param: Tuple[str, int, int]):
     return layers.Convolution1D(
         nfilt, kern_size, activation="relu", name=name,
     )(prev)
-
 
 
 def build_conv(incomming,
@@ -50,6 +92,7 @@ def build_rec(nsteps: Sequence[int],
     :param bidirectional:
     :param stateful: use stateful LSTM-cells
     :return:
+    >>> rec = build_rec([200, 200], 0.1, 0.1, True)
     """
 
     @runtime_validation
@@ -76,7 +119,8 @@ def build_rec(nsteps: Sequence[int],
 
     def rec(incomming):
         rec_names = ("rec_{}".format(i) for i in range(1, len(nsteps)+1))
-        parameters = zip(rec_names, nsteps, inp_drop, rec_drop, bi)
+        parameters = zip(rec_names, nsteps, map(float, inp_drop),
+                         map(float, rec_drop), bi)
         recur = reduce(stack_lstm, parameters, incomming)
         return recur
 

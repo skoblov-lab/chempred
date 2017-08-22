@@ -7,6 +7,7 @@ from setuptools import find_packages
 
 setup(
     name="chempred",
+    version="0.1dev",
     # ext_modules=cythonize(["chempred/chemdner.pyx"]),
     packages=find_packages("./"),
     requires=["numpy",

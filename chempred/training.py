@@ -26,11 +26,15 @@ Sample = List[Annotation]
 Failure = Tuple[int, Annotation]
 
 
-def process_data_detector(abstracts: List[Abstract],
-                          abstract_annotations: List[AbstractAnnotation],
-                          window: int, maxlen: int, n_nonpositive: int,
-                          mapping: Mapping[str, int],
-                          positive: Union[Mapping[str, int], Set[str]]) \
+def build_nn():
+    pass
+
+
+def process_data(abstracts: List[Abstract],
+                 abstract_annotations: List[AbstractAnnotation],
+                 window: int, maxlen: int, n_nonpositive: int,
+                 mapping: Mapping[str, int],
+                 positive: Union[Mapping[str, int], Set[str]]) \
         -> Tuple[List[int], List[Sample],  List[Failure],
                  np.ndarray, np.ndarray, np.ndarray]:
     # TODO update docs
@@ -50,7 +54,7 @@ def process_data_detector(abstracts: List[Abstract],
     >>> abstracts = chemdner.read_abstracts("testdata/abstracts.txt")
     >>> anno = chemdner.read_annotations("testdata/annotations.txt")
     >>> ids, samples, failures, x, y, mask = (
-    ...     process_data_detector(abstracts, anno, window=5, maxlen=100,
+    ...     process_data(abstracts, anno, window=5, maxlen=100,
     ...                           n_nonpositive=3, mapping=mapping, positive={})
     ... )
     """
@@ -121,12 +125,6 @@ def pick_best(filenames: List[str]) -> Tuple[str, Tuple[int, float]]:
              >> (starmap, lambda epoch, acc: (int(epoch), float(acc)))
              )(filenames)
     return max(zip(filenames, stats), key=op.itemgetter(1))
-
-
-def process_data_tagger(mapping: Mapping[str, int],
-                        abstract_annotations: List[AbstractAnnotation],
-                        maxlen: int) -> Tuple[np.ndarray, np.ndarray]:
-    pass
 
 
 @contextmanager

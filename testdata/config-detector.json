@@ -1,10 +1,10 @@
 {
   "embed": 50,
   "conv": {
-    "width": [5, 5],
-    "nfilters": [30 ,30]
+    "filter_width": [5, 5],
+    "nfilters": [30, 30]
   },
-  "lstm": {
+  "rec": {
     "nsteps": [200, 200],
     "input_dropout": [0.0, 0.1],
     "recurrent_dropout": [0.0, 0.1],
@@ -14,19 +14,19 @@
   "sampling": {
     "window": 5,
     "maxlen": 500,
-    "nonpositive": 3
+    "n_nonpositive": 3
   },
-  "class_mapping": {
-    "OTHER": 0,
-    "ABBREVIATION": 1,
-    "FAMILY": 1,
-    "FORMULA": 1,
-    "IDENTIFIER": 1,
-    "MULTIPLE": 1,
-    "NO CLASS": 1,
-    "SYSTEMATIC": 1,
-    "TRIVIAL": 1
-  },
+  "class_mapping": [
+    "OTHER:0",
+    "ABBREVIATION:1",
+    "FAMILY:1",
+    "FORMULA:1",
+    "IDENTIFIER:1",
+    "MULTIPLE:1",
+    "NO CLASS:1",
+    "SYSTEMATIC:1",
+    "TRIVIAL:1"
+  ],
   "positive_cls": ["ABBREVIATION", "FAMILY", "FORMULA", "IDENTIFIER",
                    "MULTIPLE", "NO CLASS", "SYSTEMATIC", "TRIVIAL"]
 }

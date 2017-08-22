@@ -72,21 +72,6 @@ def maskfalse(array: np.ndarray, mask: np.ndarray) -> np.ndarray:
     return copy
 
 
-# def parse_mapping(classmaps: Sequence[str]) -> Mapping[str, int]:
-#     """
-#     :param classmaps:
-#     :return:
-#     >>> classmaps = ["a:1", "b:1", "c:2"]
-#     >>> parse_mapping(classmaps) == dict(a=1, b=1, c=2)
-#     True
-#     """
-#     try:
-#         return {cls: int(val)
-#                 for cls, val in [classmap.split(":") for classmap in classmaps]}
-#     except ValueError as err:
-#         raise ValueError("Badly formatted mapping: {}".format(err))
-
-
 if __name__ == "__main__":
     raise RuntimeError
 

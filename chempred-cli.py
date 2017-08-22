@@ -19,26 +19,26 @@ from chempred import util
 
 NCHAR = encoding.MAXCHAR + 1
 MODEL = "chempred"
+DIRECTORY = "directory"
 
-# config keys
-MAPPING = "string_to_int_class_mapping"
-POSITIVE_CLASSES = "positive_classes"
-WINDOW = "sample_window_length_in_tokens"
-MAXLEN = "maximum_sample_length_in_characters"
-NONPOS_TARGETS = "number_of_non-positive_targets_to_sample_per_text"
+# CONFIGURATION KEYS
 
-MODEL_DIR = "model_directory"
-
-EMBEDDING = "character_embedding_size"
-CONV_WIDTH = "1d_conv_width"
-CONV_NFILT = "number_of_filters"
-LSTM_STEPS = "number_of_lstm_steps_per_layer"
-BIDIRECTIONAL = "use_bidirectional_lstm_layers"
-INPUT_DROP = "input_dropout_in_lstm_layers"
-REC_DROP = "recurrent_dropout_in_lstm_layers"
-
-EPOCHS = "epochs"
-BATCHSIZE = "batchsize"
+EMBEDDING = "embed"  # the size of character embeddings
+# convolutional block
+FILTER_WIDTH = "filter_width"  # 1D convolutional filter width
+NFILTERS = "the number of filters to use at each layer"
+# recurrent block
+NSTEPS = "nsteps"  # the number of steps to use at each rnn layer
+INPUT_DROPOUT = "input_dropout"  # rnn layer input dropout
+REC_DROPOUT = "recurrent_dropout"  # rnn layer recurrent dropout
+BIDIRECTIONAL = "bidirectional"  # bidirectional rnn flags
+STATEFUL = "stateful"  # use stateful rnn layers
+# sampling block
+WINDOW = "window"  # sampling window width
+MAXLEN = "maxlen"  # sample size limit
+N_NONPOS = "n_nonpositive"  # the number of non-pos targets to sample per text
+MAPPING = "class_mapping"  # string to integer class mapping
+POSITIVE = "positive_cls"  # a sequence of positive classes
 
 # TODO extensive doc update
 # TODO return conv-layers
@@ -52,8 +52,7 @@ BATCHSIZE = "batchsize"
               help="Configurations.")
 @click.pass_context
 def chempred(ctx, directory, config):
-    ctx.obj[MODEL_DIR] = os.path.abspath(directory)
-
+    ctx.obj[DIRECTORY] = os.path.abspath(directory)
     ctx.obj.update(model.Config(open(os.path.abspath(config))))
 
 
@@ -74,18 +73,22 @@ def detect(ctx, input):
 @click.pass_context
 def train(ctx, train_abstracts, train_annotations, test_abstracts,
           test_annotations, epochs, batchsize):
-    # extract training_configs
-    mapping = ctx[MAPPING]
-    positive = ctx[POSITIVE_CLASSES]
-    maxlen = ctx[MAXLEN]
-    window = ctx[WINDOW]
-    n_nonpos = ctx[NONPOS_TARGETS]
+    config = ctx.obj
+    directory = config[DIRECTORY]
+    model_destination = os.path.join(directory, "{}.json".format(MODEL))
 
-    embedding = ctx[EMBEDDING]
-    lstm_layers = ctx[LSTM_STEPS]
-    bidirectional = ctx[BIDIRECTIONAL]
-    input_dropout = ctx[INPUT_DROP]
-    rec_dropout = ctx[REC_DROP]
+    # extract training_configs
+    mapping = model.parse_mapping(config[MAPPING])
+    positive = set(config[POSITIVE])
+    maxlen = config[MAXLEN]
+    window = config[WINDOW]
+    n_nonpos = config[N_NONPOS]
+
+    embedding = config[EMBEDDING]
+    lstm_layers = config[NSTEPS]
+    bidirectional = config[BIDIRECTIONAL]
+    input_dropout = config[INPUT_DROPOUT]
+    rec_dropout = config[REC_DROPOUT]
 
     # TODO report failures
     # read data
@@ -112,4 +115,4 @@ def train(ctx, train_abstracts, train_annotations, test_abstracts,
 
 
 if __name__ == "__main__":
-    chempred(obj={})
+    chempred(obj=model.Config({}))

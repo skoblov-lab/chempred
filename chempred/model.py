@@ -11,11 +11,15 @@ from functools import reduce
 from itertools import chain
 
 from enforce import runtime_validation
-from keras import layers
+from keras import layers, models
+from fn import F
 import numpy as np
 
-
+from chempred import encoding
 from chempred.chemdner import Interval
+
+
+NCHAR = encoding.MAXCHAR + 1
 
 
 class Config(dict):
@@ -48,6 +52,11 @@ class Config(dict):
         >>> from_mapping = Config(from_dict)
         >>> from_mapping["nsteps"]
         [200, 200]
+        >>> from_mapping.update({"lstm": {"nsteps": [300, 300]}})
+        >>> isinstance(from_mapping, Config)
+        True
+        >>> from_mapping["nsteps"]
+        [300, 300]
         """
         to_visit = list(self.items())
         while to_visit:
@@ -59,23 +68,52 @@ class Config(dict):
         return default
 
 
-@runtime_validation
-def stack_conv(prev, param: Tuple[str, int, int]):
-    name, nfilt, kern_size = param
-    return layers.Convolution1D(
-        nfilt, kern_size, activation="relu", name=name,
-    )(prev)
+def parse_mapping(classmaps: Sequence[str]) -> Mapping[str, int]:
+    """
+    :param classmaps:
+    :return:
+    >>> classmaps = ["a:1", "b:1", "c:2"]
+    >>> parse_mapping(classmaps) == dict(a=1, b=1, c=2)
+    True
+    """
+    try:
+        return {cls: int(val)
+                for cls, val in [classmap.split(":") for classmap in classmaps]}
+    except ValueError as err:
+        raise ValueError("Badly formatted mapping: {}".format(err))
 
 
-def build_conv(incomming,
-               filters: Optional[Sequence[int]],
-               kernels: Optional[Sequence[int]]):
-    filters = filters or []
-    kernels = kernels or []
-    assert len(filters) == len(kernels)
+def build_conv(nfilters: Sequence[int],
+               filter_width: Union[int, Sequence[int]]) \
+        -> Callable:
+    # TODO extend documentation
+    # TODO more tests
+    """
 
-    conv_names = ("conv_{}".format(i) for i in range(1, len(kernels)+1))
-    conv = reduce(stack_conv, zip(conv_names, filters, kernels), incomming)
+    :param nfilters:
+    :param filter_width:
+    :return:
+    >>> conv = build_conv([30, 30], 5)
+    """
+    @runtime_validation
+    def stack_conv(prev, param: Tuple[str, int, int]):
+        name, nfilt, kern_size = param
+        return layers.Convolution1D(
+            nfilt, kern_size, activation="relu", name=name,
+        )(prev)
+
+    filter_width = (filter_width if isinstance(filter_width, Sequence) else
+                    [filter_width] * len(nfilters))
+
+    if not len(nfilters) == len(filter_width):
+        raise ValueError("Parameter sequences have different length")
+
+    def conv(incomming):
+        conv_names = ("conv_{}".format(i) for i in range(1, len(nfilters)+1))
+        parameters = zip(conv_names, nfilters, filter_width)
+        cnn = reduce(stack_conv, parameters, incomming)
+        return cnn
+
     return conv
 
 
@@ -121,8 +159,8 @@ def build_rec(nsteps: Sequence[int],
         rec_names = ("rec_{}".format(i) for i in range(1, len(nsteps)+1))
         parameters = zip(rec_names, nsteps, map(float, inp_drop),
                          map(float, rec_drop), bi)
-        recur = reduce(stack_lstm, parameters, incomming)
-        return recur
+        rnn = reduce(stack_lstm, parameters, incomming)
+        return rnn
 
     return rec
 
@@ -165,6 +203,38 @@ def merge_predictions(intervals: List[Interval], predictions: np.ndarray) \
         nsamples[start:end] += np.ones(sample_length, dtype=np.int32)
     with np.errstate(divide='ignore', invalid="ignore"):
         return buckets / nsamples
+
+
+def build_nn(maxlen: int,
+             embed: int,
+             nfilters: Optional[Sequence[int]],
+             filter_width: Optional[Union[int, Sequence[int]]],
+             nsteps: Sequence[int],
+             in_drop: Union[float, Sequence[float]],
+             rec_drop: Union[float, Sequence[float]],
+             bidirectional: Union[bool, Sequence[bool]],
+             stateful: bool):
+    # TODO tests
+    # TODO documentation
+    without_cnn = not bool(nfilters)
+    l_in = layers.Input(shape=(maxlen,), name="l_in")
+    l_emb = layers.Embedding(NCHAR, embed, input_length=maxlen,
+                             mask_zero=without_cnn)(l_in)
+
+    if without_cnn:  # build a pure rnn-model
+        rnn = build_rec(nsteps, in_drop, rec_drop, bidirectional, stateful)(l_emb)
+        l_out = layers.TimeDistributed(
+            layers.Dense(2, activation='softmax'), name="l_out")(rnn)
+    # build a cnn-rnn model
+    cnn = build_conv(nfilters, filter_width)(l_emb)
+    l_flat = layers.Flatten(name="flat_1")(cnn)
+    l_repeat = layers.RepeatVector(maxlen, name="repeat")(l_flat)
+    rnn = build_rec(nsteps, in_drop, rec_drop, bidirectional, stateful)
+    l_out = layers.TimeDistributed(
+        layers.Dense(2, activation='softmax'), name="l_out")(rnn)
+    return models.Model(l_in, l_out)
+
+
 
 
 if __name__ == "__main__":

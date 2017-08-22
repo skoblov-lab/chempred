@@ -1,33 +1,24 @@
-import operator as op
-import shutil
 import glob
-import os
-import re
 from contextlib import contextmanager
 from itertools import chain, starmap
 from typing import Tuple, List, Mapping, Set, Union, Sequence
 
 import numpy as np
+import operator as op
+import os
+import re
+import shutil
 from fn import F
 
-from chempred import encoding
-from chempred import util
 from chempred import chemdner
-from chempred import sampling as pp
+from chempred import encoding
+from chempred import sampling
+from chempred import util
 from chempred.chemdner import Annotation, Abstract, AbstractAnnotation
-
-# configuration fields
-TRAINING_DATA = "training_data"
-TESTING_DATA = "testing_data"
-
 
 Data = Union[Mapping[str, str], Sequence[str]]
 Sample = List[Annotation]
 Failure = Tuple[int, Annotation]
-
-
-def build_nn():
-    pass
 
 
 def process_data(abstracts: List[Abstract],
@@ -73,11 +64,11 @@ def process_data(abstracts: List[Abstract],
     text_annotations = [chemdner.annotate_text(text, annotations, src, True)
                         for _, src, text, annotations in nonempty]
 
-    targets = [pp.sample_targets(positive, annotations, n_nonpositive)
+    targets = [sampling.sample_targets(positive, annotations, n_nonpositive)
                for annotations in text_annotations]
-    sampler = pp.make_sampler(maxlen=maxlen, width=window, flanking=False)
+    sampler = sampling.make_sampler(maxlen=maxlen, width=window, flanking=False)
     samples_and_failures = (F(zip)
-                            >> (starmap, F(pp.sample_windows, sampler=sampler))
+                            >> (starmap, F(sampling.sample_windows, sampler=sampler))
                             >> list)(targets, text_annotations)
     samples = list(map(op.itemgetter(0), samples_and_failures))
     failures = list(map(op.itemgetter(1), samples_and_failures))
@@ -140,10 +131,9 @@ def training(rootdir: str, name: str):
     weights_template = os.path.join(training_dir,
                                     "{epoch:02d}-{val_acc:.3f}.hdf5")
     w_destination = os.path.join(rootdir, "{}-weights.hdf5".format(name))
-    model_destination = os.path.join(rootdir, "{}.json".format(name))
     os.makedirs(training_dir)
     try:
-        yield model_destination, weights_template
+        yield weights_template
     finally:
         all_weights = glob.glob(os.path.join(training_dir, "*.hdf5"))
         if all_weights:

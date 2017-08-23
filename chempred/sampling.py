@@ -10,9 +10,9 @@ from itertools import chain
 
 import numpy as np
 
-from chempred.chemdner import Annotation, Interval
+from chempred.chemdner import ClassifiedRegion, Interval
 
-Sampler = Callable[[int, List[Annotation]], List[List[Annotation]]]
+Sampler = Callable[[int, List[ClassifiedRegion]], List[List[ClassifiedRegion]]]
 
 
 def slide(center: int, width: int, lastpos: int=None, flanking: bool=False) \
@@ -62,11 +62,11 @@ def make_sampler(width: int, maxlen: int, flanking: bool) \
     each positive token is an independent central word
     >>> text = "abcdefjhijklmnop"
     >>> extractor = lambda x: text[x[0].start: x[-1].end]
-    >>> annotations = [Annotation(None, 0, 4, None, None),
-    ...                Annotation(None, 5, 8, None, None),
-    ...                Annotation(None, 8, 10, None, None),
-    ...                Annotation(None, 11, 12, None, None),
-    ...                Annotation(None, 13, 16, None, None)]
+    >>> annotations = [ClassifiedRegion(None, 0, 4, None, None),
+    ...                ClassifiedRegion(None, 5, 8, None, None),
+    ...                ClassifiedRegion(None, 8, 10, None, None),
+    ...                ClassifiedRegion(None, 11, 12, None, None),
+    ...                ClassifiedRegion(None, 13, 16, None, None)]
     >>> sampler1 = make_sampler(3, len(text), flanking=False)
     >>> len(sampler1(0, annotations)) == 1
     True
@@ -89,8 +89,8 @@ def make_sampler(width: int, maxlen: int, flanking: bool) \
     if flanking:
         raise NotImplemented("`flanking` is deliberately disabled")
 
-    def sampler(target: int, annotations: List[Annotation]) \
-            -> List[List[Annotation]]:
+    def sampler(target: int, annotations: List[ClassifiedRegion]) \
+            -> List[List[ClassifiedRegion]]:
         """
         Samples context windows around the target
         """
@@ -104,9 +104,9 @@ def make_sampler(width: int, maxlen: int, flanking: bool) \
     return sampler
 
 
-def sample_windows(targets: List[int], annotations: List[Annotation],
+def sample_windows(targets: List[int], annotations: List[ClassifiedRegion],
                    sampler: Sampler) \
-        -> Tuple[List[List[Annotation]], List[Annotation]]:
+        -> Tuple[List[List[ClassifiedRegion]], List[ClassifiedRegion]]:
     # TODO tests
     """
     Sample context windows around positive tokens.
@@ -121,7 +121,7 @@ def sample_windows(targets: List[int], annotations: List[Annotation],
 
 
 def sample_targets(positive_classes: Union[Set[str], Mapping[str, int]],
-                   annotations: List[Annotation], nonpos: int) -> List[int]:
+                   annotations: List[ClassifiedRegion], nonpos: int) -> List[int]:
     # TODO tests
     """
     Extract all positions of positive annotations and add `nonpos` randomly

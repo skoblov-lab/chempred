@@ -9,12 +9,12 @@ from typing import List, Mapping, Tuple
 
 import numpy as np
 
-from chempred.chemdner import Annotation
+from chempred.chemdner import ClassifiedRegion
 
 MAXCHAR = 127
 
 
-def encode_sample_chars(text: str, sample: List[Annotation], dtype=np.int32) \
+def encode_sample_chars(text: str, sample: List[ClassifiedRegion], dtype=np.int32) \
         -> np.ndarray:
     # TODO tests
     """
@@ -33,7 +33,7 @@ def encode_sample_chars(text: str, sample: List[Annotation], dtype=np.int32) \
     return encoded
 
 
-def encode_sample_classes(mapping: Mapping[str, int], sample: List[Annotation],
+def encode_sample_classes(mapping: Mapping[str, int], sample: List[ClassifiedRegion],
                           dtype=np.int32) \
         -> np.array:
     # TODO tests
@@ -44,8 +44,8 @@ def encode_sample_classes(mapping: Mapping[str, int], sample: List[Annotation],
     :param sample: a list of annotations
     :param dtype: output data type; it must be an integral numpy dtype
     :return: an integer array
-    >>> sample = [Annotation(None, 0, 5, None, "a"),
-    ...           Annotation(None, 6, 10, None, "b")]
+    >>> sample = [ClassifiedRegion(None, 0, 5, None, "a"),
+    ...           ClassifiedRegion(None, 6, 10, None, "b")]
     >>> (np.unique(encode_sample_classes(dict(a=1, b=2), sample), return_counts=True)[1]
     ...  == np.array([1, 5, 4])).all()
     True
@@ -66,7 +66,7 @@ def encode_sample_classes(mapping: Mapping[str, int], sample: List[Annotation],
     return encoded
 
 
-def encode_annotation(mapping: Mapping[str, int], anno: Annotation) \
+def encode_annotation(mapping: Mapping[str, int], anno: ClassifiedRegion) \
         -> Tuple[np.ndarray, np.ndarray]:
     # TODO docs
     # TODO tests

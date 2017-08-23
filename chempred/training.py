@@ -14,11 +14,11 @@ from chempred import chemdner
 from chempred import encoding
 from chempred import sampling
 from chempred import util
-from chempred.chemdner import Annotation, Abstract, AbstractAnnotation
+from chempred.chemdner import ClassifiedRegion, Abstract, AbstractAnnotation
 
 Data = Union[Mapping[str, str], Sequence[str]]
-Sample = List[Annotation]
-Failure = Tuple[int, Annotation]
+Sample = List[ClassifiedRegion]
+Failure = Tuple[int, ClassifiedRegion]
 
 
 def process_data(abstracts: List[Abstract],

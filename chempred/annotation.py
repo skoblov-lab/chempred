@@ -1,57 +1,76 @@
-from typing import Any, TypeVar, Generic, List, Tuple, Sequence, Optional, overload
+from typing import TypeVar, Generic, List, Tuple, Iterable, Sequence, Optional,\
+    overload, cast, Any, Container
 from numbers import Integral
 from math import ceil
 
 from fn.recur import tco
 
 
-class Interval:
+T = TypeVar("T")
+
+
+class Interval(Container, Generic[T]):
 
     """
     The intervals are non-inclusive on the right side, like Python's `range`.
     """
 
-    __slots__ = ("start", "stop", "data")
+    __slots__ = ("_start", "_stop", "_data")
 
-    def __init__(self, start: Integral, stop: Integral, data: Any=None):
-        self.start = start
-        self.stop = stop
-        self.data = data
+    def __init__(self, start: Integral, stop: Integral, data: Optional[T]=None):
+        if not isinstance(start, Integral) or not isinstance(stop, Integral):
+            raise TypeError("`start` and `stop` are not Integral")
+        self._start = start
+        self._stop = stop
+        self._data = data
 
     def __repr__(self) -> str:
         return "{}(start={}, stop={})".format(
-            type(self).__name__, self.start, self.stop
+            type(self).__name__, self._start, self._stop
         )
 
-    def __contains__(self, point: int) -> bool:
-        return self.contains(point)
+    def __contains__(self, item: T) -> bool:
+        return self._data == item if self._data is not None else None
 
     def __lt__(self, other: "Interval") -> bool:
-        return self.start < other.start
+        return self._start < other._start
+
+    @property
+    def start(self) -> Integral:
+        return self._start
+
+    @property
+    def stop(self) -> Integral:
+        return self._stop
+
+    @property
+    def data(self) -> T:
+        return self._data
 
     def before(self, point: Integral) -> bool:
-        return self.stop <= point
+        return self._stop <= point
 
     def after(self, point: Integral) -> bool:
-        return self.start > point
+        return self._start > point
 
     def contains(self, point: Integral) -> bool:
-        return self.start <= point < self.stop
+        return self._start <= point < self._stop
 
 
 IntervalT = TypeVar("IntervalT", bound=Interval)
 
 
 class Annotation(Generic[IntervalT], Sequence):
-    def __len__(self) -> int:
-        return len(self._regions)
 
     # TODO report overlapping regions (raise an error)
-    def __init__(self, regions: Sequence[Interval]):
-        self._regions = sorted(regions)
+    def __init__(self, regions: Iterable[Interval]):
+        self._intervals = sorted(regions)
+
+    def __len__(self) -> int:
+        return len(self._intervals)
 
     def __iter__(self):
-        return iter(self._regions)
+        return iter(self._intervals)
 
     @overload
     def __getitem__(self, item: slice) -> List[Interval]:
@@ -79,7 +98,7 @@ class Annotation(Generic[IntervalT], Sequence):
         TypeError: Can't use objects of type str for indexing/slicing
         """
         try:
-            return self._regions[item]
+            return self._intervals[item]
         except IndexError:
             raise IndexError("{} is out of bounds".format(item))
         except TypeError:
@@ -87,11 +106,7 @@ class Annotation(Generic[IntervalT], Sequence):
                             "indexing/slicing".format(type(item).__name__))
 
     def __bool__(self) -> bool:
-        return bool(self._regions)
-
-    @property
-    def regions(self) -> List[Interval]:
-        return list(self._regions)
+        return bool(self._intervals)
 
     def lookup(self, start: Integral, stop: Integral) -> List[Interval]:
         # TODO docs
@@ -103,7 +118,7 @@ class Annotation(Generic[IntervalT], Sequence):
         >>> ranges = [(2, 3), (5, 6), (7, 9), (11, 15), (19, 30)]
         >>> regions = list(starmap(Interval, ranges))
         >>> annotation = Annotation(regions)
-        >>> [(i.start, i.stop) for i in annotation.lookup(4, 17)] == ranges[1:4]
+        >>> [(i.start, i._stop) for i in annotation.lookup(4, 17)] == ranges[1:4]
         True
         >>> annotation.lookup(0, 2)
         []
@@ -111,7 +126,7 @@ class Annotation(Generic[IntervalT], Sequence):
         first, last = self.borders(start, stop)
         if first is None or last is None or not last - first:
             return []
-        return self._regions[first:last + 1]
+        return self._intervals[first:last + 1]
 
     def borders(self, start: Integral, stop: Integral) \
             -> Tuple[Optional[int], Optional[int]]:
@@ -166,7 +181,7 @@ class Annotation(Generic[IntervalT], Sequence):
                               ceil((idx + final) / 2)))
 
         first = None if not self else left_border(start, final // 2)
-        last = None if first is None else right_border(stop-1, first)
+        last = None if first is None else right_border(stop-1, cast(int, first))
         return first, last or first
 
 

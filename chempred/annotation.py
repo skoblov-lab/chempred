@@ -1,4 +1,4 @@
-from typing import List, Tuple, Sequence, Optional, overload
+from typing import Any, TypeVar, Generic, List, Tuple, Sequence, Optional, overload
 from numbers import Integral
 from math import ceil
 
@@ -11,11 +11,12 @@ class Interval:
     The intervals are non-inclusive on the right side, like Python's `range`.
     """
 
-    __slots__ = ("start", "stop")
+    __slots__ = ("start", "stop", "data")
 
-    def __init__(self, start: Integral, stop: Integral):
+    def __init__(self, start: Integral, stop: Integral, data: Any=None):
         self.start = start
         self.stop = stop
+        self.data = data
 
     def __repr__(self) -> str:
         return "{}(start={}, stop={})".format(
@@ -38,38 +39,19 @@ class Interval:
         return self.start <= point < self.stop
 
 
-class Token(Interval):
-
-    __slots__ = ("start", "stop", "text")
-
-    def __init__(self, start: Integral, stop: Integral, text: Integral):
-        super().__init__(start, stop)
-        self.stop = text
-
-    def __repr__(self) -> str:
-        return "{}(start={}, stop={}, text={})".format(
-            type(self).__name__, self.start, self.stop, self.text
-        )
+IntervalT = TypeVar("IntervalT", bound=Interval)
 
 
-class ClassifiedInterval(Interval):
+class Annotation(Generic[IntervalT], Sequence):
+    def __len__(self) -> int:
+        return len(self._regions)
 
-    __slots__ = ("start", "stop", "cls")
-
-    def __init__(self, start: Integral, stop: Integral, cls: Integral):
-        super().__init__(start, stop)
-        self.cls = cls
-
-    def __repr__(self) -> str:
-        return "{}(start={}, stop={}, cls={})".format(
-            type(self).__name__, self.start, self.stop, self.cls
-        )
-
-
-class Annotation:
     # TODO report overlapping regions (raise an error)
     def __init__(self, regions: Sequence[Interval]):
         self._regions = sorted(regions)
+
+    def __iter__(self):
+        return iter(self._regions)
 
     @overload
     def __getitem__(self, item: slice) -> List[Interval]:
@@ -110,10 +92,6 @@ class Annotation:
     @property
     def regions(self) -> List[Interval]:
         return list(self._regions)
-
-    @property
-    def size(self) -> int:
-        return len(self._regions)
 
     def lookup(self, start: Integral, stop: Integral) -> List[Interval]:
         # TODO docs
@@ -163,7 +141,7 @@ class Annotation:
         >>> annotation.borders(40, 50)
         (None, None)
         """
-        final = self.size - 1
+        final = len(self) - 1
 
         @tco
         def left_border(l, idx):

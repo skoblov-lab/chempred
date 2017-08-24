@@ -1,104 +1,163 @@
-from typing import overload, List, Tuple, Sequence, Optional, NamedTuple
+from typing import List, Tuple, Sequence, Optional, overload
+from numbers import Integral
 from math import ceil
 
+import numpy as np
 from fn.recur import tco
 
 
-Interval = NamedTuple("Interval", [("start", int), ("end", int)])
+class Interval:
 
-
-class ClassifiedRegion:
     """
-    The regions are non-inclusive on the right side, like Python's `range`.
+    The intervals are non-inclusive on the right side, like Python's `range`.
     """
-    __slots__ = ("start", "end", "cls")
 
-    def __init__(self, start: int, end: int, cls: int):
+    __slots__ = ("start", "end")
+
+    def __init__(self, start: Integral, end: Integral):
         self.start = start
         self.end = end
-        self.cls = cls
 
     def __repr__(self) -> str:
-        return "AnnotatedRegion(start={}, end={}, cls={})".format(
-            self.start, self.end, self.cls
+        return "{}(start={}, end={})".format(
+            type(self).__name__, self.start, self.end
         )
 
     def __contains__(self, point: int) -> bool:
         return self.contains(point)
 
-    def __lt__(self, other: "ClassifiedRegion"):
+    def __lt__(self, other: "Interval") -> bool:
         return self.start < other.start
 
-    def before(self, point: int) -> bool:
+    def before(self, point: Integral) -> bool:
         return self.end <= point
 
-    def after(self, point: int) -> bool:
+    def after(self, point: Integral) -> bool:
         return self.start > point
 
-    def contains(self, point: int) -> bool:
+    def contains(self, point: Integral) -> bool:
         return self.start <= point < self.end
+
+
+class Token(Interval):
+
+    __slots__ = ("start", "end", "text")
+
+    def __init__(self, start: Integral, end: Integral, text: Integral):
+        super().__init__(start, end)
+        self.end = text
+
+    def __repr__(self) -> str:
+        return "{}(start={}, end={}, text={})".format(
+            type(self).__name__, self.start, self.end, self.text
+        )
+
+
+class ClassifiedInterval(Interval):
+
+    __slots__ = ("start", "end", "cls")
+
+    def __init__(self, start: Integral, end: Integral, cls: Integral):
+        super().__init__(start, end)
+        self.cls = cls
+
+    def __repr__(self) -> str:
+        return "{}(start={}, end={}, cls={})".format(
+            type(self).__name__, self.start, self.end, self.cls
+        )
 
 
 class Annotation:
     # TODO report overlapping regions (raise an error)
-    def __init__(self, regions: Sequence[ClassifiedRegion], default=0):
+    def __init__(self, regions: Sequence[Interval], default: int=0):
         self._regions = sorted(regions)
-        self.default = default
+        self.default = np.int32(default)
 
     @overload
-    def __getitem__(self, item: slice) -> Sequence[int]:
+    def __getitem__(self, item: slice) -> List[Interval]:
         pass
 
     @overload
-    def __getitem__(self, item: int) -> Optional[ClassifiedRegion]:
+    def __getitem__(self, item: int) -> Optional[Interval]:
         pass
 
     def __getitem__(self, item):
+        """
+        :param item:
+        :return:
+        >>> from itertools import starmap
+        >>> ranges = [(2, 3), (5, 6), (7, 9), (11, 15), (19, 30)]
+        >>> regions = list(starmap(Interval, ranges))
+        >>> annotation = Annotation(regions)
+        >>> annotation[0]
+        Interval(start=2, end=3)
+        >>> annotation[-1]
+        Interval(start=19, end=30)
+        >>> [(i.start, i.end) for i in annotation[4:17]] == ranges[1:4]
+        True
+        >>> annotation[0:2]
+        []
+        >>> annotation[30:]
+        Traceback (most recent call last):
+        ...
+        ValueError: Implicit slicing is not supported - specify both borders
+        >>> annotation["a"]
+        Traceback (most recent call last):
+        ...
+        ValueError: Can't use objects of type str for indexing/slicing
+        """
         if isinstance(item, slice):
-            pass
+            start, stop = item.start, item.stop
+            if start is None or stop is None:
+                raise ValueError("Implicit slicing is not supported - specify "
+                                 "both borders")
+            first, last = self.borders(start, stop)
+            if first is None or last is None or not last - first:
+                return []
+            return self._regions[first:last+1]
         elif isinstance(item, int):
             return self._regions[item] if item < self.size else None
-        raise ValueError
 
-    def __bool__(self):
+        raise ValueError("Can't use objects of type {} for "
+                         "indexing/slicing".format(type(item).__name__))
+
+    def __bool__(self) -> bool:
         return bool(self._regions)
 
-    def __len__(self):
-        raise NotImplemented
-
     @property
-    def regions(self) -> List[ClassifiedRegion]:
+    def regions(self) -> List[Interval]:
         return list(self._regions)
 
     @property
     def size(self) -> int:
         return len(self._regions)
 
-    def borders(self, interval: slice) \
+    def borders(self, start: Integral, stop: Integral) \
             -> Tuple[Optional[int], Optional[int]]:
         # TODO docs
         """
-        !!!Both borders are inclusive!!!
-        :param interval:
-        :return:
-        >>> regions = [ClassifiedRegion(s, e, 1) for s, e in
-        ...            [(2, 3), (5, 6), (7, 9), (11, 15), (19, 30)]]
-        >>> annotations = Annotation(regions)
-        >>> annotations.borders(slice(4, 17))
+        :param start: inclusive left-border
+        :param stop: non-inclusive right-border
+        :return: !!!Both borders are inclusive!!!
+        >>> from itertools import starmap
+        >>> ranges = [(2, 3), (5, 6), (7, 9), (11, 15), (19, 30)]
+        >>> regions = list(starmap(Interval, ranges))
+        >>> annotation = Annotation(regions)
+        >>> annotation.borders(4, 17)
         (1, 3)
-        >>> annotations.borders(slice(2, 12))
+        >>> annotation.borders(2, 12)
         (0, 3)
-        >>> annotations.borders(slice(0, 17))
+        >>> annotation.borders(0, 17)
         (0, 3)
-        >>> annotations.borders(slice(0, 25))
+        >>> annotation.borders(0, 25)
         (0, 4)
-        >>> annotations.borders(slice(0, 40))
+        >>> annotation.borders(0, 40)
         (0, 4)
-        >>> annotations.borders(slice(0, 2))
+        >>> annotation.borders(0, 2)
         (0, 0)
-        >>> annotations.borders(slice(3, 4))
+        >>> annotation.borders(3, 4)
         (1, 1)
-        >>> annotations.borders(slice(40, 50))
+        >>> annotation.borders(40, 50)
         (None, None)
         """
         final = self.size - 1
@@ -125,6 +184,10 @@ class Annotation:
             return True, (r, (idx // 2 if self[idx].after(r) else
                               ceil((idx + final) / 2)))
 
-        first = None if not self else left_border(interval.start, final // 2)
-        last = None if first is None else right_border(interval.stop-1, first)
+        first = None if not self else left_border(start, final // 2)
+        last = None if first is None else right_border(stop-1, first)
         return first, last or first
+
+
+if __name__ == "__main__":
+    raise RuntimeError

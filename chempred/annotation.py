@@ -69,16 +69,15 @@ class ClassifiedInterval(Interval):
 
 class Annotation:
     # TODO report overlapping regions (raise an error)
-    def __init__(self, regions: Sequence[Interval], default: int=0):
+    def __init__(self, regions: Sequence[Interval]):
         self._regions = sorted(regions)
-        self.default = np.int32(default)
 
     @overload
     def __getitem__(self, item: slice) -> List[Interval]:
         pass
 
     @overload
-    def __getitem__(self, item: int) -> Optional[Interval]:
+    def __getitem__(self, item: Integral) -> Optional[Interval]:
         pass
 
     def __getitem__(self, item):

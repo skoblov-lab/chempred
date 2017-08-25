@@ -1,5 +1,5 @@
-from typing import TypeVar, Generic, List, Tuple, Iterable, Sequence, Sized, \
-    Container, Optional, overload, cast
+from typing import TypeVar, Generic, Hashable, Tuple, Iterable, Sequence, \
+    Sized, Container, Optional, overload, cast
 from itertools import chain, islice
 from numbers import Integral
 from math import ceil
@@ -10,7 +10,7 @@ from fn.recur import tco
 T = TypeVar("T")
 
 
-class Interval(Container, Sized, Generic[T]):
+class Interval(Hashable, Container, Sized, Generic[T]):
 
     """
     The intervals are non-inclusive on the right side, like Python's `range`.
@@ -52,6 +52,9 @@ class Interval(Container, Sized, Generic[T]):
         :return:
         """
         return self.start == other.start and self.stop == other.stop
+
+    def __hash__(self):
+        return hash((self._start, self._stop))
 
     @property
     def start(self) -> Integral:
@@ -127,6 +130,9 @@ class Intervals(Generic[IntervalT], Sequence):
     def __init__(self, regions: Iterable[Interval[T]]):
         self._intervals = sorted(regions)
 
+    def __repr__(self):
+        return "{}({})".format(type(self).__name__, repr(self._intervals))
+
     def __len__(self) -> int:
         return self[-1].stop - self[0].start
 
@@ -152,14 +158,14 @@ class Intervals(Generic[IntervalT], Sequence):
         >>> from itertools import starmap
         >>> ranges = [(2, 3), (5, 6), (7, 9), (11, 15), (19, 30)]
         >>> regions = list(starmap(Interval, ranges))
-        >>> annotation = Intervals(regions)
-        >>> annotation[0]
+        >>> intervals = Intervals(regions)
+        >>> intervals[0]
         Interval(start=2, stop=3)
-        >>> annotation[-1]
+        >>> intervals[-1]
         Interval(start=19, stop=30)
-        >>> annotation[:] == annotation
+        >>> intervals[:] == intervals
         True
-        >>> annotation["a"]
+        >>> intervals["a"]
         Traceback (most recent call last):
         ...
         TypeError: Can't use objects of type str for indexing/slicing
@@ -180,7 +186,7 @@ class Intervals(Generic[IntervalT], Sequence):
     def size(self) -> int:
         return len(self._intervals)
 
-    def within(self, start: Integral, stop: Integral, crop=True,
+    def within(self, start: Integral, stop: Integral, dropcropped=True, crop=True,
                cropdata=False) -> "Intervals[Interval[T]]":
         # TODO docs
         # TODO more tests
@@ -191,35 +197,44 @@ class Intervals(Generic[IntervalT], Sequence):
         >>> from itertools import starmap
         >>> ranges = [(2, 3), (5, 6), (7, 9), (11, 15), (19, 30)]
         >>> regions = list(starmap(Interval, ranges))
-        >>> annotation = Intervals(regions)
-        >>> [(i.start, i.stop) for i in annotation.within(4, 17)] == ranges[1:4]
+        >>> intervals = Intervals(regions)
+        >>> [(i.start, i.stop) for i in intervals.within(4, 17)] == ranges[1:4]
         True
-        >>> not annotation.within(0, 2)
+        >>> not intervals.within(0, 2)
         True
-        >>> ([(i.start, i.stop) for i in annotation.within(12, 20)] ==
+        >>> not intervals.within(12, 20)
+        True
+        >>> ([(i.start, i.stop) for i in intervals.within(12, 20, False, False)]
+        ... == [(11, 15), (19, 30)])
+        True
+        >>> ([(i.start, i.stop) for i in intervals.within(12, 20, False)] ==
         ...  [(12, 15), (19, 20)])
         True
-        >>> ([(i.start, i.stop) for i in annotation.within(12, 40)] ==
+        >>> ([(i.start, i.stop) for i in intervals.within(12, 40, False)] ==
         ...  [(12, 15), (19, 30)])
         True
-        >>> [(i.start, i.stop) for i in annotation.within(-1, 40)] == ranges
+        >>> [(i.start, i.stop) for i in intervals.within(-1, 40)] == ranges
         True
         """
-        first, last = self.borders(start, stop)
-        if first is None or last is None or not last - first:
+        first_idx, last_idx = self.borders(start, stop)
+        if first_idx is None or last_idx is None or not last_idx - first_idx:
             return Intervals([])
-        intervals = self._intervals[first:last+1]
+        intervals = self._intervals[first_idx:last_idx+1]
         if not crop or not intervals:
             return Intervals(intervals)
         if len(intervals) == 1:
             return Intervals([intervals[0].crop(start, stop, cropdata)])
         if len(intervals) > 1:
-            first_crop = intervals[0].crop(start=max(start, intervals[0].start),
-                                           cropdata=cropdata)
-            last_crop = intervals[-1].crop(stop=min(stop, intervals[-1].stop),
-                                           cropdata=cropdata)
+            first, last = intervals[0], intervals[-1]
+            fst_c = first.crop(start=max(start, first.start), cropdata=cropdata)
+            lst_c = last.crop(stop=min(stop, last.stop), cropdata=cropdata)
             middle = islice(intervals, 1, len(intervals)-1)
-            return Intervals(chain([first_crop], middle, [last_crop]))
+            drop_first = dropcropped and (fst_c != first)
+            drop_last = dropcropped and (lst_c != last)
+            intervals_c = chain([fst_c] if not drop_first else [],
+                                middle,
+                                [lst_c] if not drop_last else [])
+            return Intervals(intervals_c)
         assert False
 
     def borders(self, start: Integral, stop: Integral) \

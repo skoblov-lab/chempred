@@ -4,27 +4,25 @@ Parsers, preprocessors and type annotations for the chemdner dataset.
 
 """
 
-import operator as op
-import re
-from typing import List, Tuple, Iterator, Text, Iterable, NamedTuple, Mapping
-from numbers import Integral
 from itertools import groupby
+from numbers import Integral
+from typing import List, Tuple, Iterator, Text, Iterable, NamedTuple, Mapping
 
+import operator as op
 from fn import F
 
-from chempred.annotation import Annotation, Interval
+from chempred.intervals import Intervals, Interval
 
-
-TOKEN_PATT = re.compile("\S+")
 OTHER = "OTHER"
 TITLE = "T"
 BODY = "A"
 
+ClassifiedInterval = Interval[Integral]
 AbstractAnnotation = NamedTuple(
     "AbstractAnnotation", [
         ("id", int),
-        ("title", Annotation[Interval]),
-        ("body", Annotation[Interval])
+        ("title", Intervals[ClassifiedInterval]),
+        ("body", Intervals[ClassifiedInterval])
     ]
 )
 Abstract = NamedTuple("Abstract",
@@ -84,22 +82,9 @@ def read_annotations(path: Text, mapping: Mapping[Text, Integral],
         mapped_parts = ((id_, {part: wrapper(recs) for part, recs in parts})
                         for id_, parts in part_groups)
         return [AbstractAnnotation(int(id_),
-                                   Annotation(parts.get(TITLE, [])),
-                                   Annotation(parts.get(BODY, [])))
+                                   Intervals(parts.get(TITLE, [])),
+                                   Intervals(parts.get(BODY, [])))
                 for id_, parts in mapped_parts]
-
-
-def tokenise(text: Text) -> Annotation[Interval]:
-    # TODO tests
-    """
-    Tokenise text and classify each token
-    :param text: text to parse
-    :return: a sorted list of annotated tokens
-    """
-    # mask text if needed
-    intervals = [m.span() for m in TOKEN_PATT.finditer(text)]
-    return Annotation(Interval(start, end, text[start:end])
-                      for start, end in intervals)
 
 
 def align_abstracts_and_annotations(abstracts: Iterable[Abstract],
@@ -113,7 +98,7 @@ def align_abstracts_and_annotations(abstracts: Iterable[Abstract],
     :return: Iterator[(parsed abstract, parsed annotation)]
     """
     def empty(id_: int) -> AbstractAnnotation:
-        return AbstractAnnotation(id_, Annotation([]), Annotation([]))
+        return AbstractAnnotation(id_, Intervals([]), Intervals([]))
 
     anno_mapping = {anno.id: anno for anno in annotations}
     return ((abstract, anno_mapping.get(abstract.id, empty(abstract.id)))
@@ -121,7 +106,7 @@ def align_abstracts_and_annotations(abstracts: Iterable[Abstract],
 
 
 def flatten_aligned_pair(pair: Tuple[Abstract, AbstractAnnotation]) \
-        -> List[Tuple[int, Text, Text, Annotation[Interval]]]:
+        -> List[Tuple[int, Text, Text, Intervals[Interval]]]:
     # TODO tests
     """
     :return: list[(abstract id, source, text, annotation)]

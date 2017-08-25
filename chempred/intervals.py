@@ -128,13 +128,26 @@ class Intervals(Generic[IntervalT], Sequence):
 
     # TODO report overlapping regions (raise an error)
     def __init__(self, regions: Iterable[Interval[T]]):
+        """
+        :param regions:
+        >>> from itertools import starmap
+        >>> ranges = [(2, 3), (5, 6), (7, 9), (11, 15), (19, 30)]
+        >>> regions = list(starmap(Interval, ranges))
+        >>> intervals = Intervals(regions)
+        >>> all(Interval(start, stop) in intervals for start, stop in ranges)
+        True
+        >>> Interval(0, 2) not in intervals
+        True
+        >>> Interval(7, 8) not in intervals
+        True
+        """
         self._intervals = sorted(regions)
 
     def __repr__(self):
         return "{}({})".format(type(self).__name__, repr(self._intervals))
 
     def __len__(self) -> int:
-        return self[-1].stop - self[0].start
+        return len(self._intervals)
 
     def __iter__(self):
         return iter(self._intervals)
@@ -180,16 +193,30 @@ class Intervals(Generic[IntervalT], Sequence):
                             "indexing/slicing".format(type(item).__name__))
 
     def __bool__(self) -> bool:
-        return bool(self.size)
+        return bool(len(self))
 
     @property
-    def size(self) -> int:
-        return len(self._intervals)
+    def span(self) -> int:
+        return self[-1].stop - self[0].start
 
-    def within(self, start: Integral, stop: Integral, dropcropped=True, crop=True,
-               cropdata=False) -> "Intervals[Interval[T]]":
+    def contains(self, interval: Interval) -> bool:
+        """
+        Test whether an `interval` lies within the span these `Intervals`
+        :param interval:
+        :return:
+        >>> Intervals([Interval(0, 10)]).contains(Interval(2, 10))
+        True
+        >>> Intervals([Interval(1, 10)]).contains(Interval(0, 10))
+        False
+        """
+        if not self:
+            return False
+        span_start, span_stop = self[0].start, self[-1].stop
+        return span_start <= interval.start and interval.stop <= span_stop
+
+    def within(self, start: Integral, stop: Integral, dropcropped=True,
+               crop=True, cropdata=False) -> "Intervals[Interval[T]]":
         # TODO docs
-        # TODO more tests
         """
         :param start:
         :param stop:
@@ -265,7 +292,7 @@ class Intervals(Generic[IntervalT], Sequence):
         >>> annotation.borders(40, 50)
         (None, None)
         """
-        final = self.size - 1
+        final = len(self) - 1
 
         @tco
         def left_border(l, idx):

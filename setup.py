@@ -12,7 +12,7 @@ setup(
     packages=find_packages("./"),
     requires=["numpy",
               "h5py",
-              # "cython",
+              "typing>=3.6.2",
               "fn",
               "enforce",
               "pyrsistent",

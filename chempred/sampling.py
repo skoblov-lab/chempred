@@ -6,10 +6,6 @@ Data preprocessing routines
 
 
 from typing import List, Sequence, Iterator, Iterable
-from numbers import Integral
-from itertools import chain
-
-import numpy as np
 
 from chempred.intervals import Interval, Intervals, T
 

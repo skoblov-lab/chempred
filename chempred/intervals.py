@@ -1,3 +1,4 @@
+# TODO add module-level documentation
 from typing import TypeVar, Generic, Hashable, Tuple, Iterable, Sequence, \
     Sized, Container, Optional, overload, cast
 from itertools import chain, islice
@@ -127,6 +128,7 @@ IntervalT = TypeVar("IntervalT", bound=Interval)
 class Intervals(Generic[IntervalT], Sequence):
 
     # TODO report overlapping regions (raise an error)
+    # TODO docs
     def __init__(self, regions: Iterable[Interval[T]]):
         """
         :param regions:
@@ -196,8 +198,12 @@ class Intervals(Generic[IntervalT], Sequence):
         return bool(len(self))
 
     @property
-    def span(self) -> int:
-        return self[-1].stop - self[0].start
+    def span(self) -> Optional[Interval]:
+        """
+        Return the spanning interval
+        :return:
+        """
+        return Interval(self[0].start, self[-1].stop) if self else None
 
     def contains(self, interval: Interval) -> bool:
         """

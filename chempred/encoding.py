@@ -5,16 +5,17 @@
 """
 
 
-from typing import List, Mapping, Tuple
+from typing import List, Mapping, Tuple, Text
 
 import numpy as np
 
-from chempred.chemdner import ClassifiedRegion
+from chempred.intervals import Intervals, Interval, T
+from chempred.chemdner import Annotation, ClassifiedInterval
 
 MAXCHAR = 127
 
 
-def encode_sample_chars(text: str, sample: List[ClassifiedRegion], dtype=np.int32) \
+def encode_sample_chars(text: Text, sample: Intervals, dtype=np.int32) \
         -> np.ndarray:
     # TODO tests
     """
@@ -33,9 +34,8 @@ def encode_sample_chars(text: str, sample: List[ClassifiedRegion], dtype=np.int3
     return encoded
 
 
-def encode_sample_classes(mapping: Mapping[str, int], sample: List[ClassifiedRegion],
-                          dtype=np.int32) \
-        -> np.array:
+def encode_sample_classes(sample: Intervals, annotation: Annotation,
+                          dtype=np.int32) -> np.ndarray:
     # TODO tests
     """
     Encode classes at each position of the sample. The function maps any class
@@ -64,17 +64,6 @@ def encode_sample_classes(mapping: Mapping[str, int], sample: List[ClassifiedReg
     for _, start, end, _, cls in sample:
         encoded[start-offset:end-offset] = mapping.get(cls, 0)
     return encoded
-
-
-def encode_annotation(mapping: Mapping[str, int], anno: ClassifiedRegion) \
-        -> Tuple[np.ndarray, np.ndarray]:
-    # TODO docs
-    # TODO tests
-    length = anno.end - anno.start
-    txt = np.fromiter(map(ord, anno.text), dtype=np.int32, count=length)
-    txt[txt > MAXCHAR] = MAXCHAR
-    cls = np.array([mapping.get(anno.cls, 0)] * length, dtype=np.int32)
-    return txt, cls
 
 
 if __name__ == "__main__":

@@ -18,13 +18,10 @@ TITLE = "T"
 BODY = "A"
 
 ClassifiedInterval = Interval[Integral]
-AbstractAnnotation = NamedTuple(
-    "AbstractAnnotation", [
-        ("id", int),
-        ("title", Intervals[ClassifiedInterval]),
-        ("body", Intervals[ClassifiedInterval])
-    ]
-)
+Annotation = Intervals[ClassifiedInterval]
+AbstractAnnotation = NamedTuple("AbstractAnnotation", [("id", int),
+                                                       ("title", Annotation),
+                                                       ("body", Annotation)])
 Abstract = NamedTuple("Abstract",
                       [("id", int), ("title", Text), ("body", Text)])
 

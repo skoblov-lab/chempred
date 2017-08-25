@@ -17,10 +17,7 @@ class Interval(Hashable, Container, Sized, Generic[T]):
     The intervals are non-inclusive on the right side, like Python's `range`.
     """
 
-    # __slots__ = ("_start", "_stop", "_data")
-    # note: a bug in `typing` makes it not fully compatible with __slots__;
-    #       because of this you can't bind a real type to the container using
-    #       stock `typing` from Python 3.5. This was patched in typing 3.6.2
+    __slots__ = ("_start", "_stop", "_data")
 
     def __init__(self, start: Integral, stop: Integral, data: Optional[T]=None):
         if not isinstance(start, Integral) or not isinstance(stop, Integral):
@@ -56,6 +53,9 @@ class Interval(Hashable, Container, Sized, Generic[T]):
 
     def __hash__(self):
         return hash((self._start, self._stop))
+
+    def __bool__(self):
+        return bool(len(self))
 
     @property
     def start(self) -> Integral:
@@ -236,6 +236,8 @@ class Intervals(Generic[IntervalT], Sequence):
         >>> not intervals.within(0, 2)
         True
         >>> not intervals.within(12, 20)
+        True
+        >>> not intervals.within(2, 2)
         True
         >>> ([(i.start, i.stop) for i in intervals.within(12, 20, False, False)]
         ... == [(11, 15), (19, 30)])

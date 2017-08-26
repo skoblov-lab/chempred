@@ -5,76 +5,61 @@
 """
 
 
-from typing import List, Mapping, Tuple
+from typing import List, Mapping, Tuple, Text
 
 import numpy as np
 
+from chempred.intervals import Intervals, Interval
 from chempred.chemdner import Annotation
+
 
 MAXCHAR = 127
 
 
-def encode_sample_chars(text: str, sample: List[Annotation], dtype=np.int32) \
+def encode_text(text: Text, span: Interval, dtype=np.int32) \
         -> np.ndarray:
     # TODO tests
     """
     Encode text characters at each position of the sample
     :param text: the complete text from which the sample was drawn
-    :param sample: a list of annotations
+    :param span: sample's span
     :param dtype: output data type; it must be an integral numpy dtype
     :return: an integer array
     """
     if not np.issubdtype(dtype, np.int):
         raise ValueError("`dtype` must be integral")
-    start, end = sample[0].start, sample[-1].end
-    length = end - start
-    encoded = np.fromiter(map(ord, text[start:end]), dtype, length)
-    encoded[encoded >= MAXCHAR] = MAXCHAR
+    encoded = np.fromiter(map(ord, text[span.start:span.stop]),
+                          dtype, len(span))
+    encoded[encoded > MAXCHAR] = MAXCHAR
     return encoded
 
 
-def encode_sample_classes(mapping: Mapping[str, int], sample: List[Annotation],
-                          dtype=np.int32) \
-        -> np.array:
-    # TODO tests
+def encode_annotation(span: Interval, annotation: Annotation, default=0,
+                      dtype=np.int32) -> np.ndarray:
     """
-    Encode classes at each position of the sample. The function maps any class
-    not in `mapping` into 0.
-    :param mapping: a mapping from string classes into integers
-    :param sample: a list of annotations
+    :param span: sample's span
+    :param annotation: annotated intervals
+    :param default: default value for unannotated regions
     :param dtype: output data type; it must be an integral numpy dtype
     :return: an integer array
-    >>> sample = [Annotation(None, 0, 5, None, "a"),
-    ...           Annotation(None, 6, 10, None, "b")]
-    >>> (np.unique(encode_sample_classes(dict(a=1, b=2), sample), return_counts=True)[1]
-    ...  == np.array([1, 5, 4])).all()
+    >>> anno = Intervals([Interval(3, 10, 1), Interval(12, 15, 2)])
+    >>> samples = [Interval(0, 10), Interval(2, 10), Interval(2, 20),
+    ...            Interval(11, 16)]
+    >>> encoded = [encode_annotation(sample, anno) for sample in samples]
+    >>> all(len(s) == len(e) for s, e in zip(samples, encoded))
     True
-    >>> (np.unique(encode_sample_classes(dict(a=1), sample), return_counts=True)[1]
-    ...  == np.array([5, 5])).all()
-    True
-    >>> (np.unique(encode_sample_classes(dict(), sample), return_counts=True)[1]
-    ...  == np.array([10])).all()
+    >>> all(sum(e) == sum(len(i) * i.data for i in anno.within(s.start, s.stop))
+    ...     for s, e in zip(samples, encoded))
     True
     """
     if not np.issubdtype(dtype, np.int):
         raise ValueError("`dtype` must be integral")
-    offset = sample[0].start
-    length = sample[-1].end - offset
-    encoded = np.zeros(length, dtype=dtype)
-    for _, start, end, _, cls in sample:
-        encoded[start-offset:end-offset] = mapping.get(cls, 0)
+    intervals = annotation.within(span.start, span.stop)
+    encoded = np.repeat([default], len(span)).astype(dtype)
+    offset = span.start
+    for interval in intervals:
+        encoded[interval.start-offset:interval.stop-offset] = interval.data
     return encoded
-
-
-def encode_annotation(mapping: Mapping[str, int], anno: Annotation) \
-        -> Tuple[np.ndarray, np.ndarray]:
-    # TODO docs
-    # TODO tests
-    length = anno.end - anno.start
-    txt = np.fromiter(map(ord, anno.text), dtype=np.int32, count=length)
-    txt[txt > MAXCHAR] = MAXCHAR
-    cls = np.array([mapping.get(anno.cls, 0)] * length, dtype=np.int32)
-    return txt, cls
 
 
 if __name__ == "__main__":

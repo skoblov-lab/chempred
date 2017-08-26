@@ -1,7 +1,28 @@
-from typing import List, Tuple
+from typing import List, Tuple, Optional, Text, Pattern
+import re
 
 import numpy as np
 from enforce import runtime_validation
+
+from chempred.intervals import Interval, Intervals
+
+
+Token = Interval[Optional[Text]]
+
+
+def tokenise(text: Text, inflate=False, pattern: Pattern=re.compile("\S+")) \
+        -> Intervals[Token]:
+    # TODO tests
+    """
+    Tokenise text
+    :param text: text to parse
+    :param inflate: store token's text inside the tokens
+    :param pattern: token pattern
+    :return: a sorted list of tokens
+    """
+    intervals = [m.span() for m in pattern.finditer(text)]
+    return Intervals(Interval(start, end, text[start:end] if inflate else None)
+                     for start, end in intervals)
 
 
 @runtime_validation
@@ -10,6 +31,9 @@ def join(arrays: List[np.ndarray], length: int, dtype=np.int32) \
     """
     Join 1D arrays. The function uses zero-padding to bring all arrays to the
     same length. The dtypes will be coerced to `dtype`
+    :param arrays: arrays to join
+    :param length: final sample length
+    :param dtype: output data type (must be a numpy integral type)
     :return: (joined and padded arrays, boolean array masks); masks are
     positive, i.e. padded regions are False
     >>> import random
@@ -74,5 +98,3 @@ def maskfalse(array: np.ndarray, mask: np.ndarray) -> np.ndarray:
 
 if __name__ == "__main__":
     raise RuntimeError
-
-

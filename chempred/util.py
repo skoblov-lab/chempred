@@ -31,6 +31,9 @@ def join(arrays: List[np.ndarray], length: int, dtype=np.int32) \
     """
     Join 1D arrays. The function uses zero-padding to bring all arrays to the
     same length. The dtypes will be coerced to `dtype`
+    :param arrays: arrays to join
+    :param length: final sample length
+    :param dtype: output data type (must be a numpy integral type)
     :return: (joined and padded arrays, boolean array masks); masks are
     positive, i.e. padded regions are False
     >>> import random

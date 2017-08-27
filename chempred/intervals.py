@@ -113,12 +113,27 @@ class Interval(Hashable, Container, Sized, Generic[T]):
             raise TypeError("Failed to slice the data")
 
     def before(self, point: Integral) -> bool:
+        """
+        Test whether the interval comes before the point
+        :param point:
+        :return:
+        """
         return self._stop <= point
 
     def after(self, point: Integral) -> bool:
+        """
+        Test whether the interval comes after the point
+        :param point:
+        :return:
+        """
         return self._start > point
 
     def contains(self, point: Integral) -> bool:
+        """
+        Test whether the interval contains the point
+        :param point:
+        :return:
+        """
         return self._start <= point < self._stop
 
 
@@ -220,12 +235,16 @@ class Intervals(Generic[IntervalT], Sequence):
         span_start, span_stop = self[0].start, self[-1].stop
         return span_start <= interval.start and interval.stop <= span_stop
 
-    def within(self, start: Integral, stop: Integral, dropcropped=True,
-               crop=True, cropdata=False) -> "Intervals[Interval[T]]":
+    def within(self, start: Integral, stop: Integral, partial: bool=False,
+               crop: bool=True, cropdata: bool=False) \
+            -> "Intervals[Interval[T]]":
         # TODO docs
         """
         :param start:
         :param stop:
+        :param partial: keep partially covered intervals
+        :param crop: crop partially covered intervals
+        :param cropdata: crop data in partially covered intervals if `crop is True`
         :return:
         >>> from itertools import starmap
         >>> ranges = [(2, 3), (5, 6), (7, 9), (11, 15), (19, 30)]
@@ -239,94 +258,105 @@ class Intervals(Generic[IntervalT], Sequence):
         True
         >>> not intervals.within(2, 2)
         True
-        >>> ([(i.start, i.stop) for i in intervals.within(12, 20, False, False)]
+        >>> ([(i.start, i.stop) for i in intervals.within(12, 20, True, False)]
         ... == [(11, 15), (19, 30)])
         True
-        >>> ([(i.start, i.stop) for i in intervals.within(12, 20, False)] ==
+        >>> ([(i.start, i.stop) for i in intervals.within(12, 20, True)] ==
         ...  [(12, 15), (19, 20)])
         True
-        >>> ([(i.start, i.stop) for i in intervals.within(12, 40, False)] ==
+        >>> ([(i.start, i.stop) for i in intervals.within(12, 40, True)] ==
         ...  [(12, 15), (19, 30)])
         True
         >>> [(i.start, i.stop) for i in intervals.within(-1, 40)] == ranges
         True
         """
-        first_idx, last_idx = self.borders(start, stop)
-        if first_idx is None or last_idx is None or not last_idx - first_idx:
+        left, right = self._borders(start, stop)
+        if left is None or right is None or not right - left:
             return Intervals([])
-        intervals = self._intervals[first_idx:last_idx+1]
+        intervals = self._intervals[left:right]
         if not crop or not intervals:
             return Intervals(intervals)
         if len(intervals) == 1:
-            return Intervals([intervals[0].crop(start, stop, cropdata)])
+            interval = intervals[0]
+            return Intervals([interval.crop(max(start, interval.start),
+                                            min(stop, interval.stop),
+                                            cropdata)])
         if len(intervals) > 1:
             first, last = intervals[0], intervals[-1]
             fst_c = first.crop(start=max(start, first.start), cropdata=cropdata)
             lst_c = last.crop(stop=min(stop, last.stop), cropdata=cropdata)
             middle = islice(intervals, 1, len(intervals)-1)
-            drop_first = dropcropped and (fst_c != first)
-            drop_last = dropcropped and (lst_c != last)
+            drop_first = not partial and (fst_c != first)
+            drop_last = not partial and (lst_c != last)
             intervals_c = chain([fst_c] if not drop_first else [],
                                 middle,
                                 [lst_c] if not drop_last else [])
             return Intervals(intervals_c)
         assert False
 
-    def borders(self, start: Integral, stop: Integral) \
+    def _borders(self, start: Integral, stop: Integral) \
             -> Tuple[Optional[int], Optional[int]]:
         # TODO docs
         """
         :param start: inclusive left-border
         :param stop: non-inclusive right-border
-        :return: both borders are inclusive
+        :return: returns indices of the first (inclusive) and the last
+        (non-inclusive) interval within [start:stop)
         >>> from itertools import starmap
         >>> ranges = [(2, 3), (5, 6), (7, 9), (11, 15), (19, 30)]
         >>> regions = list(starmap(Interval, ranges))
         >>> annotation = Intervals(regions)
-        >>> annotation.borders(4, 17)
-        (1, 3)
-        >>> annotation.borders(2, 12)
-        (0, 3)
-        >>> annotation.borders(0, 17)
-        (0, 3)
-        >>> annotation.borders(0, 25)
+        >>> annotation._borders(4, 17)
+        (1, 4)
+        >>> annotation._borders(2, 12)
         (0, 4)
-        >>> annotation.borders(0, 40)
+        >>> annotation._borders(0, 17)
         (0, 4)
-        >>> annotation.borders(0, 2)
+        >>> annotation._borders(0, 25)
+        (0, 5)
+        >>> annotation._borders(0, 40)
+        (0, 5)
+        >>> annotation._borders(0, 2)
         (0, 0)
-        >>> annotation.borders(3, 4)
+        >>> annotation._borders(0, 0)
+        (0, 0)
+        >>> annotation._borders(3, 4)
         (1, 1)
-        >>> annotation.borders(40, 50)
+        >>> annotation._borders(40, 50)
         (None, None)
         """
         final = len(self) - 1
+        left, right = start, stop - 1
 
         @tco
-        def left_border(l, idx):
-            if self[idx].contains(l) or (not idx and self[idx].after(l)):
+        def left_border(idx):
+            if self[idx].contains(left) or (not idx and self[idx].after(left)):
                 return False, idx
-            if idx >= final and self[idx].before(l):
+            if idx >= final and self[idx].before(left):
                 return False, None
-            if self[idx].before(l) and self[idx+1].after(l):
+            if self[idx].before(left) and self[idx+1].after(left):
                 return False, idx + 1
-            return True, (l, (idx // 2 if self[idx].after(l) else
-                              ceil((idx + final) / 2)))
+            return True, [idx // 2 if self[idx].after(left) else
+                          ceil((idx + final) / 2)]
 
         @tco
-        def right_border(r, idx):
-            if self[idx].contains(r) or (idx == final and self[idx].before(r)):
+        def right_border(idx):
+            if self[idx].contains(right) or (idx == final and
+                                             self[idx].before(right)):
                 return False, idx
-            if not idx and self[idx].after(r):
+            if not idx and self[idx].after(right):
                 return False, None
-            if self[idx].before(r) and self[idx+1].after(r):
+            if self[idx].before(right) and self[idx+1].after(right):
                 return False, idx
-            return True, (r, (idx // 2 if self[idx].after(r) else
-                              ceil((idx + final) / 2)))
+            return True, [idx // 2 if self[idx].after(right) else
+                          ceil((idx + final) / 2)]
 
-        first = None if not self else left_border(start, final // 2)
-        last = None if first is None else right_border(stop-1, cast(int, first))
-        return first, last or first
+        fst = None if not self else cast(int, left_border(final // 2))
+        lst = None if fst is None else cast(int, right_border(fst)) or fst
+
+        if fst is None or lst is None or lst == fst and self[lst].after(right):
+            return fst, lst
+        return fst, lst + 1  # the last index is non-inclusive
 
 
 if __name__ == "__main__":

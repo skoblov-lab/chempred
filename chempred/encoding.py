@@ -51,10 +51,12 @@ def encode_annotation(span: Interval, annotation: Annotation, default=0,
     >>> all(sum(e) == sum(len(i) * i.data for i in anno.within(s.start, s.stop))
     ...     for s, e in zip(samples, encoded))
     True
+    >>> encode_annotation(Interval(10, 13), anno).sum() == 2
+    True
     """
     if not np.issubdtype(dtype, np.int):
         raise ValueError("`dtype` must be integral")
-    intervals = annotation.within(span.start, span.stop)
+    intervals = annotation.within(span.start, span.stop, partial=True)
     encoded = np.repeat([default], len(span)).astype(dtype)
     offset = span.start
     for interval in intervals:

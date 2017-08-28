@@ -5,18 +5,17 @@ their predictions
 
 """
 import json
-from typing import Sequence, Tuple, Optional, List, Union, Callable, Mapping
-from io import TextIOWrapper
 from functools import reduce
+from io import TextIOWrapper
 from itertools import chain
+from typing import Sequence, Tuple, Optional, List, Union, Callable, Mapping
 
+import numpy as np
 from enforce import runtime_validation
 from keras import layers, models
-import numpy as np
 
 from chempred import encoding
 from chempred.chemdner import Interval
-
 
 NCHAR = encoding.MAXCHAR + 1
 
@@ -65,21 +64,6 @@ class Config(dict):
             if isinstance(value, Mapping):
                 to_visit.extend(value.items())
         return default
-
-
-def parse_mapping(classmaps: Sequence[str]) -> Mapping[str, int]:
-    """
-    :param classmaps:
-    :return:
-    >>> classmaps = ["a:1", "b:1", "c:2"]
-    >>> parse_mapping(classmaps) == dict(a=1, b=1, c=2)
-    True
-    """
-    try:
-        return {cls: int(val)
-                for cls, val in [classmap.split(":") for classmap in classmaps]}
-    except ValueError as err:
-        raise ValueError("Badly formatted mapping: {}".format(err))
 
 
 def build_conv(nfilters: Sequence[int],

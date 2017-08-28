@@ -1,7 +1,7 @@
 import glob
 from contextlib import contextmanager
 from itertools import chain, starmap
-from typing import Tuple, List, Mapping, Set, Union, Sequence
+from typing import Tuple, List, Mapping, Set, Union, Sequence, Text, Iterator
 
 import numpy as np
 import operator as op
@@ -10,95 +10,120 @@ import re
 import shutil
 from fn import F
 
+from chempred import intervals
 from chempred import chemdner
 from chempred import encoding
 from chempred import sampling
 from chempred import util
-from chempred.chemdner import ClassifiedRegion, Abstract, AbstractAnnotation
+from chempred import chemdner
 
-Data = Union[Mapping[str, str], Sequence[str]]
-Sample = List[ClassifiedRegion]
-Failure = Tuple[int, ClassifiedRegion]
+# Data = Union[Mapping[str, str], Sequence[str]]
+Sample = List[intervals.Interval]
+# Failure = Tuple[int, ClassifiedRegion]
 
 
-def process_data(abstracts: List[Abstract],
-                 abstract_annotations: List[AbstractAnnotation],
-                 window: int, maxlen: int, n_nonpositive: int,
-                 mapping: Mapping[str, int],
-                 positive: Union[Mapping[str, int], Set[str]]) \
-        -> Tuple[List[int], List[Sample],  List[Failure],
-                 np.ndarray, np.ndarray, np.ndarray]:
+def process_text(text: Text,
+                 annotation: intervals.Intervals[chemdner.ClassifiedInterval],
+                 width: int, minlen: int, default: int=0) \
+        -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """
+    :param text:
+    :param annotation:
+    :param width: context window width (in charactes)
+    :param minlen: minimum sample span
+    :param default: default class encoding
+    :return: encoded text samples, encoded annotations, padding mask
+    >>> import random
+    >>> from chempred.intervals import Interval, Intervals
+    >>> anno = Intervals([Interval(4, 10, 1), Interval(20, 25, 2)])
+    >>> text = "".join(random.choice("abc ") for _ in range(len(anno.span)+9))
+    >>> text_e, cls_e, mask = process_text(text, anno, 10, 5)
+    >>> text_e.shape == cls_e.shape == mask.shape
+    True
+    """
+    # TODO return failures
+    tokenised_text = util.tokenise(text)
+    sample_spans = [sample.span for sample in
+                    sampling.sample_windows(tokenised_text, width)]
+    # remove samples with no annotated regions and insufficient length
+    passing = [span for span in sample_spans
+               if len(span) >= minlen and annotation.covers(span)]
+    encoded_text = [
+        encoding.encode_text(text, span) for span in passing
+    ]
+    encoded_classes = [
+        encoding.encode_annotation(span, annotation, default=default)
+        for span in passing
+    ]
+    if not encoded_text:
+        return np.array([]), np.array([]), np.array([])
+
+    joined_text, text_mask = util.join(encoded_text, width)
+    joined_cls, cls_mask = util.join(encoded_classes, width)
+    # sanity check
+    assert (text_mask == cls_mask).all()
+    return joined_text, joined_cls, text_mask
+
+
+def process_data(abstracts: List[chemdner.Abstract],
+                 abstract_annotations: List[chemdner.AbstractAnnotation],
+                 window_width: int, minlen: int, default: int=0) \
+        -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     # TODO update docs
-    # TODO more tests
+    # TODO tests
     """
     :param abstracts:
     :param abstract_annotations:
-    :param window: context window width (in tokens)
-    :param maxlen: maximum sample length (in characters)
-    :param n_nonpositive: the number of non-positive target words per abstract
-    :param mapping: сlass mapping
-    :param positive: a set of positive classes
-    :return: abstract ids (one per sample), samples, failed targets (abstract
-    ids and token annotations), encoded and padded text, encoded and padded
-    classes, padding masks.
-    >>> mapping = {}
+    :param window_width: context window width (in charactes)
+    :param minlen: minimum sample span
+    :param default: default class encoding
+    :return: encoded and padded text, encoded and padded classes, padding masks.
+    >>> mapping = {"SYSTEMATIC": 1}
     >>> abstracts = chemdner.read_abstracts("testdata/abstracts.txt")
-    >>> anno = chemdner.read_annotations("testdata/annotations.txt")
-    >>> ids, samples, failures, x, y, mask = (
-    ...     process_data(abstracts, anno, window=5, maxlen=100,
-    ...                           n_nonpositive=3, mapping=mapping, positive={})
+    >>> anno = chemdner.read_annotations("testdata/annotations.txt", mapping)
+    >>> x, y, mask = (
+    ...     process_data(abstracts, anno, 100, 50)
     ... )
+    >>> x.shape[0] == y.shape[0] == mask.shape[0]
+    True
     """
     # align pairs, flatten and remove texts with no annotations
-    aligned = list(chemdner.align_abstracts_and_annotations(abstracts,
-                                                            abstract_annotations))
-    data = (F(map, chemdner.flatten_aligned_pair)
-            >> chain.from_iterable
-            >> list)(aligned)
-    nonempty = [(id_, src, text, annotations)
-                for id_, src, text, annotations in data if annotations]
-    nonempty_ids = [id_ for id_, *_ in nonempty]
-    texts = [text for *_, text, _ in nonempty]
+    pairs = chemdner.align_abstracts_and_annotations(abstracts,
+                                                     abstract_annotations)
+    flattened_pairs = list(map(chemdner.flatten_aligned_pair, pairs))
+    # sample windows
+    titles = [title for title, _ in flattened_pairs]
+    bodies = [body for _, body in flattened_pairs]
+    # sanity  check
+    assert [id_ for id_, *_ in titles] == [id_ for id_, *_ in bodies]
+    processed_titles = [process_text(text, anno, window_width, minlen, default)
+                        for *_, text, anno in titles]
+    processed_bodies = [process_text(text, anno, window_width, minlen, default)
+                        for *_, text, anno in bodies]
+    # merge samples from titles and bodies
+    texts = (F(map, F(map, op.itemgetter(0)))
+             >> chain.from_iterable
+             >> (filter, lambda x: len(x) > 0)
+             >> tuple
+             >> np.vstack)(
+        [processed_titles, processed_bodies]
+    )
+    cls = (F(map, F(map, op.itemgetter(1)))
+           >> chain.from_iterable
+           >> (filter, lambda x: len(x) > 0)
+           >> tuple
+           >> np.vstack)(
+        [processed_titles, processed_bodies]
+    )
+    masks = (F(map, F(map, op.itemgetter(2)))
+             >> chain.from_iterable
+             >> (filter, lambda x: len(x) > 0)
+             >> tuple
+             >> np.vstack)(
+        [processed_titles, processed_bodies]
+    )
+    return texts, cls, masks
 
-    # annotate texts and sample windows
-    text_annotations = [chemdner.annotate_text(text, annotations, src, True)
-                        for _, src, text, annotations in nonempty]
-
-    targets = [sampling.sample_targets(positive, annotations, n_nonpositive)
-               for annotations in text_annotations]
-    sampler = sampling.make_sampler(maxlen=maxlen, width=window, flanking=False)
-    samples_and_failures = (F(zip)
-                            >> (starmap, F(sampling.sample_windows, sampler=sampler))
-                            >> list)(targets, text_annotations)
-    samples = list(map(op.itemgetter(0), samples_and_failures))
-    failures = list(map(op.itemgetter(1), samples_and_failures))
-    failures_with_ids = [((id_, fail) for fail in failures_)
-                         for id_, failures_ in zip(nonempty_ids, failures)
-                         if failures_]
-    flattened_failures = list(chain.from_iterable(failures_with_ids))
-
-    # extract each sample window's text and encode it as char-codes;
-    # join encoded text (using zero-padding to match lengths)
-    encoded_texts = [[encoding.encode_sample_chars(text, sample) for sample in samples_]
-                     for text, samples_ in zip(texts, samples)]
-    ids = [[id_] * len(samples_)
-           for id_, samples_ in zip(nonempty_ids, encoded_texts)]
-    encoded_classes = [
-        [encoding.encode_sample_classes(mapping, sample) for sample in samples_]
-        for text, samples_ in zip(texts, samples)]
-
-    joined_texts, masks_text = util.join(list(chain.from_iterable(encoded_texts)),
-                                         maxlen)
-    joined_cls, masks_cls = util.join(list(chain.from_iterable(encoded_classes)),
-                                      maxlen)
-    flattened_ids = list(chain.from_iterable(ids))
-
-    # sanity checks
-    assert (masks_text == masks_cls).all()
-    assert len(flattened_ids) == len(joined_texts)
-
-    return (flattened_ids, samples, flattened_failures, joined_texts,
-            joined_cls, masks_text)
 
 
 def pick_best(filenames: List[str]) -> Tuple[str, Tuple[int, float]]:

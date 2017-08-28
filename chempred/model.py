@@ -12,7 +12,6 @@ from itertools import chain
 
 from enforce import runtime_validation
 from keras import layers, models
-from fn import F
 import numpy as np
 
 from chempred import encoding

@@ -53,6 +53,8 @@ def encode_annotation(span: Interval, annotation: Annotation, default=0,
     True
     >>> encode_annotation(Interval(10, 13), anno).sum() == 2
     True
+    >>> encode_annotation(Interval(10, 13), anno)[-1] == 2
+    True
     """
     if not np.issubdtype(dtype, np.int):
         raise ValueError("`dtype` must be integral")

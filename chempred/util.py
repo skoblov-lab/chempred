@@ -26,13 +26,14 @@ def tokenise(text: Text, inflate=False, pattern: Pattern=re.compile("\S+")) \
 
 
 @runtime_validation
-def join(arrays: List[np.ndarray], length: int, dtype=np.int32) \
+def join(arrays: List[np.ndarray], length: int, padval: int=0, dtype=np.int32) \
         -> Tuple[np.ndarray, np.ndarray]:
     """
     Join 1D arrays. The function uses zero-padding to bring all arrays to the
     same length. The dtypes will be coerced to `dtype`
     :param arrays: arrays to join
     :param length: final sample length
+    :param padval: padding value
     :param dtype: output data type (must be a numpy integral type)
     :return: (joined and padded arrays, boolean array masks); masks are
     positive, i.e. padded regions are False
@@ -54,6 +55,7 @@ def join(arrays: List[np.ndarray], length: int, dtype=np.int32) \
     if length < max(map(len, arrays)):
         raise ValueError("Some arrays are longer than `length`")
     joined = np.zeros((len(arrays), length), dtype=dtype)
+    joined[:] = padval
     masks = np.zeros((len(arrays), length), dtype=bool)
     for i, arr in enumerate(arrays):
         joined[i, :len(arr)] = arr

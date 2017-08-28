@@ -235,6 +235,17 @@ class Intervals(Generic[IntervalT], Sequence):
         span_start, span_stop = self[0].start, self[-1].stop
         return span_start <= interval.start and interval.stop <= span_stop
 
+    def covers(self, span: Interval) -> bool:
+        # TODO tests
+        """
+        Check whether any interval in self covers (at least partially) the span
+        :param span: an interval
+        """
+        start, stop = self._borders(span.start, span.stop)
+        if any(border is None for border in [start, stop]) or not stop - start:
+            return False
+        return True
+
     def within(self, start: Integral, stop: Integral, partial: bool=False,
                crop: bool=True, cropdata: bool=False) \
             -> "Intervals[Interval[T]]":
@@ -246,29 +257,31 @@ class Intervals(Generic[IntervalT], Sequence):
         :param crop: crop partially covered intervals
         :param cropdata: crop data in partially covered intervals if `crop is True`
         :return:
-        >>> from itertools import starmap
-        >>> ranges = [(2, 3), (5, 6), (7, 9), (11, 15), (19, 30)]
-        >>> regions = list(starmap(Interval, ranges))
-        >>> intervals = Intervals(regions)
-        >>> [(i.start, i.stop) for i in intervals.within(4, 17)] == ranges[1:4]
-        True
-        >>> not intervals.within(0, 2)
-        True
-        >>> not intervals.within(12, 20)
-        True
-        >>> not intervals.within(2, 2)
-        True
-        >>> ([(i.start, i.stop) for i in intervals.within(12, 20, True, False)]
-        ... == [(11, 15), (19, 30)])
-        True
-        >>> ([(i.start, i.stop) for i in intervals.within(12, 20, True)] ==
-        ...  [(12, 15), (19, 20)])
-        True
-        >>> ([(i.start, i.stop) for i in intervals.within(12, 40, True)] ==
-        ...  [(12, 15), (19, 30)])
-        True
-        >>> [(i.start, i.stop) for i in intervals.within(-1, 40)] == ranges
-        True
+        # >>> from itertools import starmap
+        # >>> ranges = [(2, 3), (5, 6), (7, 9), (11, 15), (19, 30)]
+        # >>> regions = list(starmap(Interval, ranges))
+        # >>> intervals = Intervals(regions)
+        # >>> [(i.start, i.stop) for i in intervals.within(4, 17)] == ranges[1:4]
+        # True
+        # >>> not intervals.within(0, 2)
+        # True
+        # >>> not intervals.within(12, 20)
+        # True
+        # >>> not intervals.within(2, 2)
+        # True
+        # >>> len(intervals.within(12, 20, True))
+        # 2
+        # >>> ([(i.start, i.stop) for i in intervals.within(12, 20, True, False)]
+        # ... == [(11, 15), (19, 30)])
+        # True
+        # >>> ([(i.start, i.stop) for i in intervals.within(12, 20, True)] ==
+        # ...  [(12, 15), (19, 20)])
+        # True
+        # >>> ([(i.start, i.stop) for i in intervals.within(12, 40, True)] ==
+        # ...  [(12, 15), (19, 30)])
+        # True
+        # >>> [(i.start, i.stop) for i in intervals.within(-1, 40)] == ranges
+        # True
         """
         left, right = self._borders(start, stop)
         if left is None or right is None or not right - left:
@@ -278,9 +291,12 @@ class Intervals(Generic[IntervalT], Sequence):
             return Intervals(intervals)
         if len(intervals) == 1:
             interval = intervals[0]
-            return Intervals([interval.crop(max(start, interval.start),
-                                            min(stop, interval.stop),
-                                            cropdata)])
+            interval_c = interval.crop(max(start, interval.start),
+                                       min(stop, interval.stop),
+                                       cropdata)
+            return (Intervals([]) if not partial and interval != interval_c else
+                    Intervals([interval_c]))
+
         if len(intervals) > 1:
             first, last = intervals[0], intervals[-1]
             fst_c = first.crop(start=max(start, first.start), cropdata=cropdata)
@@ -325,39 +341,20 @@ class Intervals(Generic[IntervalT], Sequence):
         >>> annotation._borders(40, 50)
         (None, None)
         """
-        final = len(self) - 1
-        left, right = start, stop - 1
+        # TODO use an Interval tree
 
-        @tco
-        def left_border(idx):
-            if self[idx].contains(left) or (not idx and self[idx].after(left)):
-                return False, idx
-            if idx >= final and self[idx].before(left):
-                return False, None
-            if self[idx].before(left) and self[idx+1].after(left):
-                return False, idx + 1
-            return True, [idx // 2 if self[idx].after(left) else
-                          ceil((idx + final) / 2)]
+        def left_border(range_, left) -> Optional[int]:
+            return next((i for i in range_
+                         if self[i].contains(left) or self[i].after(left)), None)
 
-        @tco
-        def right_border(idx):
-            if self[idx].contains(right) or (idx == final and
-                                             self[idx].before(right)):
-                return False, idx
-            if not idx and self[idx].after(right):
-                return False, None
-            if self[idx].before(right) and self[idx+1].after(right):
-                return False, idx
-            return True, [idx // 2 if self[idx].after(right) else
-                          ceil((idx + final) / 2)]
+        def right_border(range_, right) -> Optional[int]:
+            idx = next((i for i in range_ if self[i].after(right)), len(self)-1)
+            return idx if self[idx].after(right) else idx + 1
 
-        fst = None if not self else cast(int, left_border(final // 2))
-        lst = None if fst is None else cast(int, right_border(fst)) or fst
-
-        if fst is None or lst is None or lst == fst and self[lst].after(right):
-            return fst, lst
-        return fst, lst + 1  # the last index is non-inclusive
-
+        first = left_border(range(len(self)), start)
+        last = (None if first is None else
+                right_border(range(first, len(self)), stop-1))
+        return first, last
 
 if __name__ == "__main__":
     raise RuntimeError

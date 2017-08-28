@@ -17,6 +17,7 @@ OTHER = "OTHER"
 TITLE = "T"
 BODY = "A"
 
+ClassMapping = Mapping[Text, Integral]
 ClassifiedInterval = Interval[Integral]
 Annotation = Intervals[ClassifiedInterval]
 AbstractAnnotation = NamedTuple("AbstractAnnotation", [("id", int),
@@ -42,8 +43,7 @@ def read_abstracts(path: Text) -> List[Abstract]:
                 for abstract_n, title, abstract in parsed_buffer]
 
 
-def read_annotations(path: Text, mapping: Mapping[Text, Integral],
-                     default: Integral=0) \
+def read_annotations(path: Text, mapping: ClassMapping, default: Integral=0) \
         -> List[AbstractAnnotation]:
     # TODO more tests
     """

@@ -96,6 +96,8 @@ class Interval(Hashable, Container, Sized, Generic[T]):
         >>> i.crop(1, 1, True).data == ""
         True
         """
+        if not self:
+            raise ValueError("Can't crop a zero-length interval")
         if start is not None and not self.contains(start):
             raise ValueError("New start lies outside interval's borders")
         if stop is not None and not self.contains(stop-1):
@@ -251,6 +253,7 @@ class Intervals(Generic[IntervalT], Sequence):
                crop: bool=True, cropdata: bool=False) \
             -> "Intervals[Interval[T]]":
         # TODO docs
+        # TODO more autotests
         """
         :param start:
         :param stop:
@@ -258,31 +261,43 @@ class Intervals(Generic[IntervalT], Sequence):
         :param crop: crop partially covered intervals
         :param cropdata: crop data in partially covered intervals if `crop is True`
         :return:
-        # >>> from itertools import starmap
-        # >>> ranges = [(2, 3), (5, 6), (7, 9), (11, 15), (19, 30)]
-        # >>> regions = list(starmap(Interval, ranges))
-        # >>> intervals = Intervals(regions)
-        # >>> [(i.start, i.stop) for i in intervals.within(4, 17)] == ranges[1:4]
-        # True
-        # >>> not intervals.within(0, 2)
-        # True
-        # >>> not intervals.within(12, 20)
-        # True
-        # >>> not intervals.within(2, 2)
-        # True
-        # >>> len(intervals.within(12, 20, True))
-        # 2
-        # >>> ([(i.start, i.stop) for i in intervals.within(12, 20, True, False)]
-        # ... == [(11, 15), (19, 30)])
-        # True
-        # >>> ([(i.start, i.stop) for i in intervals.within(12, 20, True)] ==
-        # ...  [(12, 15), (19, 20)])
-        # True
-        # >>> ([(i.start, i.stop) for i in intervals.within(12, 40, True)] ==
-        # ...  [(12, 15), (19, 30)])
-        # True
-        # >>> [(i.start, i.stop) for i in intervals.within(-1, 40)] == ranges
-        # True
+        >>> from itertools import starmap
+        >>> ranges = [(2, 3), (5, 6), (7, 9), (11, 15), (19, 30)]
+        >>> regions = list(starmap(Interval, ranges))
+        >>> intervals = Intervals(regions)
+        >>> [(i.start, i.stop) for i in intervals.within(4, 17)] == ranges[1:4]
+        True
+        >>> not intervals.within(0, 2)
+        True
+        >>> not intervals.within(12, 20)
+        True
+        >>> not intervals.within(2, 2)
+        True
+        >>> len(intervals.within(12, 20, True))
+        2
+        >>> ([(i.start, i.stop) for i in intervals.within(12, 20, True, False)]
+        ... == [(11, 15), (19, 30)])
+        True
+        >>> ([(i.start, i.stop) for i in intervals.within(12, 20, True)] ==
+        ...  [(12, 15), (19, 20)])
+        True
+        >>> ([(i.start, i.stop) for i in intervals.within(12, 40, True)] ==
+        ...  [(12, 15), (19, 30)])
+        True
+        >>> [(i.start, i.stop) for i in intervals.within(-1, 40)] == ranges
+        True
+        >>> from random import randint
+        >>> ranges = [[30, 35]]
+        >>> for _ in range(1000):
+        ...     start = ranges[-1][1] + randint(0, 100)
+        ...     stop = start + randint(1, 100)
+        ...     ranges.append([start, stop])
+        >>> intervals = Intervals(list(starmap(Interval, ranges)))
+        >>> max_ = max(chain.from_iterable(ranges))
+        >>> spans = [sorted([randint(0, max_+10000), randint(0, max_+10000)])
+        ...          for _ in range(1000)]
+        >>> for start, stop in spans:
+        ...     _ = intervals.within(start, stop)
         """
         left, right = self._borders(start, stop)
         if left is None or right is None or not right - left:

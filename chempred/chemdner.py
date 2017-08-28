@@ -6,7 +6,7 @@ Parsers, preprocessors and type annotations for the chemdner dataset.
 
 from itertools import groupby
 from numbers import Integral
-from typing import List, Tuple, Iterator, Text, Iterable, NamedTuple, Mapping
+from typing import List, Tuple, Iterator, Text, Iterable, NamedTuple, Mapping, Optional
 
 import operator as op
 from fn import F
@@ -26,6 +26,7 @@ AbstractAnnotation = NamedTuple("AbstractAnnotation", [("id", int),
 Abstract = NamedTuple("Abstract",
                       [("id", int), ("title", Text), ("body", Text)])
 
+# TODO log empty annotations
 
 def read_abstracts(path: Text) -> List[Abstract]:
     """
@@ -64,7 +65,8 @@ def read_annotations(path: Text, mapping: ClassMapping, default: Integral=0) \
     >>> [len(body) for _, _, body in anno]
     [1, 6, 9, 5]
     """
-    def wrap_interval(record: Tuple[str, str, str, str, str, str]) -> Interval:
+    def wrap_interval(record: Tuple[str, str, str, str, str, str]) \
+            -> Interval:
         _, _, start, stop, _, cls = record
         return Interval(int(start), int(stop), mapping.get(cls, default))
 
@@ -75,7 +77,8 @@ def read_annotations(path: Text, mapping: ClassMapping, default: Integral=0) \
         # separate parts (title and body)
         part_groups = ((id_, groupby(group, op.itemgetter(1)))
                        for id_, group in abstract_groups)
-        wrapper = F(map, wrap_interval) >> list
+        # filter zero-length intervals
+        wrapper = F(map, wrap_interval) >> (filter, bool) >> list
         mapped_parts = ((id_, {part: wrapper(recs) for part, recs in parts})
                         for id_, parts in part_groups)
         return [AbstractAnnotation(int(id_),

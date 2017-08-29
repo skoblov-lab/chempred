@@ -13,6 +13,7 @@ from fn import F
 
 from chempred.intervals import Interval, Intervals
 from chempred import chemdner
+from chempred.chemdner import Abstract, AbstractAnnotation
 from chempred import encoding
 from chempred import sampling
 from chempred import util
@@ -68,16 +69,13 @@ def process_text(text: Text,
     return passing, joined_text, joined_cls, text_mask
 
 
-def process_data(abstracts: List[chemdner.Abstract],
-                 abstract_annotations: List[chemdner.AbstractAnnotation],
+def process_data(pairs: Iterable[Tuple[Abstract, AbstractAnnotation]],
                  width: int, minlen: int, default: int=0) \
         -> Tuple[List[int], List[str], List[Interval],
                  np.ndarray, np.ndarray, np.ndarray]:
     # TODO update docs
     # TODO tests
     """
-    :param abstracts:
-    :param abstract_annotations:
     :param width: context window width (in charactes)
     :param minlen: minimum sample span
     :param default: default class encoding
@@ -86,8 +84,9 @@ def process_data(abstracts: List[chemdner.Abstract],
     >>> mapping = {"SYSTEMATIC": 1}
     >>> abstracts = chemdner.read_abstracts("testdata/abstracts.txt")
     >>> anno = chemdner.read_annotations("testdata/annotations.txt", mapping)
+    >>> pairs = chemdner.align_abstracts_and_annotations(abstracts, anno)
     >>> ids, sources, spans, x, y, mask = (
-    ...     process_data(abstracts, anno, 100, 50)
+    ...     process_data(pairs, 100, 50)
     ... )
     >>> len(ids) == len(sources) == x.shape[0] == y.shape[0] == mask.shape[0]
     True
@@ -102,11 +101,8 @@ def process_data(abstracts: List[chemdner.Abstract],
     def list_merger(lists: Iterable[list]) -> list:
         return reduce(op.iadd, lists, [])
 
-    # align pairs, flatten and remove texts with no annotations
-    pairs = chemdner.align_abstracts_and_annotations(abstracts,
-                                                     abstract_annotations)
+    # align pairs, flatten and remove texts with no annotations and sample
     flattened_pairs = list(map(chemdner.flatten_aligned_pair, pairs))
-    # sample windows
     titles = [title for title, _ in flattened_pairs]
     bodies = [body for _, body in flattened_pairs]
     # sanity  check

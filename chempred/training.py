@@ -1,23 +1,23 @@
 import glob
-from contextlib import contextmanager
-from itertools import chain, starmap
-from functools import reduce
-from typing import Tuple, List, Mapping, Set, Union, Sequence, Text, Iterable, Callable
-
-import numpy as np
 import operator as op
 import os
 import re
 import shutil
+from contextlib import contextmanager
+from functools import reduce
+from itertools import chain, starmap
+from typing import Tuple, List, Text, Iterable, Callable
+
+import numpy as np
 from fn import F
 
-from chempred.intervals import Interval, Intervals
 from chempred import chemdner
-from chempred.chemdner import Abstract, AbstractAnnotation
 from chempred import encoding
 from chempred import sampling
 from chempred import util
-from chempred import chemdner
+from chempred.chemdner import Abstract, AbstractAnnotation
+from chempred.intervals import Interval, Intervals
+
 
 # Data = Union[Mapping[str, str], Sequence[str]]
 # Sample = List[Interval]

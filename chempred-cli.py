@@ -10,6 +10,7 @@ from keras import callbacks
 from keras import layers
 from keras import models
 
+import chempred.util
 from chempred import chemdner
 from chempred import encoding
 from chempred import model
@@ -35,10 +36,8 @@ BIDIRECTIONAL = "bidirectional"  # bidirectional rnn flags
 STATEFUL = "stateful"  # use stateful rnn layers
 # sampling block
 WINDOW = "window"  # sampling window width
-MAXLEN = "maxlen"  # sample size limit
-N_NONPOS = "n_nonpositive"  # the number of non-pos targets to sample per text
+MINLEN = "maxlen"  # sample size limit
 MAPPING = "class_mapping"  # string to integer class mapping
-POSITIVE = "positive_cls"  # a sequence of positive classes
 
 # TODO extensive doc update
 # TODO return conv-layers
@@ -78,11 +77,9 @@ def train(ctx, train_abstracts, train_annotations, test_abstracts,
     model_destination = os.path.join(directory, "{}.json".format(MODEL))
 
     # extract training_configs
-    mapping = model.parse_mapping(config[MAPPING])
-    positive = set(config[POSITIVE])
-    maxlen = config[MAXLEN]
+    mapping = chempred.util.parse_mapping(config[MAPPING])
+    maxlen = config[MINLEN]
     window = config[WINDOW]
-    n_nonpos = config[N_NONPOS]
 
     embedding = config[EMBEDDING]
     lstm_layers = config[NSTEPS]
@@ -92,25 +89,7 @@ def train(ctx, train_abstracts, train_annotations, test_abstracts,
 
     # TODO report failures
     # read data
-    train_abstracts = chemdner.read_abstracts(os.path.abspath(train_abstracts))
-    train_anno = chemdner.read_annotations(os.path.abspath(train_annotations))
-    test_abstracts = chemdner.read_abstracts(os.path.abspath(test_abstracts))
-    test_anno = chemdner.read_annotations(os.path.abspath(test_annotations))
 
-    # encode data
-    train_ids, train_samples, train_fail, train_x, train_y, train_mask = (
-        training.process_data(train_abstracts, train_anno, window,
-                              maxlen, n_nonpos, mapping, positive)
-    )
-    train_y_onehot = util.one_hot(train_y)
-    train_y_masked = util.maskfalse(train_y_onehot, train_mask)
-
-    test_ids, test_samples, test_fail, test_x, test_y, test_mask = (
-        training.process_data(test_abstracts, test_anno, window,
-                              maxlen, n_nonpos, mapping, positive)
-    )
-    test_y_onehot = util.one_hot(test_y)
-    test_y_masked = util.maskfalse(test_y_onehot, test_mask)
 
 
 

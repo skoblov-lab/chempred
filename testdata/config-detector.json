@@ -5,15 +5,15 @@
     "nfilters": [30, 30]
   },
   "rec": {
-    "nsteps": [200, 200],
-    "input_dropout": [0.0, 0.1],
-    "recurrent_dropout": [0.0, 0.1],
+    "nsteps": [200, 200, 200, 200],
+    "input_dropout": [0.0, 0.1, 0.1, 0.1],
+    "recurrent_dropout": [0.0, 0.1, 0.1, 0.1],
     "bidirectional": true,
     "stateful": false
   },
   "sampling": {
-    "window": 5,
-    "maxlen": 500,
+    "window": 200,
+    "minlen": 50,
     "n_nonpositive": 3
   },
   "class_mapping": [
@@ -26,7 +26,5 @@
     "NO CLASS:1",
     "SYSTEMATIC:1",
     "TRIVIAL:1"
-  ],
-  "positive_cls": ["ABBREVIATION", "FAMILY", "FORMULA", "IDENTIFIER",
-                   "MULTIPLE", "NO CLASS", "SYSTEMATIC", "TRIVIAL"]
+  ]
 }

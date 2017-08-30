@@ -6,18 +6,19 @@ Parsers, preprocessors and type annotations for the chemdner dataset.
 
 from itertools import groupby
 from numbers import Integral
-from typing import List, Tuple, Iterator, Text, Iterable, NamedTuple, Mapping, Optional
+from typing import List, Tuple, Iterator, Text, Iterable, NamedTuple
 
 import operator as op
 from fn import F
 
 from chempred.intervals import Intervals, Interval
+from chempred.util import ClassMapping
+
 
 OTHER = "OTHER"
 TITLE = "T"
 BODY = "A"
 
-ClassMapping = Mapping[Text, Integral]
 ClassifiedInterval = Interval[Integral]
 Annotation = Intervals[ClassifiedInterval]
 AbstractAnnotation = NamedTuple("AbstractAnnotation", [("id", int),
@@ -26,7 +27,6 @@ AbstractAnnotation = NamedTuple("AbstractAnnotation", [("id", int),
 Abstract = NamedTuple("Abstract",
                       [("id", int), ("title", Text), ("body", Text)])
 
-# TODO log empty annotations
 
 def read_abstracts(path: Text) -> List[Abstract]:
     """
@@ -46,6 +46,7 @@ def read_abstracts(path: Text) -> List[Abstract]:
 
 def read_annotations(path: Text, mapping: ClassMapping, default: Integral=0) \
         -> List[AbstractAnnotation]:
+    # TODO log empty annotations
     # TODO more tests
     """
     Read chemdner annotations

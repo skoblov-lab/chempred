@@ -1,13 +1,16 @@
 from typing import List, Tuple, Optional, Text, Pattern, Sequence, Mapping
+from numbers import Integral
 import re
 
 import numpy as np
 from enforce import runtime_validation
+from sklearn.utils import class_weight
 
 from chempred.intervals import Interval, Intervals
 
 
 Token = Interval[Optional[Text]]
+ClassMapping = Mapping[Text, Integral]
 
 
 def tokenise(text: Text, inflate=False, pattern: Pattern=re.compile("\S+")) \
@@ -98,7 +101,7 @@ def maskfalse(array: np.ndarray, mask: np.ndarray) -> np.ndarray:
     return copy
 
 
-def parse_mapping(classmaps: Sequence[str]) -> Mapping[str, int]:
+def parse_mapping(classmaps: Sequence[str]) -> ClassMapping:
     """
     :param classmaps:
     :return:
@@ -113,7 +116,37 @@ def parse_mapping(classmaps: Sequence[str]) -> Mapping[str, int]:
         raise ValueError("Badly formatted mapping: {}".format(err))
 
 
+def balance_class_weights(y: np.ndarray, mask: Optional[np.ndarray]=None) \
+        -> Mapping[int, float]:
+    """
+    :param y: a 2D array encoding sample classes; each sample is a row of
+    integers representing class codes
+    :param mask: a boolean array of the same shape as `y`, wherein True shows
+    that the corresponding value in `y` should be used to calculate weights;
+    if `None` the function will consider all values in `y`
+    :return: class weights
+    """
+    y_flat = (y.flat() if mask is None else
+              np.concatenate([sample[mask] for sample, mask in zip(y, mask)]))
+    classes = np.unique(y_flat)
+    weights = class_weight.compute_class_weight("balanced", classes, y_flat)
+    return {cls: weight for cls, weight in zip(classes, weights)}
+
+
+def sample_weights(y: np.ndarray, class_weights: Mapping[int, float]) \
+        -> np.ndarray:
+    """
+    :param y: a 2D array encoding sample classes; each sample is a row of
+    integers representing class code
+    :param class_weights: a class to weight mapping
+    :return: a 2D array of the same shape as `y`, wherein each position stores
+    a weight for the corresponding position in `y`
+    """
+    weights_mask = np.zeros(shape=y.shape, dtype=np.float32)
+    for cls, weight in class_weights.items():
+        weights_mask[y == cls] = weight
+    return weights_mask
+
+
 if __name__ == "__main__":
     raise RuntimeError
-
-

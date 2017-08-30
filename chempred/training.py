@@ -27,14 +27,14 @@ from chempred import chemdner
 def process_text(text: Text,
                  annotation: Intervals[chemdner.ClassifiedInterval],
                  width: int, minlen: int, default: int=0) \
-        -> Tuple[List[Interval], np.ndarray, np.ndarray, np.ndarray]:
+        -> Tuple[List[Intervals], np.ndarray, np.ndarray, np.ndarray]:
     """
     :param text:
     :param annotation:
     :param width: context window width (in charactes)
     :param minlen: minimum sample span
     :param default: default class encoding
-    :return: sample spans, encoded text, encoded annotations, padding mask
+    :return: samples, encoded text, encoded annotations, padding mask
     >>> import random
     >>> from chempred.intervals import Interval, Intervals
     >>> anno = Intervals([Interval(4, 10, 1), Interval(20, 25, 2)])
@@ -47,20 +47,22 @@ def process_text(text: Text,
     """
     # TODO return failures
     tokenised_text = util.tokenise(text)
-    sample_spans = [sample.span for sample in
-                    sampling.sample_windows(tokenised_text, width)]
+    samples = [sample for sample in
+               sampling.sample_windows(tokenised_text, width)]
     # remove samples with no annotated regions and insufficient length
-    passing = [span for span in sample_spans
-               if len(span) >= minlen and annotation.covers(span)]
+    passing = [sample for sample in samples
+               if len(sample.span) >= minlen and annotation.covers(sample.span)]
+
+    if not passing:
+        return [], np.array([]), np.array([]), np.array([])
+
     encoded_text = [
-        encoding.encode_text(text, span) for span in passing
+        encoding.encode_text(text, sample.span) for sample in passing
     ]
     encoded_classes = [
-        encoding.encode_annotation(span, annotation, default=default)
-        for span in passing
+        encoding.encode_annotation(sample.span, annotation, default=default)
+        for sample in passing
     ]
-    if not encoded_text:
-        return [], np.array([]), np.array([]), np.array([])
 
     joined_text, text_mask = util.join(encoded_text, width)
     joined_cls, cls_mask = util.join(encoded_classes, width)
@@ -79,7 +81,7 @@ def process_data(pairs: Iterable[Tuple[Abstract, AbstractAnnotation]],
     :param width: context window width (in charactes)
     :param minlen: minimum sample span
     :param default: default class encoding
-    :return: text ids, sample spans, sample sources (title or body), encoded and
+    :return: text ids, samples, sample sources (title or body), encoded and
     padded text, encoded and padded classes, padding masks.
     >>> mapping = {"SYSTEMATIC": 1}
     >>> abstracts = chemdner.read_abstracts("testdata/abstracts.txt")
@@ -101,7 +103,7 @@ def process_data(pairs: Iterable[Tuple[Abstract, AbstractAnnotation]],
     def list_merger(lists: Iterable[list]) -> list:
         return reduce(op.iadd, lists, [])
 
-    # align pairs, flatten and remove texts with no annotations and sample
+    # align pairs, flatten and sample windows
     flattened_pairs = list(map(chemdner.flatten_aligned_pair, pairs))
     titles = [title for title, _ in flattened_pairs]
     bodies = [body for _, body in flattened_pairs]
@@ -113,21 +115,21 @@ def process_data(pairs: Iterable[Tuple[Abstract, AbstractAnnotation]],
                     for id_, src, text, anno in bodies]
     # flatten processed data
     proc_titles_flat = [
-        ([id_] * len(spans), [src] * len(spans), spans, txt, cls, mask)
-        for id_, src, (spans, txt, cls, mask) in proc_titles
+        ([id_] * len(samples), [src] * len(samples), samples, txt, cls, mask)
+        for id_, src, (samples, txt, cls, mask) in proc_titles
     ]
     proc_bodies_flat = [
-        ([id_] * len(spans), [src] * len(spans), spans, txt, cls, mask)
-        for id_, src, (spans, txt, cls, mask) in proc_bodies
+        ([id_] * len(samples), [src] * len(samples), samples, txt, cls, mask)
+        for id_, src, (samples, txt, cls, mask) in proc_bodies
     ]
     # merge data from titles and bodies
     ids = merge_results(0, list_merger)([proc_titles_flat, proc_bodies_flat])
     src = merge_results(1, list_merger)([proc_titles_flat, proc_bodies_flat])
-    spans = merge_results(2, list_merger)([proc_titles_flat, proc_bodies_flat])
+    samples = merge_results(2, list_merger)([proc_titles_flat, proc_bodies_flat])
     texts = merge_results(3, np.vstack)([proc_titles_flat, proc_bodies_flat])
     cls = merge_results(4, np.vstack)([proc_titles_flat, proc_bodies_flat])
     masks = merge_results(5, np.vstack)([proc_titles_flat, proc_bodies_flat])
-    return ids, src, spans, texts, cls, masks
+    return ids, src, samples, texts, cls, masks
 
 
 def pick_best(filenames: List[str]) -> Tuple[str, Tuple[int, float]]:

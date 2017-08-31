@@ -1,0 +1,29 @@
+{
+  "embed": 50,
+  "conv": {
+    "filter_width": [5, 5],
+    "nfilters": [30, 30]
+  },
+  "rec": {
+    "nsteps": [200, 200, 200, 200],
+    "input_dropout": [0.0, 0.1, 0.1, 0.1],
+    "recurrent_dropout": [0.0, 0.1, 0.1, 0.1],
+    "bidirectional": true,
+    "stateful": false
+  },
+  "sampling": {
+    "window": 30,
+    "minlen": 10
+  },
+  "weighted": true,
+  "class_mapping": [
+    "ABBREVIATION:1",
+    "FAMILY:1",
+    "FORMULA:1",
+    "IDENTIFIER:1",
+    "MULTIPLE:1",
+    "NO CLASS:1",
+    "SYSTEMATIC:1",
+    "TRIVIAL:1"
+  ]
+}

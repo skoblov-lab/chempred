@@ -1,6 +1,10 @@
-from setuptools import find_packages
+import sys
 from distutils.core import setup
-import os
+from setuptools import find_packages
+
+if sys.version_info < (3, 5, 3):
+    print("ChemPred required Python >= 3.5.3")
+    sys.exit(1)
 
 # from Cython.Build import cythonize
 #
@@ -8,10 +12,13 @@ import os
 
 setup(
     name="chempred",
-    # ext_modules=cythonize(["chempred/chemdner.py"]),
+    version="0.1dev",
     packages=find_packages("./"),
+    scripts=["chem-pred"],
     requires=["numpy",
-              # "cython",
+              "h5py",
               "fn",
-              "pyrsistent"]
+              "enforce",
+              "pyrsistent",
+              "keras"]
 )

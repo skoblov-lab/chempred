@@ -1,4 +1,5 @@
-# import chempred.chemdner
-# import chempred.preprocessing
-# import chempred.model
-# import chempred.training
+import sys
+
+if sys.version_info < (3, 5, 3):
+    print("ChemPred required Python >= 3.5.3")
+    sys.exit(1)

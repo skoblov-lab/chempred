@@ -12,7 +12,7 @@ if sys.version_info < (3, 5, 3):
 
 setup(
     name="chempred",
-    version="0.1dev",
+    version="0.2dev",
     packages=find_packages("./"),
     scripts=["chem-pred"],
     requires=["numpy",

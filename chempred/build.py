@@ -4,66 +4,15 @@ Utility functions for creating ChemPred deep learning models and working with
 their predictions
 
 """
-import json
 from functools import reduce
-from io import TextIOWrapper
-from itertools import chain
-from typing import Sequence, Tuple, Optional, List, Union, Callable, Mapping
+from typing import Sequence, Tuple, Optional, Union, Callable
 
-import numpy as np
 from enforce import runtime_validation
 from keras import layers, models
 
 from chempred import encoding
-from chempred.chemdner import Interval
 
 NCHAR = encoding.MAXCHAR + 1
-
-
-class Config(dict):
-    """
-    Model configurations
-    """
-    def __init__(self, config: Union[TextIOWrapper, Mapping]):
-        """
-        :param config: an opened json file or a mapping
-        """
-        super(Config, self).__init__(config if isinstance(config, Mapping) else
-                                     json.load(config))
-
-    def __getitem__(self, item):
-        retval = self.get(item)
-        if retval is None:
-            raise KeyError("No {} configuration".format(item))
-        return retval
-
-    def get(self, item, default=None):
-        """
-        :param item: item to search for
-        :param default: default value
-        :return:
-        >>> config = Config(open("testdata/config-detector.json"))
-        >>> config["bidirectional"]
-        True
-        >>> config.get("epochs")
-        >>> from_dict = Config(json.load(open("testdata/config-detector.json")))
-        >>> from_mapping = Config(from_dict)
-        >>> from_mapping["nsteps"]
-        [200, 200, 200, 200]
-        >>> from_mapping.update({"lstm": {"nsteps": [300, 300]}})
-        >>> isinstance(from_mapping, Config)
-        True
-        >>> from_mapping["nsteps"]
-        [300, 300]
-        """
-        to_visit = list(self.items())
-        while to_visit:
-            key, value = to_visit.pop()
-            if key == item:
-                return value
-            if isinstance(value, Mapping):
-                to_visit.extend(value.items())
-        return default
 
 
 def build_conv(nfilters: Sequence[int],
@@ -148,46 +97,6 @@ def build_rec(nsteps: Sequence[int],
     return rec
 
 
-def merge_predictions(intervals: List[Interval], predictions: np.ndarray) \
-        -> np.ndarray:
-    """
-    :param intervals: intervals (non-inclusive on the right side)
-    :param predictions:
-    :return:
-    >>> randints = np.random.randint(0, 1000, size=20)
-    >>> intervals = sorted([tuple(sorted(randints[i:i+2]))
-    ...                     for i in range(0, len(randints), 2)])
-    >>> maxlen = max(end - start for start, end in intervals)
-    >>> predictions = np.zeros((len(intervals), maxlen), dtype=float)
-    >>> for i, (start, end) in enumerate(intervals):
-    ...     predictions[i, :end-start] = np.random.uniform(0, 1, size=end-start)
-    >>> manual = [[] for _ in range(max(chain.from_iterable(intervals)))]
-    >>> for (i, (start, end)), pred in zip(enumerate(intervals), predictions):
-    ...     for j, value in zip(range(start, end), pred[:end-start]):
-    ...         manual[j].append(value)
-    >>> means_man =  np.array([np.mean(values) if values else np.nan
-    ...                       for values in manual])
-    >>> means_func = merge_predictions(intervals, predictions)
-    >>> nan_man = np.isnan(means_man)
-    >>> nan_func = np.isnan(means_func)
-    >>> (nan_man == nan_func).all()
-    True
-    >>> (means_man[~nan_man].round(3) == means_func[~nan_func].round(3)).all()
-    True
-    """
-    # the intervals are half-inclusive and zero-indexed
-    length = max(chain.from_iterable(intervals))
-    buckets = np.zeros(length, dtype=np.float64)
-    nsamples = np.zeros(length, dtype=np.int32)
-    for (start, end), pred in zip(intervals, predictions):
-        # `predictions` are zero-padded – we must remove the padded tail
-        sample_length = end - start
-        buckets[start:end] += pred[:sample_length]
-        nsamples[start:end] += np.ones(sample_length, dtype=np.int32)
-    with np.errstate(divide='ignore', invalid="ignore"):
-        return buckets / nsamples
-
-
 def build_nn(sample_size: int,
              embed: int,
              ncls: int,
@@ -205,14 +114,14 @@ def build_nn(sample_size: int,
     encoder = layers.Embedding(
         NCHAR, embed, input_length=sample_size, mask_zero=no_cnn)(l_in)
     if not no_cnn:
-        encoder = build_conv(nfilters, filter_width)
+        encoder = build_conv(nfilters, filter_width)(encoder)
         encoder = layers.Flatten(name="flat")(encoder)
         encoder = layers.RepeatVector(sample_size, name="repeat")(encoder)
     decoder = build_rec(
         nsteps, in_drop, rec_drop, bidirectional, stateful)(encoder)
     l_out = layers.TimeDistributed(
         layers.Dense(ncls, activation='softmax'), name="l_out")(decoder)
-    return l_out
+    return models.Model(l_in, l_out)
 
 
 if __name__ == "__main__":

@@ -12,9 +12,9 @@ import numpy as np
 from fn import F
 
 from chempred import chemdner, util
-from chempred.sampling import process_text
 from chempred.chemdner import Abstract, AbstractAnnotation
 from chempred.intervals import Interval
+from chempred.sampling import process_text
 
 
 def process_data(pairs: Iterable[Tuple[Abstract, AbstractAnnotation]],
@@ -47,8 +47,11 @@ def process_data(pairs: Iterable[Tuple[Abstract, AbstractAnnotation]],
                 >> tuple
                 >> merger)
 
-    def list_merger(lists: Iterable[list]) -> list:
+    def lst_merger(lists: Iterable[list]) -> list:
         return reduce(op.iadd, lists, [])
+
+    def array_merger(arrays: Tuple[np.ndarray]) -> np.ndarray:
+        return np.vstack(arrays) if arrays else np.array([], dtype=np.int32)
 
     # align pairs, flatten and sample windows
     flattened_pairs = list(map(chemdner.flatten_aligned_pair, pairs))
@@ -74,12 +77,12 @@ def process_data(pairs: Iterable[Tuple[Abstract, AbstractAnnotation]],
         for id_, src, (samples, txt, cls, mask) in proc_bodies
     ]
     # merge data from titles and bodies
-    ids = merge_results(0, list_merger)([proc_titles_flat, proc_bodies_flat])
-    src = merge_results(1, list_merger)([proc_titles_flat, proc_bodies_flat])
-    samples = merge_results(2, list_merger)([proc_titles_flat, proc_bodies_flat])
-    texts = merge_results(3, np.vstack)([proc_titles_flat, proc_bodies_flat])
-    cls = merge_results(4, np.vstack)([proc_titles_flat, proc_bodies_flat])
-    masks = merge_results(5, np.vstack)([proc_titles_flat, proc_bodies_flat])
+    ids = merge_results(0, lst_merger)([proc_titles_flat, proc_bodies_flat])
+    src = merge_results(1, lst_merger)([proc_titles_flat, proc_bodies_flat])
+    samples = merge_results(2, lst_merger)([proc_titles_flat, proc_bodies_flat])
+    texts = merge_results(3, array_merger)([proc_titles_flat, proc_bodies_flat])
+    cls = merge_results(4, array_merger)([proc_titles_flat, proc_bodies_flat])
+    masks = merge_results(5, array_merger)([proc_titles_flat, proc_bodies_flat])
     return ids, src, samples, texts, cls, masks
 
 
@@ -104,7 +107,7 @@ def pick_best(filenames: List[str]) -> Tuple[str, Tuple[int, float]]:
 def training(rootdir: str, name: str):
     # TODO docs
     """
-    Initialise training temporary directories and cleanup upon completion
+    Initialise temporary training directories and cleanup upon completion
     :param rootdir:
     :param name:
     :return:
@@ -112,15 +115,15 @@ def training(rootdir: str, name: str):
     training_dir = os.path.join(rootdir, "{}-training".format(name))
     weights_template = os.path.join(training_dir,
                                     "{epoch:02d}-{val_acc:.3f}.hdf5")
-    w_destination = os.path.join(rootdir, "{}-weights.hdf5".format(name))
+    destination = os.path.join(rootdir, "{}.hdf5".format(name))
     os.makedirs(training_dir)
     try:
         yield weights_template
     finally:
-        all_weights = glob.glob(os.path.join(training_dir, "*.hdf5"))
-        if all_weights:
-            best_weights, stats = pick_best(all_weights)
-            shutil.move(best_weights, w_destination)
+        all_checkpoints = glob.glob(os.path.join(training_dir, "*.hdf5"))
+        if all_checkpoints:
+            best_checkpoint, stats = pick_best(all_checkpoints)
+            shutil.move(best_checkpoint, destination)
         shutil.rmtree(training_dir)
 
 

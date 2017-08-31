@@ -12,9 +12,8 @@
     "stateful": false
   },
   "sampling": {
-    "window": 200,
-    "minlen": 50,
-    "n_nonpositive": 3
+    "window": 30,
+    "minlen": 10
   },
   "weighted": true,
   "class_mapping": [

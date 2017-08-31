@@ -1,4 +1,8 @@
-from typing import List, Tuple, Optional, Text, Pattern, Sequence, Mapping, Callable, Iterable
+import json
+from io import TextIOWrapper
+from itertools import chain
+from typing import List, Tuple, Optional, Text, Pattern, Sequence, Mapping, \
+    Callable, Union
 from numbers import Integral
 import re
 
@@ -16,6 +20,52 @@ ClassMapping = Mapping[Text, Integral]
 WS_PATT = re.compile("\S+")
 PUNCT_PATT = re.compile(r"[\w]+|[^\s\w]")
 PUNCT_WS_PATT = re.compile(r"[\w]+|[^\w]")
+
+
+class Config(dict):
+    """
+    Model configurations
+    """
+    def __init__(self, config: Union[TextIOWrapper, Mapping]):
+        """
+        :param config: an opened json file or a mapping
+        """
+        super(Config, self).__init__(config if isinstance(config, Mapping) else
+                                     json.load(config))
+
+    def __getitem__(self, item):
+        retval = self.get(item)
+        if retval is None:
+            raise KeyError("No {} configuration".format(item))
+        return retval
+
+    def get(self, item, default=None):
+        """
+        :param item: item to search for
+        :param default: default value
+        :return:
+        >>> config = Config(open("testdata/config-detector.json"))
+        >>> config["bidirectional"]
+        True
+        >>> config.get("epochs")
+        >>> from_dict = Config(json.load(open("testdata/config-detector.json")))
+        >>> from_mapping = Config(from_dict)
+        >>> from_mapping["nsteps"]
+        [200, 200, 200, 200]
+        >>> from_mapping.update({"lstm": {"nsteps": [300, 300]}})
+        >>> isinstance(from_mapping, Config)
+        True
+        >>> from_mapping["nsteps"]
+        [300, 300]
+        """
+        to_visit = list(self.items())
+        while to_visit:
+            key, value = to_visit.pop()
+            if key == item:
+                return value
+            if isinstance(value, Mapping):
+                to_visit.extend(value.items())
+        return default
 
 
 def tokenise(text: Text, pattern: Pattern=WS_PATT, inflate=False) \
@@ -83,6 +133,8 @@ def one_hot(array: np.ndarray) -> np.ndarray:
     """
     if not np.issubdtype(array.dtype, np.int):
         raise ValueError("`array.dtype` must be integral")
+    if not len(array):
+        return array
     vectors = np.eye(array.max()+1, dtype=array.dtype)
     return vectors[array]
 
@@ -122,7 +174,7 @@ def parse_mapping(classmaps: Sequence[str]) -> ClassMapping:
 
 
 def balance_class_weights(y: np.ndarray, mask: Optional[np.ndarray]=None) \
-        -> Mapping[int, float]:
+        -> Optional[Mapping[int, float]]:
     """
     :param y: a 2D array encoding sample classes; each sample is a row of
     integers representing class codes
@@ -131,6 +183,8 @@ def balance_class_weights(y: np.ndarray, mask: Optional[np.ndarray]=None) \
     if `None` the function will consider all values in `y`
     :return: class weights
     """
+    if not len(y):
+        raise ValueError("`y` is empty")
     y_flat = (y.flat() if mask is None else
               np.concatenate([sample[mask] for sample, mask in zip(y, mask)]))
     classes = np.unique(y_flat)
@@ -151,6 +205,46 @@ def sample_weights(y: np.ndarray, class_weights: Mapping[int, float]) \
     for cls, weight in class_weights.items():
         weights_mask[y == cls] = weight
     return weights_mask
+
+
+def merge_predictions(intervals: List[Interval], predictions: np.ndarray) \
+        -> np.ndarray:
+    """
+    :param intervals: intervals (non-inclusive on the right side)
+    :param predictions:
+    :return:
+    >>> randints = np.random.randint(0, 1000, size=20)
+    >>> intervals = sorted([tuple(sorted(randints[i:i+2]))
+    ...                     for i in range(0, len(randints), 2)])
+    >>> maxlen = max(end - start for start, end in intervals)
+    >>> predictions = np.zeros((len(intervals), maxlen), dtype=float)
+    >>> for i, (start, end) in enumerate(intervals):
+    ...     predictions[i, :end-start] = np.random.uniform(0, 1, size=end-start)
+    >>> manual = [[] for _ in range(max(chain.from_iterable(intervals)))]
+    >>> for (i, (start, end)), pred in zip(enumerate(intervals), predictions):
+    ...     for j, value in zip(range(start, end), pred[:end-start]):
+    ...         manual[j].append(value)
+    >>> means_man =  np.array([np.mean(values) if values else np.nan
+    ...                       for values in manual])
+    >>> means_func = merge_predictions(intervals, predictions)
+    >>> nan_man = np.isnan(means_man)
+    >>> nan_func = np.isnan(means_func)
+    >>> (nan_man == nan_func).all()
+    True
+    >>> (means_man[~nan_man].round(3) == means_func[~nan_func].round(3)).all()
+    True
+    """
+    # the intervals are half-inclusive and zero-indexed
+    length = max(chain.from_iterable(intervals))
+    buckets = np.zeros(length, dtype=np.float64)
+    nsamples = np.zeros(length, dtype=np.int32)
+    for (start, end), pred in zip(intervals, predictions):
+        # `predictions` are zero-padded – we must remove the padded tail
+        sample_length = end - start
+        buckets[start:end] += pred[:sample_length]
+        nsamples[start:end] += np.ones(sample_length, dtype=np.int32)
+    with np.errstate(divide='ignore', invalid="ignore"):
+        return buckets / nsamples
 
 
 if __name__ == "__main__":

@@ -1,19 +1,23 @@
+#! /usr/bin/env python3
+
 """
 
 ChemPred prototype
 
 """
-import os
 import random
+import os
+import sys
+
+if sys.version_info < (3, 5, 3):
+    print("ChemPred required Python >= 3.5.3")
+    sys.exit(1)
 
 import click
-from keras import callbacks
 
 from chempred import chemdner
 from chempred import encoding
-from chempred import model
-from chempred import training
-from chempred.training import process_data
+from chempred.training import process_data, training
 from chempred import util
 
 
@@ -26,7 +30,7 @@ DIRECTORY = "directory"
 EMBEDDING = "embed"  # the size of character embeddings
 # convolutional block
 FILTER_WIDTH = "filter_width"  # 1D convolutional filter width
-NFILTERS = "the number of filters to use at each layer"
+NFILTERS = "nfilters"
 # recurrent block
 NSTEPS = "nsteps"  # the number of steps to use at each rnn layer
 INPUT_DROPOUT = "input_dropout"  # rnn layer input dropout
@@ -35,7 +39,7 @@ BIDIRECTIONAL = "bidirectional"  # bidirectional rnn flags
 STATEFUL = "stateful"  # use stateful rnn layers
 # sampling block
 WINDOW = "window"  # sampling window width
-MINLEN = "maxlen"  # sample size limit
+MINLEN = "minlen"  # sample size limit
 MAPPING = "class_mapping"  # string to integer class mapping
 # training block
 WEIGHTED = "weighted"
@@ -45,25 +49,26 @@ WEIGHTED = "weighted"
 # TODO check that data contains > 1 cls
 # Note! Any class not in mapping is mapped into 0
 
+
 @click.group("chemdpred", chain=True, help=__doc__)
-@click.option("-d", "--directory",
+@click.option("-d", "--directory", required=True,
               help="Path to a directory with ChemPred models.")
-@click.option("-c", "--config",
+@click.option("-c", "--config", required=True,
               help="Configurations.")
 @click.pass_context
-def chempred(ctx, directory, config):
+def cli(ctx, directory, config):
     ctx.obj[DIRECTORY] = os.path.abspath(directory)
-    ctx.obj.update(model.Config(open(os.path.abspath(config))))
+    ctx.obj.update(util.Config(open(os.path.abspath(config))))
 
 
-@chempred.command("detect")
-@click.option("-i", "--input", htype=str, help="Plain text input file")
+@cli.command("detect")
+@click.option("-i", "--input", type=str, help="Plain text input file")
 @click.pass_context
 def detect(ctx, input):
     pass
 
 
-@chempred.command("train")
+@cli.command("train")
 @click.option("-a", "--abstracts", type=str, required=True)
 @click.option("-n", "--annotations", type=str, required=True)
 @click.option("-e", "--epochs", type=int, default=30)
@@ -108,9 +113,9 @@ def train(ctx, abstracts, annotations, epochs, batchsize, val_split):
                       if any(abstract_annotations[1:])]
     random.shuffle(nonempty_pairs)
     # separate training and testing datasets
-    n_val_pairs = int(len(nonempty_pairs) * val_split)
-    pairs_train = nonempty_pairs[:-n_val_pairs]
-    pairs_test = nonempty_pairs[-n_val_pairs:]
+    n_val_pairs = int(round(len(nonempty_pairs) * val_split))
+    pairs_train = nonempty_pairs[:-n_val_pairs or len(nonempty_pairs)]
+    pairs_test = nonempty_pairs[-n_val_pairs or len(nonempty_pairs):]
 
     # generate training samples
     tokeniser = util.tokenise
@@ -122,29 +127,37 @@ def train(ctx, abstracts, annotations, epochs, batchsize, val_split):
                 util.one_hot(y))
     y_test_onehot = (util.maskfalse(util.one_hot(y_test)) if not nfilters else
                      util.one_hot(y_test))
-
+    test_data = (x_test, y_test_onehot) if len(x_test) else None
+    if not len(x):
+        print("No training samples collected")
+        sys.exit(1)
+    if not len(x_test):
+        print("No testing samples collected")
+        sys.exit(1)
     # calculate sample weights
     class_weights = util.balance_class_weights(y, mask) if weighted else None
     sample_weights = util.sample_weights(y, class_weights) if weighted else None
 
-    # build, serialise and train the model
-    detector_model = model.build_nn(
+    # build.py, serialise and train the model
+    from keras import callbacks
+    from chempred import build
+    detector_model = build.build_nn(
         window_width, embedding, ncls, nfilters, filter_width, nsteps,
         input_dropout, rec_dropout, bidirectional, stateful
     )
     detector_model.compile(optimizer="Adam", loss="binary_crossentropy",
                            sample_weight_mode="temporal", metrics=["accuracy"])
-    with open(model_destination, "w") as model_out:
-        print(detector_model.to_json(), file=model_out)
-    with training.training(directory, MODEL) as model_checkpoint_path:
+    with training(directory, MODEL) as model_checkpoint_path:
+        with open(model_destination, "w") as model_out:
+            print(detector_model.to_json(), file=model_out)
         checkpoint = callbacks.ModelCheckpoint(model_checkpoint_path,
                                                monitor="val_acc",
                                                verbose=1, mode="max",
                                                save_best_only=True)
-        detector_model.fit(x, y_onehot, validation_data=(x_test, y_test_onehot),
-                           verbose=1, epochs=epochs, batch_size=batchsize,
+        detector_model.fit(x, y_onehot, validation_data=test_data, verbose=1,
+                           epochs=epochs, batch_size=batchsize,
                            sample_weight=sample_weights,  callbacks=[checkpoint])
 
 
 if __name__ == "__main__":
-    chempred(obj=model.Config({}))
+    cli(obj=util.Config({}))

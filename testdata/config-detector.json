@@ -16,8 +16,8 @@
     "minlen": 50,
     "n_nonpositive": 3
   },
+  "weighted": true,
   "class_mapping": [
-    "OTHER:0",
     "ABBREVIATION:1",
     "FAMILY:1",
     "FORMULA:1",

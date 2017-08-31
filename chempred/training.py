@@ -6,73 +6,20 @@ import shutil
 from contextlib import contextmanager
 from functools import reduce
 from itertools import chain, starmap
-from typing import Tuple, List, Text, Iterable, Callable
+from typing import Tuple, List, Iterable, Callable
 
 import numpy as np
 from fn import F
 
-from chempred import chemdner
-from chempred import encoding
-from chempred import sampling
-from chempred import util
+from chempred import chemdner, util
+from chempred.sampling import process_text
 from chempred.chemdner import Abstract, AbstractAnnotation
-from chempred.intervals import Interval, Intervals
-
-
-# Data = Union[Mapping[str, str], Sequence[str]]
-# Sample = List[Interval]
-# Failure = Tuple[int, ClassifiedRegion]
-
-
-def process_text(text: Text,
-                 annotation: Intervals[chemdner.ClassifiedInterval],
-                 width: int, minlen: int, default: int=0) \
-        -> Tuple[List[Intervals], np.ndarray, np.ndarray, np.ndarray]:
-    """
-    :param text:
-    :param annotation:
-    :param width: context window width (in charactes)
-    :param minlen: minimum sample span
-    :param default: default class encoding
-    :return: samples, encoded text, encoded annotations, padding mask
-    >>> import random
-    >>> from chempred.intervals import Interval, Intervals
-    >>> anno = Intervals([Interval(4, 10, 1), Interval(20, 25, 2)])
-    >>> text = "".join(random.choice("abc ") for _ in range(len(anno.span)+9))
-    >>> samples, text_e, cls_e, mask = process_text(text, anno, 10, 5)
-    >>> text_e.shape == cls_e.shape == mask.shape
-    True
-    >>> len(samples) == len(text_e) == len(cls_e) == len(mask)
-    True
-    """
-    # TODO return failures
-    tokenised_text = util.tokenise(text)
-    samples = [sample for sample in
-               sampling.sample_windows(tokenised_text, width)]
-    # remove samples with no annotated regions and insufficient length
-    passing = [sample for sample in samples
-               if len(sample.span) >= minlen and annotation.covers(sample.span)]
-
-    if not passing:
-        return [], np.array([]), np.array([]), np.array([])
-
-    encoded_text = [
-        encoding.encode_text(text, sample.span) for sample in passing
-    ]
-    encoded_classes = [
-        encoding.encode_annotation(sample.span, annotation, default=default)
-        for sample in passing
-    ]
-
-    joined_text, text_mask = util.join(encoded_text, width)
-    joined_cls, cls_mask = util.join(encoded_classes, width)
-    # sanity check
-    assert (text_mask == cls_mask).all()
-    return passing, joined_text, joined_cls, text_mask
+from chempred.intervals import Interval
 
 
 def process_data(pairs: Iterable[Tuple[Abstract, AbstractAnnotation]],
-                 width: int, minlen: int, default: int=0) \
+                 tokeniser: util.Tokeniser, width: int, minlen: int,
+                 default: int=0) \
         -> Tuple[List[int], List[str], List[Interval],
                  np.ndarray, np.ndarray, np.ndarray]:
     # TODO update docs
@@ -88,7 +35,7 @@ def process_data(pairs: Iterable[Tuple[Abstract, AbstractAnnotation]],
     >>> anno = chemdner.read_annotations("testdata/annotations.txt", mapping)
     >>> pairs = chemdner.align_abstracts_and_annotations(abstracts, anno)
     >>> ids, sources, spans, x, y, mask = (
-    ...     process_data(pairs, 100, 50)
+    ...     process_data(pairs, util.tokenise, 100, 50)
     ... )
     >>> len(ids) == len(sources) == x.shape[0] == y.shape[0] == mask.shape[0]
     True
@@ -109,10 +56,14 @@ def process_data(pairs: Iterable[Tuple[Abstract, AbstractAnnotation]],
     bodies = [body for _, body in flattened_pairs]
     # sanity  check
     assert [id_ for id_, *_ in titles] == [id_ for id_, *_ in bodies]
-    proc_titles = [(id_, src, process_text(text, anno, width, minlen, default))
-                    for id_, src, text, anno in titles]
-    proc_bodies = [(id_, src, process_text(text, anno, width, minlen, default))
-                    for id_, src, text, anno in bodies]
+    proc_titles = [
+        (id_, src, process_text(text, anno, tokeniser, width, minlen, default))
+        for id_, src, text, anno in titles
+    ]
+    proc_bodies = [
+        (id_, src, process_text(text, anno, tokeniser, width, minlen, default))
+        for id_, src, text, anno in bodies
+    ]
     # flatten processed data
     proc_titles_flat = [
         ([id_] * len(samples), [src] * len(samples), samples, txt, cls, mask)

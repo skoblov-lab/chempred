@@ -33,8 +33,8 @@ class Config(dict):
 
     def __getitem__(self, item):
         retval = self.get(item)
-        if not retval:
-            raise KeyError("Not {} configuration".format(item))
+        if retval is None:
+            raise KeyError("No {} configuration".format(item))
         return retval
 
     def get(self, item, default=None):
@@ -49,7 +49,7 @@ class Config(dict):
         >>> from_dict = Config(json.load(open("testdata/config-detector.json")))
         >>> from_mapping = Config(from_dict)
         >>> from_mapping["nsteps"]
-        [200, 200]
+        [200, 200, 200, 200]
         >>> from_mapping.update({"lstm": {"nsteps": [300, 300]}})
         >>> isinstance(from_mapping, Config)
         True
@@ -188,36 +188,31 @@ def merge_predictions(intervals: List[Interval], predictions: np.ndarray) \
         return buckets / nsamples
 
 
-def build_nn(maxlen: int,
+def build_nn(sample_size: int,
              embed: int,
+             ncls: int,
              nfilters: Optional[Sequence[int]],
              filter_width: Optional[Union[int, Sequence[int]]],
              nsteps: Sequence[int],
              in_drop: Union[float, Sequence[float]],
              rec_drop: Union[float, Sequence[float]],
              bidirectional: Union[bool, Sequence[bool]],
-             stateful: bool):
+             stateful: bool=False):
     # TODO tests
     # TODO documentation
-    without_cnn = not bool(nfilters)
-    l_in = layers.Input(shape=(maxlen,), name="l_in")
-    l_emb = layers.Embedding(NCHAR, embed, input_length=maxlen,
-                             mask_zero=without_cnn)(l_in)
-
-    if without_cnn:  # build a pure rnn-model
-        rnn = build_rec(nsteps, in_drop, rec_drop, bidirectional, stateful)(l_emb)
-        l_out = layers.TimeDistributed(
-            layers.Dense(2, activation='softmax'), name="l_out")(rnn)
-    # build a cnn-rnn model
-    cnn = build_conv(nfilters, filter_width)(l_emb)
-    l_flat = layers.Flatten(name="flat_1")(cnn)
-    l_repeat = layers.RepeatVector(maxlen, name="repeat")(l_flat)
-    rnn = build_rec(nsteps, in_drop, rec_drop, bidirectional, stateful)
+    no_cnn = not bool(nfilters)
+    l_in = layers.Input(shape=(sample_size,), name="l_in")
+    encoder = layers.Embedding(
+        NCHAR, embed, input_length=sample_size, mask_zero=no_cnn)(l_in)
+    if not no_cnn:
+        encoder = build_conv(nfilters, filter_width)
+        encoder = layers.Flatten(name="flat")(encoder)
+        encoder = layers.RepeatVector(sample_size, name="repeat")(encoder)
+    decoder = build_rec(
+        nsteps, in_drop, rec_drop, bidirectional, stateful)(encoder)
     l_out = layers.TimeDistributed(
-        layers.Dense(2, activation='softmax'), name="l_out")(rnn)
-    return models.Model(l_in, l_out)
-
-
+        layers.Dense(ncls, activation='softmax'), name="l_out")(decoder)
+    return l_out
 
 
 if __name__ == "__main__":

@@ -1,4 +1,4 @@
-from typing import List, Tuple, Optional, Text, Pattern, Sequence, Mapping
+from typing import List, Tuple, Optional, Text, Pattern, Sequence, Mapping, Callable, Iterable
 from numbers import Integral
 import re
 
@@ -9,11 +9,16 @@ from sklearn.utils import class_weight
 from chempred.intervals import Interval, Intervals
 
 
+Tokeniser = Callable[[Text], Intervals[Interval[Text]]]
 Token = Interval[Optional[Text]]
 ClassMapping = Mapping[Text, Integral]
 
+WS_PATT = re.compile("\S+")
+PUNCT_PATT = re.compile(r"[\w]+|[^\s\w]")
+PUNCT_WS_PATT = re.compile(r"[\w]+|[^\w]")
 
-def tokenise(text: Text, inflate=False, pattern: Pattern=re.compile("\S+")) \
+
+def tokenise(text: Text, pattern: Pattern=WS_PATT, inflate=False) \
         -> Intervals[Token]:
     # TODO tests
     """

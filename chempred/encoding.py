@@ -5,18 +5,17 @@
 """
 
 
-from typing import List, Mapping, Tuple, Text
+from typing import Text
 
 import numpy as np
 
-from chempred.intervals import Intervals, Interval
 from chempred.chemdner import Annotation
-
+from chempred.intervals import Intervals, Interval
 
 MAXCHAR = 127
 
 
-def encode_text(text: Text, span: Interval, dtype=np.int32) \
+def encode_characters(text: Text, span: Interval, dtype=np.int32) \
         -> np.ndarray:
     # TODO tests
     """

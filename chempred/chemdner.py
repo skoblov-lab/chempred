@@ -44,7 +44,7 @@ def read_abstracts(path: Text) -> List[Abstract]:
                 for abstract_n, title, abstract in parsed_buffer]
 
 
-def read_annotations(path: Text, mapping: ClassMapping, default: Integral=0) \
+def read_annotations(path: Text, mapping: ClassMapping, default: Integral=None) \
         -> List[AbstractAnnotation]:
     # TODO log empty annotations
     # TODO more tests
@@ -52,7 +52,8 @@ def read_annotations(path: Text, mapping: ClassMapping, default: Integral=0) \
     Read chemdner annotations
     :param path: path to a CHEMDNER-formatted annotation files
     :param mapping: a class mapping
-    :param default: default class integer value for out-of-mapping classes
+    :param default: default class integer value for out-of-mapping classes; if
+    None is given objects with out-of-mapping classes are discarded
     >>> path = "testdata/annotations.txt"
     >>> anno = read_annotations(path, {"SYSTEMATIC": 1}, 0)
     >>> ids = {21826085, 22080034, 22080035, 22080037}
@@ -69,7 +70,8 @@ def read_annotations(path: Text, mapping: ClassMapping, default: Integral=0) \
     def wrap_interval(record: Tuple[str, str, str, str, str, str]) \
             -> Interval:
         _, _, start, stop, _, cls = record
-        return Interval(int(start), int(stop), mapping.get(cls, default))
+        value = mapping.get(cls, default)
+        return None if value is None else Interval(int(start), int(stop), value)
 
     with open(path) as buffer:
         parsed_lines = (l.strip().split("\t") for l in buffer)
@@ -78,7 +80,7 @@ def read_annotations(path: Text, mapping: ClassMapping, default: Integral=0) \
         # separate parts (title and body)
         part_groups = ((id_, groupby(group, op.itemgetter(1)))
                        for id_, group in abstract_groups)
-        # filter zero-length intervals
+        # filter zero-length intervals and `None`s
         wrapper = F(map, wrap_interval) >> (filter, bool) >> list
         mapped_parts = ((id_, {part: wrapper(recs) for part, recs in parts})
                         for id_, parts in part_groups)

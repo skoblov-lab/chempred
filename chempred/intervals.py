@@ -372,5 +372,6 @@ class Intervals(Generic[IntervalT], Sequence):
                 right_border(range(first, len(self)), stop-1))
         return first, last
 
+
 if __name__ == "__main__":
     raise RuntimeError

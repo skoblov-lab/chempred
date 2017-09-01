@@ -2,7 +2,7 @@ import json
 from io import TextIOWrapper
 from itertools import chain
 from typing import List, Tuple, Optional, Text, Pattern, Sequence, Mapping, \
-    Callable, Union
+    Callable, Union, Iterator, Sized, Iterable, overload
 from numbers import Integral
 import re
 
@@ -10,7 +10,7 @@ import numpy as np
 from enforce import runtime_validation
 from sklearn.utils import class_weight
 
-from chempred.intervals import Interval, Intervals
+from chempred.intervals import Interval, Intervals, T
 
 
 Tokeniser = Callable[[Text], Intervals[Interval[Text]]]
@@ -68,6 +68,41 @@ class Config(dict):
         return default
 
 
+class Vocabulary(Mapping):
+    """
+    Token vocabulary. Maps tokens into their integer ids. It maps the first
+    token into 1, because 0 is usually reserved for padding/masking. It maps
+    OOV tokens into (the number of tokens) + 1.
+    """
+    def __init__(self, tokens: Iterable[Text]):
+        self.tokens = {token: i + 1 for i, token in enumerate(tokens)}
+        self.oov = len(self.tokens) + 1
+
+    @overload
+    def __getitem__(self, token: Text) -> int:
+        pass
+
+    @overload
+    def __getitem__(self, tokens: Iterable[Text]) -> np.ndarray:
+        pass
+
+    def __getitem__(self, item):
+        if isinstance(item, Iterable):
+            size = len(item) if isinstance(item, Sized) else -1
+            return np.fromiter(map(self.get, item), dtype=np.int32,
+                               count=size)
+        return self.get(item)
+
+    def __iter__(self) -> Iterator[Text]:
+        return iter(self.tokens)
+
+    def __len__(self) -> int:
+        return len(self.tokens)
+
+    def get(self, token: Text):
+        return self.tokens.get(token, self.oov)
+
+
 def tokenise(text: Text, pattern: Pattern=WS_PATT, inflate=False) \
         -> Intervals[Token]:
     # TODO tests
@@ -81,6 +116,15 @@ def tokenise(text: Text, pattern: Pattern=WS_PATT, inflate=False) \
     intervals = [m.span() for m in pattern.finditer(text)]
     return Intervals(Interval(start, end, text[start:end] if inflate else None)
                      for start, end in intervals)
+
+
+def unload_intervals(intervals: Intervals[Interval[T]]) -> Iterator[T]:
+    """
+    Extract data from intervals
+    :param intervals:
+    :return:
+    """
+    return (interval.data for interval in intervals)
 
 
 @runtime_validation

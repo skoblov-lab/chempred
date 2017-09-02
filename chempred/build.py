@@ -7,7 +7,6 @@ their predictions
 from functools import reduce
 from typing import Sequence, Tuple, Optional, Union, Callable
 
-from enforce import runtime_validation
 from keras import layers, models
 
 from chempred import encoding
@@ -27,7 +26,6 @@ def build_conv(nfilters: Sequence[int],
     :return:
     >>> conv = build_conv([30, 30], 5)
     """
-    @runtime_validation
     def stack_conv(prev, param: Tuple[str, int, int]):
         name, nfilt, kern_size = param
         return layers.Convolution1D(
@@ -65,7 +63,6 @@ def build_rec(nsteps: Sequence[int],
     >>> rec = build_rec([200, 200], 0.1, 0.1, True)
     """
 
-    @runtime_validation
     def stack_lstm(prev, param: Tuple[str, int, float, float, bool]):
         """
         :param prev: incomming keras layer

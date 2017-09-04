@@ -1,25 +1,55 @@
 import json
+import sys
 from io import TextIOWrapper
 from itertools import chain
 from typing import List, Tuple, Optional, Text, Pattern, Sequence, Mapping, \
-    Callable, Union, Iterator, Sized, Iterable, overload
+    Callable, Union, Iterator, Sized, Iterable, overload, TypeVar, NamedTuple, \
+    Container, Generic
 from numbers import Integral
+import sys
 import re
 
 import numpy as np
-from enforce import runtime_validation
 from sklearn.utils import class_weight
+from fn import F
 
-from chempred.intervals import Interval, Intervals, T
+
+_slots_supported = (sys.version_info >= (3, 6, 2) or
+                    (3, 5, 3) <= sys.version_info < (3, 6))
 
 
-Tokeniser = Callable[[Text], Intervals[Interval[Text]]]
-Token = Interval[Optional[Text]]
 ClassMapping = Mapping[Text, Integral]
-
 WS_PATT = re.compile("\S+")
 PUNCT_PATT = re.compile(r"[\w]+|[^\s\w]")
 PUNCT_WS_PATT = re.compile(r"[\w]+|[^\w]")
+
+T = TypeVar("T")
+
+
+class Interval(Container, Generic[T]):
+
+    if _slots_supported:
+        __slots__ = ("start", "stop", "data")
+
+    def __init__(self, start: int, stop: int, data: Optional[T]=None):
+        self.start = start
+        self.stop = stop
+        self.data = data
+
+    def __contains__(self, item: T) -> bool:
+        return False if self.data is None or item is None else self.data == item
+
+    def __len__(self):
+        return self.stop - self.start
+
+    def __bool__(self):
+        return bool(len(self))
+
+    def __repr__(self):
+        return "{}(start={}, stop={}, data={})".format(type(self).__name__,
+                                                       self.start,
+                                                       self.stop,
+                                                       self.data)
 
 
 class Config(dict):
@@ -74,8 +104,10 @@ class Vocabulary(Mapping):
     token into 1, because 0 is usually reserved for padding/masking. It maps
     OOV tokens into (the number of tokens) + 1.
     """
-    def __init__(self, tokens: Iterable[Text]):
-        self.tokens = {token: i + 1 for i, token in enumerate(tokens)}
+    def __init__(self, tokens: Iterable[Text], transform: Callable[[Text], Text]):
+        self.transform = transform
+        transformed = set(map(transform, tokens))
+        self.tokens = {token: i + 1 for i, token in enumerate(transformed)}
         self.oov = len(self.tokens) + 1
 
     @overload
@@ -100,34 +132,62 @@ class Vocabulary(Mapping):
         return len(self.tokens)
 
     def get(self, token: Text):
-        return self.tokens.get(token, self.oov)
+        return self.tokens.get(self.transform(token), self.oov)
 
 
-def tokenise(text: Text, pattern: Pattern=WS_PATT, inflate=False) \
-        -> Intervals[Token]:
+def parse(text: Text, pattern: Pattern) -> np.ndarray:
     # TODO tests
     """
     Tokenise text
     :param text: text to parse
-    :param inflate: store token's text inside the tokens
     :param pattern: token pattern
-    :return: a sorted list of tokens
+    :return: a sorted array of matches intervals
     """
-    intervals = [m.span() for m in pattern.finditer(text)]
-    return Intervals(Interval(start, end, text[start:end] if inflate else None)
-                     for start, end in intervals)
+    try:
+        intervals = [m.span() for m in pattern.finditer(text)]
+        return np.array([Interval(start, end) for start, end in intervals])
+    except TypeError:
+        raise TypeError("`{}` is not a unicode string".format(text))
+
+# def unload_intervals(intervals: Intervals[Interval[T]]) -> Iterator[T]:
+#     """
+#     Extract data from intervals
+#     :param intervals:
+#     :return:
+#     """
+#     return (interval.data for interval in intervals)
 
 
-def unload_intervals(intervals: Intervals[Interval[T]]) -> Iterator[T]:
+def sample_windows(intervals: np.ndarray, window: int) \
+        -> Iterator[np.ndarray]:
+    # TODO update docs
+    # TODO test
     """
-    Extract data from intervals
-    :param intervals:
-    :return:
+    Sample windows using a sliding window approach. Sampling windows start at
+    the beginning of each interval in `intervals`
+    :param intervals: a numpy array of interval objects
+    :param window: sampling window width in tokens
     """
-    return (interval.data for interval in intervals)
+    return (intervals[i:i+window] for i in range(len(intervals)-window+1))
 
 
-@runtime_validation
+def sample_length(sample: Sequence[Interval]) -> int:
+    # TODO docs
+    return 0 if not len(sample) else sample[-1].stop - sample[0].start
+
+
+def sample_span(sample: Sequence[Interval]) -> Optional[Interval]:
+    return Interval(sample[0].start, sample[-1].stop) if len(sample) else None
+
+
+def extract_intervals(sequence: Sequence[T], intervals: Iterable[Interval]) \
+        -> List[Sequence[T]]:
+    return [sequence[iv.start:iv.stop] for iv in intervals]
+
+
+flatmap = F(map) >> chain.from_iterable
+
+
 def join(arrays: List[np.ndarray], length: int, padval: int=0, dtype=np.int32) \
         -> Tuple[np.ndarray, np.ndarray]:
     """
@@ -165,7 +225,6 @@ def join(arrays: List[np.ndarray], length: int, padval: int=0, dtype=np.int32) \
     return joined, masks
 
 
-@runtime_validation
 def one_hot(array: np.ndarray) -> np.ndarray:
     """
     One-hot encode an integer array; the output inherits the array's dtype.
@@ -183,7 +242,6 @@ def one_hot(array: np.ndarray) -> np.ndarray:
     return vectors[array]
 
 
-@runtime_validation
 def maskfalse(array: np.ndarray, mask: np.ndarray) -> np.ndarray:
     """
     Replace False-masked items with zeros.
@@ -202,7 +260,7 @@ def maskfalse(array: np.ndarray, mask: np.ndarray) -> np.ndarray:
     return copy
 
 
-def parse_mapping(classmaps: Sequence[str]) -> ClassMapping:
+def parse_mapping(classmaps: Iterable[str]) -> ClassMapping:
     """
     :param classmaps:
     :return:
@@ -251,44 +309,44 @@ def sample_weights(y: np.ndarray, class_weights: Mapping[int, float]) \
     return weights_mask
 
 
-def merge_predictions(intervals: List[Interval], predictions: np.ndarray) \
-        -> np.ndarray:
-    """
-    :param intervals: intervals (non-inclusive on the right side)
-    :param predictions:
-    :return:
-    >>> randints = np.random.randint(0, 1000, size=20)
-    >>> intervals = sorted([tuple(sorted(randints[i:i+2]))
-    ...                     for i in range(0, len(randints), 2)])
-    >>> maxlen = max(end - start for start, end in intervals)
-    >>> predictions = np.zeros((len(intervals), maxlen), dtype=float)
-    >>> for i, (start, end) in enumerate(intervals):
-    ...     predictions[i, :end-start] = np.random.uniform(0, 1, size=end-start)
-    >>> manual = [[] for _ in range(max(chain.from_iterable(intervals)))]
-    >>> for (i, (start, end)), pred in zip(enumerate(intervals), predictions):
-    ...     for j, value in zip(range(start, end), pred[:end-start]):
-    ...         manual[j].append(value)
-    >>> means_man =  np.array([np.mean(values) if values else np.nan
-    ...                       for values in manual])
-    >>> means_func = merge_predictions(intervals, predictions)
-    >>> nan_man = np.isnan(means_man)
-    >>> nan_func = np.isnan(means_func)
-    >>> (nan_man == nan_func).all()
-    True
-    >>> (means_man[~nan_man].round(3) == means_func[~nan_func].round(3)).all()
-    True
-    """
-    # the intervals are half-inclusive and zero-indexed
-    length = max(chain.from_iterable(intervals))
-    buckets = np.zeros(length, dtype=np.float64)
-    nsamples = np.zeros(length, dtype=np.int32)
-    for (start, end), pred in zip(intervals, predictions):
-        # `predictions` are zero-padded – we must remove the padded tail
-        sample_length = end - start
-        buckets[start:end] += pred[:sample_length]
-        nsamples[start:end] += np.ones(sample_length, dtype=np.int32)
-    with np.errstate(divide='ignore', invalid="ignore"):
-        return buckets / nsamples
+# def merge_predictions(intervals: List[Interval], predictions: np.ndarray) \
+#         -> np.ndarray:
+#     """
+#     :param intervals: intervals (non-inclusive on the right side)
+#     :param predictions:
+#     :return:
+#     >>> randints = np.random.randint(0, 1000, size=20)
+#     >>> intervals = sorted([tuple(sorted(randints[i:i+2]))
+#     ...                     for i in range(0, len(randints), 2)])
+#     >>> maxlen = max(end - start for start, end in intervals)
+#     >>> predictions = np.zeros((len(intervals), maxlen), dtype=float)
+#     >>> for i, (start, end) in enumerate(intervals):
+#     ...     predictions[i, :end-start] = np.random.uniform(0, 1, size=end-start)
+#     >>> manual = [[] for _ in range(max(chain.from_iterable(intervals)))]
+#     >>> for (i, (start, end)), pred in zip(enumerate(intervals), predictions):
+#     ...     for j, value in zip(range(start, end), pred[:end-start]):
+#     ...         manual[j].append(value)
+#     >>> means_man =  np.array([np.mean(values) if values else np.nan
+#     ...                       for values in manual])
+#     >>> means_func = merge_predictions(intervals, predictions)
+#     >>> nan_man = np.isnan(means_man)
+#     >>> nan_func = np.isnan(means_func)
+#     >>> (nan_man == nan_func).all()
+#     True
+#     >>> (means_man[~nan_man].round(3) == means_func[~nan_func].round(3)).all()
+#     True
+#     """
+#     # the intervals are half-inclusive and zero-indexed
+#     length = max(chain.from_iterable(intervals))
+#     buckets = np.zeros(length, dtype=np.float64)
+#     nsamples = np.zeros(length, dtype=np.int32)
+#     for (start, end), pred in zip(intervals, predictions):
+#         # `predictions` are zero-padded – we must remove the padded tail
+#         sample_length = end - start
+#         buckets[start:end] += pred[:sample_length]
+#         nsamples[start:end] += np.ones(sample_length, dtype=np.int32)
+#     with np.errstate(divide='ignore', invalid="ignore"):
+#         return buckets / nsamples
 
 
 if __name__ == "__main__":

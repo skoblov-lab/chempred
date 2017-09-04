@@ -54,7 +54,7 @@ WEIGHTED = "weighted"
 @click.pass_context
 def cli(ctx, directory, config):
     ctx.obj[DIRECTORY] = os.path.abspath(directory)
-    ctx.obj.update(util.Config(open(os.path.abspath(config))))
+    ctx.obj.update(util.NestedDict(open(os.path.abspath(config))))
 
 
 @cli.command("detect")
@@ -114,7 +114,7 @@ def train(ctx, abstracts, annotations, epochs, batchsize, val_split):
     pairs_test = nonempty_pairs[-n_val_pairs or len(nonempty_pairs):]
 
     # generate training samples
-    tokeniser = util.tokenise
+    tokeniser = util.parse
     ids, src, samples, x, y, mask = process_data(
         pairs_train, tokeniser, window_width, minlen)
     ids_test, src_test, samples_test, x_test, y_test, mask_test = process_data(
@@ -156,4 +156,4 @@ def train(ctx, abstracts, annotations, epochs, batchsize, val_split):
 
 
 if __name__ == "__main__":
-    cli(obj=util.Config({}))
+    cli(obj=util.NestedDict({}))

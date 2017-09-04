@@ -6,21 +6,19 @@ Parsers, preprocessors and type annotations for the chemdner dataset.
 
 from itertools import groupby
 from numbers import Integral
-from typing import List, Tuple, Iterator, Text, Iterable, NamedTuple
+from typing import List, Tuple, Iterator, Text, Iterable, NamedTuple, Sequence
 
 import operator as op
 from fn import F
 
-from chempred.intervals import Intervals, Interval
-from chempred.util import ClassMapping
-
+from chempred.util import ClassMapping, Interval
 
 OTHER = "OTHER"
 TITLE = "T"
 BODY = "A"
 
 ClassifiedInterval = Interval[Integral]
-Annotation = Intervals[ClassifiedInterval]
+Annotation = Sequence[ClassifiedInterval]
 AbstractAnnotation = NamedTuple("AbstractAnnotation", [("id", int),
                                                        ("title", Annotation),
                                                        ("body", Annotation)])
@@ -85,8 +83,8 @@ def read_annotations(path: Text, mapping: ClassMapping, default: Integral=None) 
         mapped_parts = ((id_, {part: wrapper(recs) for part, recs in parts})
                         for id_, parts in part_groups)
         return [AbstractAnnotation(int(id_),
-                                   Intervals(parts.get(TITLE, [])),
-                                   Intervals(parts.get(BODY, [])))
+                                   list(parts.get(TITLE, [])),
+                                   list(parts.get(BODY, [])))
                 for id_, parts in mapped_parts]
 
 
@@ -101,7 +99,7 @@ def align_abstracts_and_annotations(abstracts: Iterable[Abstract],
     :return: Iterator[(parsed abstract, parsed annotation)]
     """
     def empty(id_: int) -> AbstractAnnotation:
-        return AbstractAnnotation(id_, Intervals([]), Intervals([]))
+        return AbstractAnnotation(id_, [], [])
 
     anno_mapping = {anno.id: anno for anno in annotations}
     return ((abstract, anno_mapping.get(abstract.id, empty(abstract.id)))
@@ -109,7 +107,7 @@ def align_abstracts_and_annotations(abstracts: Iterable[Abstract],
 
 
 def flatten_aligned_pair(pair: Tuple[Abstract, AbstractAnnotation]) \
-        -> List[Tuple[int, Text, Text, Intervals[Interval]]]:
+        -> List[Tuple[int, Text, Text, Sequence[Interval]]]:
     # TODO tests
     """
     :return: list[(abstract id, source, text, annotation)]

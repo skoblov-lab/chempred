@@ -5,25 +5,25 @@
 """
 
 
-from typing import Text, Sequence, Tuple
+from typing import Sequence, Iterable, Tuple, Text
 from numbers import Integral
 
 import numpy as np
 
-from chempred.chemdner import Annotation
-from chempred.intervals import Intervals, Interval
-from chempred.util import Vocabulary
+from chempred.util import Interval, Vocabulary, sample_length, sample_span, \
+    extract_intervals
 
 MAXCHAR = 127
 MAXCLS = 255
 
 EncodedSample = Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]
 
+
 class EncodingError(ValueError):
     pass
 
 
-def encode_annotation(annotations: Intervals, size: int) -> np.ndarray:
+def encode_annotation(annotations: Iterable[Interval], size: int) -> np.ndarray:
     # TODO update docs
     """
     Default class is 0.
@@ -42,8 +42,9 @@ def encode_annotation(annotations: Intervals, size: int) -> np.ndarray:
     return encoded_anno
 
 
-def encode_sample(sample: Intervals, text: Text, vocab: Vocabulary,
-                  annotation: np.ndarray, dtype=np.int32) -> EncodedSample:
+def encode_sample(sample: Sequence[Interval], text: Text,
+                  annotation: np.ndarray, vocab: Vocabulary, dtype=np.int32) \
+        -> EncodedSample:
     # TODO update docs
     # TODO tests
     """
@@ -54,23 +55,28 @@ def encode_sample(sample: Intervals, text: Text, vocab: Vocabulary,
     """
     if not np.issubdtype(dtype, np.int):
         raise ValueError("`dtype` must be integral")
+    span = sample_span(sample)
+    if span is None:
+        raise ValueError("The sample is empty")
+    if len(text) != len(annotation):
+        raise EncodingError("`annotation` must have the same length as `text`")
     # encode tokens
-    tokens = (text[iv.start:iv.stop].lower() for iv in sample)
+    tokens = extract_intervals(text, sample)
+    token_annotations = map(np.unique, extract_intervals(annotation, sample))
     encoded_tokens = np.fromiter(map(vocab.get, tokens), dtype, len(sample))
-    token_anno = np.zeros(len(sample), dtype=np.int32)
-    for i, iv in enumerate(sample):
-        tk_anno = np.unique(annotation[iv.start:iv.stop])
+    encoded_token_anno = np.zeros(len(sample), dtype=np.int32)
+    for i, tk_anno in enumerate(token_annotations):
         positive_anno = tk_anno[tk_anno > 0]
         if len(positive_anno) > 1:
             raise EncodingError("ambiguous annotation")
-        token_anno[i] = positive_anno[0] if positive_anno else 0
+        encoded_token_anno[i] = positive_anno[0] if positive_anno else 0
     # encode characters
-    span = sample.span
     characters = text[span.start:span.stop]
-    encoded_characters = np.fromiter(map(ord, characters), dtype, len(span))
+    encoded_characters = np.fromiter(map(ord, characters), dtype,
+                                     len(characters))
     encoded_characters[encoded_characters > MAXCHAR] = MAXCHAR
     char_anno = annotation[span.start:span.stop]
-    return encoded_tokens, token_anno, encoded_characters, char_anno
+    return encoded_tokens, encoded_token_anno, encoded_characters, char_anno
 
 
 if __name__ == "__main__":

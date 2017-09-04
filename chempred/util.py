@@ -6,11 +6,16 @@ from typing import List, Tuple, Optional, Text, Pattern, Sequence, Mapping, \
     Callable, Union, Iterator, Sized, Iterable, overload, TypeVar, NamedTuple, \
     Container, Generic
 from numbers import Integral
+import sys
 import re
 
 import numpy as np
 from sklearn.utils import class_weight
 from fn import F
+
+
+_slots_supported = (sys.version_info >= (3, 6, 2) or
+                    (3, 5, 3) <= sys.version_info < (3, 6))
 
 
 ClassMapping = Mapping[Text, Integral]
@@ -19,15 +24,17 @@ PUNCT_PATT = re.compile(r"[\w]+|[^\s\w]")
 PUNCT_WS_PATT = re.compile(r"[\w]+|[^\w]")
 
 T = TypeVar("T")
-_Interval = NamedTuple("_Interval", [("start", int),
-                                     ("stop", int),
-                                     ("data", T)])
 
 
-class Interval(_Interval, Container, Generic[T]):
+class Interval(Container, Generic[T]):
 
-    if sys.version_info >= (3, 5, 3):
-        __slots__ = ()
+    if _slots_supported:
+        __slots__ = ("start", "stop", "data")
+
+    def __init__(self, start: int, stop: int, data: Optional[T]=None):
+        self.start = start
+        self.stop = stop
+        self.data = data
 
     def __contains__(self, item: T) -> bool:
         return False if self.data is None or item is None else self.data == item
@@ -128,19 +135,19 @@ class Vocabulary(Mapping):
         return self.tokens.get(self.transform(token), self.oov)
 
 
-# def tokenise(text: Text, pattern: Pattern=WS_PATT, inflate=False) \
-#         -> Intervals[Token]:
-#     # TODO tests
-#     """
-#     Tokenise text
-#     :param text: text to parse
-#     :param inflate: store token's text inside the tokens
-#     :param pattern: token pattern
-#     :return: a sorted list of tokens
-#     """
-#     intervals = [m.span() for m in pattern.finditer(text)]
-#    return Intervals(Interval(start, end, text[start:end] if inflate else None)
-#                      for start, end in intervals)
+def parse(text: Text, pattern: Pattern) -> np.ndarray:
+    # TODO tests
+    """
+    Tokenise text
+    :param text: text to parse
+    :param pattern: token pattern
+    :return: a sorted array of matches intervals
+    """
+    try:
+        intervals = [m.span() for m in pattern.finditer(text)]
+        return np.array([Interval(start, end) for start, end in intervals])
+    except TypeError:
+        raise TypeError("`{}` is not a unicode string".format(text))
 
 # def unload_intervals(intervals: Intervals[Interval[T]]) -> Iterator[T]:
 #     """
@@ -169,8 +176,13 @@ def sample_length(sample: Sequence[Interval]) -> int:
     return 0 if not len(sample) else sample[-1].stop - sample[0].start
 
 
-def tokenise_intervals(text: Text, intervals: Iterable[Interval]) -> List[Text]:
-    return [text[iv.start:iv.stop] for iv in intervals]
+def sample_span(sample: Sequence[Interval]) -> Optional[Interval]:
+    return Interval(sample[0].start, sample[-1].stop) if len(sample) else None
+
+
+def extract_intervals(sequence: Sequence[T], intervals: Iterable[Interval]) \
+        -> List[Sequence[T]]:
+    return [sequence[iv.start:iv.stop] for iv in intervals]
 
 
 flatmap = F(map) >> chain.from_iterable

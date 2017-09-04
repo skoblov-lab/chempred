@@ -4,7 +4,6 @@
 """
 
 from typing import Sequence, Container, Generic, TypeVar, Iterable
-from numbers import Integral
 
 from intervaltree import Interval as _Interval, IntervalTree as _IntervalTree
 
@@ -19,7 +18,7 @@ class Interval(_Interval, Container, Generic[T]):
         return self.length()
 
     def __bool__(self):
-        return not self.length()
+        return bool(self.length())
 
     def __repr__(self):
         return "{}(start={}, stop={}, data={})".format(type(self).__name__,
@@ -27,7 +26,7 @@ class Interval(_Interval, Container, Generic[T]):
                                                        self.stop,
                                                        self.data)
 
-    # These two properties were added for compatibility with the Python's
+    # These two properties were added for compatibility with Python's
     # `range` naming convention
     @property
     def start(self) -> int:

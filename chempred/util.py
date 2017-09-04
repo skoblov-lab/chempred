@@ -74,8 +74,10 @@ class Vocabulary(Mapping):
     token into 1, because 0 is usually reserved for padding/masking. It maps
     OOV tokens into (the number of tokens) + 1.
     """
-    def __init__(self, tokens: Iterable[Text]):
-        self.tokens = {token: i + 1 for i, token in enumerate(tokens)}
+    def __init__(self, tokens: Iterable[Text], transform: Callable[[Text], Text]):
+        self.transform = transform
+        transformed = set(map(transform, tokens))
+        self.tokens = {token: i + 1 for i, token in enumerate(transformed)}
         self.oov = len(self.tokens) + 1
 
     @overload
@@ -100,7 +102,7 @@ class Vocabulary(Mapping):
         return len(self.tokens)
 
     def get(self, token: Text):
-        return self.tokens.get(token, self.oov)
+        return self.tokens.get(self.transform(token), self.oov)
 
 
 def tokenise(text: Text, pattern: Pattern=WS_PATT, inflate=False) \

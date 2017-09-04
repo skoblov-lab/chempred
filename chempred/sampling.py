@@ -11,7 +11,7 @@ from chempred.intervals import Interval, Intervals, T
 
 
 def sample_windows(intervals: Intervals[Interval[T]], width: int,
-                   partial=False) -> Iterator[List[Interval[T]]]:
+                   partial=False) -> Iterator[Intervals[Interval[T]]]:
     # TODO update docs
     """
     Sample windows using a sliding window approach. Sampling windows start at
@@ -30,7 +30,7 @@ def sample_windows(intervals: Intervals[Interval[T]], width: int,
     start_points = (interval.start for interval in intervals)
     samples = (intervals.within(start, start+width, partial)
                for start in start_points)
-    return (list(sample) for sample in samples if sample)
+    return (sample for sample in samples if sample)
 
 
 if __name__ == "__main__":

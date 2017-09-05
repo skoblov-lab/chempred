@@ -17,15 +17,15 @@ from chempred.util import WS_PATT, Interval, Vocabulary, extract_intervals, pars
 
 
 def process_data(pairs: Iterable[Tuple[Abstract, AbstractAnnotation]],
-                 parser, vocab: Vocabulary, window: int) \
-        -> Tuple[List[int], List[str], List[Interval],
-                 np.ndarray, np.ndarray, np.ndarray]:
+                 parser, vocab: Vocabulary, window: int, validator: Callable) \
+        -> Tuple[Tuple[int], Tuple[str], Tuple[np.ndarray], Tuple[np.ndarray],
+                 Tuple[np.ndarray], Tuple[np.ndarray], Tuple[np.ndarray]]:
     # TODO update docs
     # TODO tests
     """
     :param window: context window width (in raw tokens)
-    :return: text ids, samples, sample sources (title or body), encoded and
-    padded text, encoded and padded classes, padding masks.
+    :return: text ids, text sources, samples, encoded tokens, token annotation,
+    encoded characters, character annotations
     # >>> mapping = {"SYSTEMATIC": 1}
     # >>> abstracts = chemdner.read_abstracts("testdata/abstracts.txt")
     # >>> anno = chemdner.read_annotations("testdata/annotations.txt", mapping)
@@ -38,25 +38,26 @@ def process_data(pairs: Iterable[Tuple[Abstract, AbstractAnnotation]],
     """
     ids, srcs, texts, annotations = zip(
         *chain.from_iterable(map(chemdner.flatten_aligned_pair, pairs)))
-    raw_samples = (util.sample_windows(intervals, window)
+    raw_windows = (util.sample_windows(intervals, window)
                    for intervals in [parse(text, WS_PATT) for text in texts])
 
     refine = F(extract_intervals) >> " ".join >> parser
-    refined_samples = [[refine(txt, s) for s in samples]
-                       for txt, samples in zip(texts, raw_samples)]
+    windows = [[refine(txt, w) for w in windows_ if len(w)]
+               for txt, windows_ in zip(texts, raw_windows)]
     encoded_anno = [encoding.encode_annotation(anno, len(text))
                     for text, anno in zip(texts, annotations)]
-    encoded_samples = [
-        [encoding.encode_sample(s, txt, anno, vocab) for s in samples if len(s)]
-        for txt, anno, samples in zip(texts, encoded_anno, refined_samples)
+    enc_windows = [
+        [encoding.encode_sample(s, txt, anno, vocab) for s in windows_]
+        for txt, anno, windows_ in zip(texts, encoded_anno, windows)
     ]
-    ids, srcs, enc_tk, enc_tk_anno, enc_char, enc_char_anno = zip(
-        *chain.from_iterable(
-            ((id_, src, *s) for s in samples) for id_, src, samples in
-            zip(ids, srcs, encoded_samples)
-        )
+    samples = chain.from_iterable(
+            ((id_, src, w, *e) for w, e in zip(windows_, enc))
+            for id_, src, windows_, enc in zip(ids, srcs, windows, enc_windows)
     )
-    return ids, srcs, enc_tk, enc_tk_anno, enc_char, enc_char_anno
+    ids_, srcs_, samples_, enc_tk, enc_tk_anno, enc_char, enc_char_anno = zip(
+        *filter(validator, samples)
+    )
+    return ids_, srcs_, samples_, enc_tk, enc_tk_anno, enc_char, enc_char_anno
 
 
 def pick_best(filenames: List[str]) -> Tuple[str, Tuple[int, float]]:

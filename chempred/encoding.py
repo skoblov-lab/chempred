@@ -62,8 +62,10 @@ def encode_sample(sample: Sequence[Interval], text: Text,
         raise EncodingError("`annotation` must have the same length as `text`")
     # encode tokens
     tokens = extract_intervals(text, sample)
-    token_annotations = map(np.unique, extract_intervals(annotation, sample))
-    encoded_tokens = np.fromiter(map(vocab.get, tokens), dtype, len(sample))
+    token_annotations = list(map(np.unique,
+                                 extract_intervals(annotation, sample)))
+    encoded_tokens = vocab[tokens]
+    assert len(tokens) == len(token_annotations) == len(encoded_tokens)
     encoded_token_anno = np.zeros(len(sample), dtype=np.int32)
     for i, tk_anno in enumerate(token_annotations):
         positive_anno = tk_anno[tk_anno > 0]

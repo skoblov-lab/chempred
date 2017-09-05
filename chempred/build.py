@@ -94,32 +94,5 @@ def build_rec(nsteps: Sequence[int],
     return rec
 
 
-def build_nn(sample_size: int,
-             embed: int,
-             ncls: int,
-             nfilters: Optional[Sequence[int]],
-             filter_width: Optional[Union[int, Sequence[int]]],
-             nsteps: Sequence[int],
-             in_drop: Union[float, Sequence[float]],
-             rec_drop: Union[float, Sequence[float]],
-             bidirectional: Union[bool, Sequence[bool]],
-             stateful: bool=False):
-    # TODO tests
-    # TODO documentation
-    no_cnn = not bool(nfilters)
-    l_in = layers.Input(shape=(sample_size,), name="l_in")
-    encoder = layers.Embedding(
-        NCHAR, embed, input_length=sample_size, mask_zero=no_cnn)(l_in)
-    if not no_cnn:
-        encoder = build_conv(nfilters, filter_width)(encoder)
-        encoder = layers.Flatten(name="flat")(encoder)
-        encoder = layers.RepeatVector(sample_size, name="repeat")(encoder)
-    decoder = build_rec(
-        nsteps, in_drop, rec_drop, bidirectional, stateful)(encoder)
-    l_out = layers.TimeDistributed(
-        layers.Dense(ncls, activation='softmax'), name="l_out")(decoder)
-    return models.Model(l_in, l_out)
-
-
 if __name__ == "__main__":
     raise RuntimeError

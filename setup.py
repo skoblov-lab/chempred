@@ -21,5 +21,5 @@ setup(
               "pyrsistent",
               "keras",
               "intervaltree",
-              "scikit-learn"]
+              "scikit-learn", 'pandas']
 )

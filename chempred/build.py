@@ -7,7 +7,6 @@ their predictions
 from functools import reduce
 from typing import Sequence, Tuple, Optional, Union, Callable
 
-from enforce import runtime_validation
 from keras import layers, models
 
 from chempred import encoding
@@ -27,7 +26,6 @@ def build_conv(nfilters: Sequence[int],
     :return:
     >>> conv = build_conv([30, 30], 5)
     """
-    @runtime_validation
     def stack_conv(prev, param: Tuple[str, int, int]):
         name, nfilt, kern_size = param
         return layers.Convolution1D(
@@ -65,7 +63,6 @@ def build_rec(nsteps: Sequence[int],
     >>> rec = build_rec([200, 200], 0.1, 0.1, True)
     """
 
-    @runtime_validation
     def stack_lstm(prev, param: Tuple[str, int, float, float, bool]):
         """
         :param prev: incomming keras layer
@@ -95,33 +92,6 @@ def build_rec(nsteps: Sequence[int],
         return rnn
 
     return rec
-
-
-def build_nn(sample_size: int,
-             embed: int,
-             ncls: int,
-             nfilters: Optional[Sequence[int]],
-             filter_width: Optional[Union[int, Sequence[int]]],
-             nsteps: Sequence[int],
-             in_drop: Union[float, Sequence[float]],
-             rec_drop: Union[float, Sequence[float]],
-             bidirectional: Union[bool, Sequence[bool]],
-             stateful: bool=False):
-    # TODO tests
-    # TODO documentation
-    no_cnn = not bool(nfilters)
-    l_in = layers.Input(shape=(sample_size,), name="l_in")
-    encoder = layers.Embedding(
-        NCHAR, embed, input_length=sample_size, mask_zero=no_cnn)(l_in)
-    if not no_cnn:
-        encoder = build_conv(nfilters, filter_width)(encoder)
-        encoder = layers.Flatten(name="flat")(encoder)
-        encoder = layers.RepeatVector(sample_size, name="repeat")(encoder)
-    decoder = build_rec(
-        nsteps, in_drop, rec_drop, bidirectional, stateful)(encoder)
-    l_out = layers.TimeDistributed(
-        layers.Dense(ncls, activation='softmax'), name="l_out")(decoder)
-    return models.Model(l_in, l_out)
 
 
 if __name__ == "__main__":

@@ -6,84 +6,58 @@ import shutil
 from contextlib import contextmanager
 from functools import reduce
 from itertools import chain, starmap
-from typing import Tuple, List, Iterable, Callable
+from typing import Tuple, List, Iterable, Callable, cast
 
 import numpy as np
 from fn import F
 
-from chempred import chemdner, util
+from chempred import chemdner, util, encoding
 from chempred.chemdner import Abstract, AbstractAnnotation
-from chempred.intervals import Interval
-from chempred.sampling import process_text
+from chempred.util import WS_PATT, Interval, Vocabulary, extract_intervals, parse
 
 
 def process_data(pairs: Iterable[Tuple[Abstract, AbstractAnnotation]],
-                 tokeniser: util.Tokeniser, width: int, minlen: int,
-                 default: int=0) \
-        -> Tuple[List[int], List[str], List[Interval],
-                 np.ndarray, np.ndarray, np.ndarray]:
+                 parser, vocab: Vocabulary, window: int, validator: Callable) \
+        -> Tuple[Tuple[int], Tuple[str], Tuple[np.ndarray], Tuple[np.ndarray],
+                 Tuple[np.ndarray], Tuple[np.ndarray], Tuple[np.ndarray]]:
     # TODO update docs
     # TODO tests
     """
-    :param width: context window width (in charactes)
-    :param minlen: minimum sample span
-    :param default: default class encoding
-    :return: text ids, samples, sample sources (title or body), encoded and
-    padded text, encoded and padded classes, padding masks.
-    >>> mapping = {"SYSTEMATIC": 1}
-    >>> abstracts = chemdner.read_abstracts("testdata/abstracts.txt")
-    >>> anno = chemdner.read_annotations("testdata/annotations.txt", mapping)
-    >>> pairs = chemdner.align_abstracts_and_annotations(abstracts, anno)
-    >>> ids, sources, spans, x, y, mask = (
-    ...     process_data(pairs, util.tokenise, 100, 50)
-    ... )
-    >>> len(ids) == len(sources) == x.shape[0] == y.shape[0] == mask.shape[0]
-    True
+    :param window: context window width (in raw tokens)
+    :return: text ids, text sources, samples, encoded tokens, token annotation,
+    encoded characters, character annotations
+    # >>> mapping = {"SYSTEMATIC": 1}
+    # >>> abstracts = chemdner.read_abstracts("testdata/abstracts.txt")
+    # >>> anno = chemdner.read_annotations("testdata/annotations.txt", mapping)
+    # >>> pairs = chemdner.align_abstracts_and_annotations(abstracts, anno)
+    # >>> ids, sources, spans, x, y, mask = (
+    # ...     process_data(pairs, util.tokenise, 100, 50)
+    # ... )
+    # >>> len(ids) == len(sources) == x.shape[0] == y.shape[0] == mask.shape[0]
+    # True
     """
-    def merge_results(field_idx: int, merger: Callable) -> Callable:
-        return (F(map, F(map, op.itemgetter(field_idx)))
-                >> chain.from_iterable
-                >> (filter, lambda x: len(x) > 0)
-                >> tuple
-                >> merger)
+    ids, srcs, texts, annotations = zip(
+        *chain.from_iterable(map(chemdner.flatten_aligned_pair, pairs)))
+    raw_windows = (util.sample_windows(intervals, window)
+                   for intervals in [parse(text, WS_PATT) for text in texts])
 
-    def lst_merger(lists: Iterable[list]) -> list:
-        return reduce(op.iadd, lists, [])
-
-    def array_merger(arrays: Tuple[np.ndarray]) -> np.ndarray:
-        return np.vstack(arrays) if arrays else np.array([], dtype=np.int32)
-
-    # align pairs, flatten and sample windows
-    flattened_pairs = list(map(chemdner.flatten_aligned_pair, pairs))
-    titles = [title for title, _ in flattened_pairs]
-    bodies = [body for _, body in flattened_pairs]
-    # sanity  check
-    assert [id_ for id_, *_ in titles] == [id_ for id_, *_ in bodies]
-    proc_titles = [
-        (id_, src, process_text(text, anno, tokeniser, width, minlen, default))
-        for id_, src, text, anno in titles
+    refine = F(extract_intervals) >> " ".join >> parser
+    windows = [[refine(txt, w) for w in windows_ if len(w)]
+               for txt, windows_ in zip(texts, raw_windows)]
+    encoded_anno = [encoding.encode_annotation(anno, len(text))
+                    for text, anno in zip(texts, annotations)]
+    enc_windows = [
+        [encoding.encode_sample(s, txt, anno, vocab) for s in windows_]
+        for txt, anno, windows_ in zip(texts, encoded_anno, windows)
     ]
-    proc_bodies = [
-        (id_, src, process_text(text, anno, tokeniser, width, minlen, default))
-        for id_, src, text, anno in bodies
-    ]
-    # flatten processed data
-    proc_titles_flat = [
-        ([id_] * len(samples), [src] * len(samples), samples, txt, cls, mask)
-        for id_, src, (samples, txt, cls, mask) in proc_titles
-    ]
-    proc_bodies_flat = [
-        ([id_] * len(samples), [src] * len(samples), samples, txt, cls, mask)
-        for id_, src, (samples, txt, cls, mask) in proc_bodies
-    ]
-    # merge data from titles and bodies
-    ids = merge_results(0, lst_merger)([proc_titles_flat, proc_bodies_flat])
-    src = merge_results(1, lst_merger)([proc_titles_flat, proc_bodies_flat])
-    samples = merge_results(2, lst_merger)([proc_titles_flat, proc_bodies_flat])
-    texts = merge_results(3, array_merger)([proc_titles_flat, proc_bodies_flat])
-    cls = merge_results(4, array_merger)([proc_titles_flat, proc_bodies_flat])
-    masks = merge_results(5, array_merger)([proc_titles_flat, proc_bodies_flat])
-    return ids, src, samples, texts, cls, masks
+    samples = chain.from_iterable(
+            ((id_, src, w, *e) for w, e in zip(windows_, enc))
+            for id_, src, windows_, enc in zip(ids, srcs, windows, enc_windows)
+    )
+    ids_, srcs_, samples_, enc_tk, enc_tk_anno, enc_char, enc_char_anno = zip(
+        *filter(validator, samples)
+    )
+    return ids_, srcs_, samples_, enc_tk, enc_tk_anno, enc_char, enc_char_anno
 
 
 def pick_best(filenames: List[str]) -> Tuple[str, Tuple[int, float]]:

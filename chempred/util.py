@@ -1,17 +1,20 @@
 import json
-import sys
 from io import TextIOWrapper
 from itertools import chain
+from functools import reduce
+import operator as op
 from typing import List, Tuple, Optional, Text, Pattern, Sequence, Mapping, \
     Callable, Union, Iterator, Sized, Iterable, overload, TypeVar, NamedTuple, \
     Container, Generic
 from numbers import Integral
+import csv
 import sys
 import re
 
 import numpy as np
 from sklearn.utils import class_weight
 from fn import F
+import pandas as pd
 
 
 _slots_supported = (sys.version_info >= (3, 6, 2) or
@@ -104,35 +107,32 @@ class Vocabulary(Mapping):
     token into 1, because 0 is usually reserved for padding/masking. It maps
     OOV tokens into (the number of tokens) + 1.
     """
-    def __init__(self, tokens: Iterable[Text], transform: Callable[[Text], Text]):
+    def __init__(self, embeddings: Text, transform: Callable[[Text], Text],
+                 oov="<unk>"):
+        embeddings = pd.read_table(embeddings, sep=" ", index_col=0,
+                                   header=None, quoting=csv.QUOTE_NONE)
+        self.vectors = embeddings.as_matrix()
+        self.token_index = {tk: i for i, tk in enumerate(embeddings.index)}
         self.transform = transform
-        transformed = set(map(transform, tokens))
-        self.tokens = {token: i + 1 for i, token in enumerate(transformed)}
-        self.oov = len(self.tokens) + 1
+        if oov not in self.token_index:
+            raise ValueError("there is no `oov` among the embeddings")
+        self.oov = oov
 
-    @overload
-    def __getitem__(self, token: Text) -> int:
-        pass
-
-    @overload
-    def __getitem__(self, tokens: Iterable[Text]) -> np.ndarray:
-        pass
-
-    def __getitem__(self, item):
-        if isinstance(item, Iterable):
-            size = len(item) if isinstance(item, Sized) else -1
-            return np.fromiter(map(self.get, item), dtype=np.int32,
-                               count=size)
-        return self.get(item)
+    def __getitem__(self, tokens: Iterable[Text]):
+        index = self.token_index
+        oov_idx = self.token_index[self.oov]
+        transform = self.transform
+        return self.vectors[[index.get(transform(tk), oov_idx) for tk in tokens]]
 
     def __iter__(self) -> Iterator[Text]:
-        return iter(self.tokens)
+        return iter(self.token_index)
 
     def __len__(self) -> int:
-        return len(self.tokens)
+        return len(self.token_index)
 
     def get(self, token: Text):
-        return self.tokens.get(self.transform(token), self.oov)
+        tk = self.transform(token)
+        return self.vectors[self.token_index.get(tk, self.token_index[self.oov])]
 
 
 def parse(text: Text, pattern: Pattern) -> np.ndarray:
@@ -191,7 +191,7 @@ flatmap = F(map) >> chain.from_iterable
 def join(arrays: List[np.ndarray], length: int, padval: int=0, dtype=np.int32) \
         -> Tuple[np.ndarray, np.ndarray]:
     """
-    Join 1D arrays. The function uses zero-padding to bring all arrays to the
+    Join 1D or 2D arrays. The function uses zero-padding to bring all arrays to the
     same length. The dtypes will be coerced to `dtype`
     :param arrays: arrays to join
     :param length: final sample length
@@ -208,17 +208,16 @@ def join(arrays: List[np.ndarray], length: int, padval: int=0, dtype=np.int32) \
     >>> all((arr == j[m]).all() for arr, j, m in zip(arrays, joined, masks))
     True
     """
-    if not np.issubdtype(dtype, np.int):
-        raise ValueError("`dtype` must be integral")
-
-    ndim = set(arr.ndim for arr in arrays)
-    if ndim != {1}:
-        raise ValueError("`arrays` must be a nonempty list of 1D numpy arrays")
     if length < max(map(len, arrays)):
         raise ValueError("Some arrays are longer than `length`")
-    joined = np.zeros((len(arrays), length), dtype=dtype)
-    joined[:] = padval
+    ndim = set(arr.ndim for arr in arrays)
+    if ndim not in ({1}, {2}):
+        raise ValueError("`arrays` must be a nonempty list of 2D or 3D arrays ")
     masks = np.zeros((len(arrays), length), dtype=bool)
+    shape = ((len(arrays), length) if ndim == {1} else
+             (len(arrays), length, arrays[0].shape[1]))
+    joined = (
+        np.repeat([padval], reduce(op.mul, shape)).reshape(shape).astype(dtype))
     for i, arr in enumerate(arrays):
         joined[i, :len(arr)] = arr
         masks[i, :len(arr)] = True
@@ -278,16 +277,16 @@ def parse_mapping(classmaps: Iterable[str]) -> ClassMapping:
 def balance_class_weights(y: np.ndarray, mask: Optional[np.ndarray]=None) \
         -> Optional[Mapping[int, float]]:
     """
-    :param y: a 2D array encoding sample classes; each sample is a row of
-    integers representing class codes
-    :param mask: a boolean array of the same shape as `y`, wherein True shows
-    that the corresponding value in `y` should be used to calculate weights;
-    if `None` the function will consider all values in `y`
+    :param y: a numpy array encoding sample classes; samples are encoded along
+    the 0-axis
+    :param mask: a boolean array of shape compatible with `y`, wherein True
+    shows that the corresponding value(s) in `y` should be used to calculate
+    weights; if `None` the function will consider all values in `y`
     :return: class weights
     """
     if not len(y):
         raise ValueError("`y` is empty")
-    y_flat = (y.flat() if mask is None else
+    y_flat = (y.flatten() if mask is None else
               np.concatenate([sample[mask] for sample, mask in zip(y, mask)]))
     classes = np.unique(y_flat)
     weights = class_weight.compute_class_weight("balanced", classes, y_flat)

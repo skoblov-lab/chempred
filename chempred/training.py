@@ -4,28 +4,28 @@ import os
 import re
 import shutil
 from contextlib import contextmanager
-from functools import reduce
 from itertools import chain, starmap
-from typing import Tuple, List, Iterable, Callable, cast
+from typing import Tuple, List, Iterable, Callable, Text, Sequence
 
 import numpy as np
 from fn import F
 
 from chempred import chemdner, util, encoding
+from chempred.encoding import annotate_sample
 from chempred.chemdner import Abstract, AbstractAnnotation
-from chempred.util import WS_PATT, Interval, Vocabulary, extract_intervals, parse
+from chempred.util import Interval
 
 
 def process_data(pairs: Iterable[Tuple[Abstract, AbstractAnnotation]],
-                 parser, vocab: Vocabulary, window: int, validator: Callable) \
-        -> Tuple[Tuple[int], Tuple[str], Tuple[np.ndarray], Tuple[np.ndarray],
-                 Tuple[np.ndarray], Tuple[np.ndarray], Tuple[np.ndarray]]:
+                 parser: Callable[[Text], Sequence[Interval]], window: int,
+                 validator: Callable) \
+        -> Tuple[Tuple[int], Tuple[str], Tuple[Interval], Tuple[np.ndarray]]:
     # TODO update docs
     # TODO tests
     """
     :param window: context window width (in raw tokens)
-    :return: text ids, text sources, samples, encoded tokens, token annotation,
-    encoded characters, character annotations
+    :return: text ids, sample sources (title or body), sampled intervals,
+    sample annotations
     # >>> mapping = {"SYSTEMATIC": 1}
     # >>> abstracts = chemdner.read_abstracts("testdata/abstracts.txt")
     # >>> anno = chemdner.read_annotations("testdata/annotations.txt", mapping)
@@ -38,26 +38,16 @@ def process_data(pairs: Iterable[Tuple[Abstract, AbstractAnnotation]],
     """
     ids, srcs, texts, annotations = zip(
         *chain.from_iterable(map(chemdner.flatten_aligned_pair, pairs)))
-    raw_windows = (util.sample_windows(intervals, window)
-                   for intervals in [parse(text, WS_PATT) for text in texts])
-
-    refine = F(extract_intervals) >> " ".join >> parser
-    windows = [[refine(txt, w) for w in windows_ if len(w)]
-               for txt, windows_ in zip(texts, raw_windows)]
-    encoded_anno = [encoding.encode_annotation(anno, len(text))
-                    for text, anno in zip(texts, annotations)]
-    enc_windows = [
-        [encoding.encode_sample(s, txt, anno, vocab) for s in windows_]
-        for txt, anno, windows_ in zip(texts, encoded_anno, windows)
-    ]
-    samples = chain.from_iterable(
-            ((id_, src, w, *e) for w, e in zip(windows_, enc))
-            for id_, src, windows_, enc in zip(ids, srcs, windows, enc_windows)
+    samples = (util.sample_windows(intervals, window)
+               for intervals in [parser(text) for text in texts])
+    annotations = [encoding.encode_annotation(anno, len(text))
+                   for text, anno in zip(texts, annotations)]
+    processed = chain.from_iterable(
+        ((id_, src, s, annotate_sample(s, anno)) for s in samples if len(s))
+        for id_, src, samples, anno in zip(ids, srcs, samples, annotations)
     )
-    ids_, srcs_, samples_, enc_tk, enc_tk_anno, enc_char, enc_char_anno = zip(
-        *filter(validator, samples)
-    )
-    return ids_, srcs_, samples_, enc_tk, enc_tk_anno, enc_char, enc_char_anno
+    ids_, src_, samples_, sample_anno = zip(*filter(validator, processed))
+    return ids_, src_, samples_, sample_anno
 
 
 def pick_best(filenames: List[str]) -> Tuple[str, Tuple[int, float]]:

@@ -101,12 +101,7 @@ class Config(dict):
         return default
 
 
-class Vocabulary(Mapping):
-    """
-    Token vocabulary. Maps tokens into their integer ids. It maps the first
-    token into 1, because 0 is usually reserved for padding/masking. It maps
-    OOV tokens into (the number of tokens) + 1.
-    """
+class GloveEmbeddings(Mapping):
     def __init__(self, embeddings: Text, transform: Callable[[Text], Text],
                  oov="<unk>"):
         embeddings = pd.read_table(embeddings, sep=" ", index_col=0,
@@ -148,14 +143,6 @@ def parse(text: Text, pattern: Pattern) -> np.ndarray:
         return np.array([Interval(start, end) for start, end in intervals])
     except TypeError:
         raise TypeError("`{}` is not a unicode string".format(text))
-
-# def unload_intervals(intervals: Intervals[Interval[T]]) -> Iterator[T]:
-#     """
-#     Extract data from intervals
-#     :param intervals:
-#     :return:
-#     """
-#     return (interval.data for interval in intervals)
 
 
 def sample_windows(intervals: np.ndarray, window: int) \

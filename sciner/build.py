@@ -9,7 +9,7 @@ from typing import Sequence, Tuple, Optional, Union, Callable
 
 from keras import layers, models
 
-from chempred import encoding
+from sciner import encoding
 
 NCHAR = encoding.MAXCHAR + 1
 

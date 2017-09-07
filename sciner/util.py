@@ -101,12 +101,7 @@ class Config(dict):
         return default
 
 
-class Vocabulary(Mapping):
-    """
-    Token vocabulary. Maps tokens into their integer ids. It maps the first
-    token into 1, because 0 is usually reserved for padding/masking. It maps
-    OOV tokens into (the number of tokens) + 1.
-    """
+class EmbeddingsWrapper(Mapping):
     def __init__(self, embeddings: Text, transform: Callable[[Text], Text],
                  oov="<unk>"):
         embeddings = pd.read_table(embeddings, sep=" ", index_col=0,
@@ -118,11 +113,13 @@ class Vocabulary(Mapping):
             raise ValueError("there is no `oov` among the embeddings")
         self.oov = oov
 
-    def __getitem__(self, tokens: Iterable[Text]):
+    def __getitem__(self, tokens: Union[Text, Iterable[Text]]):
+        tokens_ = [tokens] if isinstance(tokens, Text) else tokens
         index = self.token_index
         oov_idx = self.token_index[self.oov]
         transform = self.transform
-        return self.vectors[[index.get(transform(tk), oov_idx) for tk in tokens]]
+        return self.vectors[[index.get(transform(tk), oov_idx)
+                             for tk in tokens_]]
 
     def __iter__(self) -> Iterator[Text]:
         return iter(self.token_index)
@@ -147,28 +144,24 @@ def parse(text: Text, pattern: Pattern) -> np.ndarray:
         intervals = [m.span() for m in pattern.finditer(text)]
         return np.array([Interval(start, end) for start, end in intervals])
     except TypeError:
-        raise TypeError("`{}` is not a unicode string".format(text))
-
-# def unload_intervals(intervals: Intervals[Interval[T]]) -> Iterator[T]:
-#     """
-#     Extract data from intervals
-#     :param intervals:
-#     :return:
-#     """
-#     return (interval.data for interval in intervals)
+        raise TypeError("`{}` is not a valid unicode string".format(repr(text)))
 
 
-def sample_windows(intervals: np.ndarray, window: int) \
-        -> Iterator[np.ndarray]:
+def sample_windows(intervals: Sequence[Interval], window: int) \
+        -> Iterator[Sequence[Interval]]:
     # TODO update docs
     # TODO test
     """
     Sample windows using a sliding window approach. Sampling windows start at
     the beginning of each interval in `intervals`
-    :param intervals: a numpy array of interval objects
+    :param intervals: a sequence (preferable a numpy array) of interval objects
     :param window: sampling window width in tokens
     """
-    return (intervals[i:i+window] for i in range(len(intervals)-window+1))
+    samples = (
+        iter([intervals]) if len(intervals) <= window else
+        (intervals[i:i+window] for i in range(len(intervals)-window+1))
+    )
+    return samples
 
 
 def sample_length(sample: Sequence[Interval]) -> int:
@@ -188,7 +181,7 @@ def extract_intervals(sequence: Sequence[T], intervals: Iterable[Interval]) \
 flatmap = F(map) >> chain.from_iterable
 
 
-def join(arrays: List[np.ndarray], length: int, padval: int=0, dtype=np.int32) \
+def join(arrays: List[np.ndarray], length: int, padval=0) \
         -> Tuple[np.ndarray, np.ndarray]:
     """
     Join 1D or 2D arrays. The function uses zero-padding to bring all arrays to the
@@ -216,6 +209,7 @@ def join(arrays: List[np.ndarray], length: int, padval: int=0, dtype=np.int32) \
     masks = np.zeros((len(arrays), length), dtype=bool)
     shape = ((len(arrays), length) if ndim == {1} else
              (len(arrays), length, arrays[0].shape[1]))
+    dtype = arrays[0].dtype
     joined = (
         np.repeat([padval], reduce(op.mul, shape)).reshape(shape).astype(dtype))
     for i, arr in enumerate(arrays):
@@ -290,7 +284,8 @@ def balance_class_weights(y: np.ndarray, mask: Optional[np.ndarray]=None) \
               np.concatenate([sample[mask] for sample, mask in zip(y, mask)]))
     classes = np.unique(y_flat)
     weights = class_weight.compute_class_weight("balanced", classes, y_flat)
-    return {cls: weight for cls, weight in zip(classes, weights)}
+    weights_scaled = weights / weights.min()
+    return {cls: weight for cls, weight in zip(classes, weights_scaled)}
 
 
 def sample_weights(y: np.ndarray, class_weights: Mapping[int, float]) \

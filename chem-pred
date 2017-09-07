@@ -11,14 +11,14 @@ import sys
 
 import click
 
-from chempred import chemdner
-from chempred import encoding
-from chempred.training import process_data, training
-from chempred import util
+from sciner import chemdner
+from sciner import encoding
+from sciner.training import process_pair, training
+from sciner import util
 
 
 NCHAR = encoding.MAXCHAR + 1
-MODEL = "chempred"
+MODEL = "sciner"
 DIRECTORY = "directory"
 
 # CONFIGURATION KEYS
@@ -115,9 +115,9 @@ def train(ctx, abstracts, annotations, epochs, batchsize, val_split):
 
     # generate training samples
     tokeniser = util.parse
-    ids, src, samples, x, y, mask = process_data(
+    ids, src, samples, x, y, mask = process_pair(
         pairs_train, tokeniser, window_width, minlen)
-    ids_test, src_test, samples_test, x_test, y_test, mask_test = process_data(
+    ids_test, src_test, samples_test, x_test, y_test, mask_test = process_pair(
         pairs_test, tokeniser,  window_width, minlen)
     y_onehot = (util.maskfalse(util.one_hot(y)) if not nfilters else
                 util.one_hot(y))
@@ -136,7 +136,7 @@ def train(ctx, abstracts, annotations, epochs, batchsize, val_split):
 
     # build.py, serialise and train the model
     from keras import callbacks
-    from chempred import build
+    from sciner import build
     detector_model = build.build_nn(
         window_width, embedding, ncls, nfilters, filter_width, nsteps,
         input_dropout, rec_dropout, bidirectional, stateful

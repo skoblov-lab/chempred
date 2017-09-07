@@ -11,7 +11,7 @@ from typing import List, Tuple, Iterator, Text, Iterable, NamedTuple, Sequence
 import operator as op
 from fn import F
 
-from chempred.util import ClassMapping, Interval
+from sciner.util import ClassMapping, Interval
 
 OTHER = "OTHER"
 TITLE = "T"

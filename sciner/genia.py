@@ -5,9 +5,9 @@ from typing import List, Tuple, Text, NamedTuple
 import numpy as np
 from fn import F
 
-from chempred.chemdner import ClassMapping, AbstractAnnotation, Abstract, \
+from sciner.chemdner import ClassMapping, AbstractAnnotation, Abstract, \
     TITLE, BODY
-from chempred.util import Interval
+from sciner.util import Interval
 
 Record = NamedTuple("Record", [("source", Text),
                                ("start", int),

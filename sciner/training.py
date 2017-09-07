@@ -10,25 +10,27 @@ from typing import Tuple, List, Iterator, Iterable, Callable, Text, Sequence
 import numpy as np
 from fn import F
 
-from sciner import util
+from sciner import chemdner, util, encoding
 from sciner.encoding import annotate_sample, encode_annotation
+from sciner.chemdner import Abstract, AbstractAnnotation
 from sciner.util import Interval, extract_intervals
 
 
 ProcessedSample = Tuple[int, Text, Sequence[Interval], Sequence[Text], np.ndarray]
 
 
-def process_pairs(flat_pairs: Tuple[int, Text, Text, Sequence[Interval]],
-                  parser: Callable[[Text], Sequence[Interval]], window: int) \
+def process_pair(pair: Tuple[Abstract, AbstractAnnotation],
+                 parser: Callable[[Text], Sequence[Interval]], window: int) \
         -> Iterator[ProcessedSample]:
     # TODO update docs
     # TODO tests
     """
+    :param pair: abstract paired with its annotation
     :param window: context window width (in raw tokens)
     :return: Iterator[(text ids, sample sources (title or body),
     sampled intervals, sample tokens, sample annotations)]
     """
-    ids, srcs, texts, annotations = zip(*flat_pairs)
+    ids, srcs, texts, annotations = zip(*chemdner.flatten_aligned_pair(pair))
     sampled_ivs = (util.sample_windows(intervals, window)
                    for intervals in [parser(text) for text in texts])
     encoded_anno = [encode_annotation(anno, len(text))

@@ -5,15 +5,19 @@
 """
 
 
-from typing import Sequence, Iterable, Text, Mapping
+from typing import Sequence, Iterable, Text, Mapping, Union
 
 import numpy as np
 
-from chempred.util import Interval, sample_span, \
+from sciner.util import Interval, sample_span, \
     extract_intervals
 
 MAXCHAR = 127
 MAXCLS = 255
+
+
+Encoder = Union[Mapping[Text, np.ndarray],
+                Mapping[Sequence[Text], np.ndarray]]
 
 
 class EncodingError(ValueError):
@@ -39,7 +43,7 @@ def encode_annotation(annotations: Iterable[Interval], size: int) -> np.ndarray:
     return encoded_anno
 
 
-def annotate_sample(sample: Sequence[Interval], annotation: np.ndarray,
+def annotate_sample(annotation: np.ndarray, sample: Sequence[Interval],
                     dtype=np.int32) -> np.ndarray:
     # TODO update docs
     # TODO tests
@@ -66,8 +70,7 @@ def annotate_sample(sample: Sequence[Interval], annotation: np.ndarray,
     return encoded_token_anno
 
 
-def encode_sample(sample: Sequence[Interval], text: Text,
-                  encoder: Mapping[Text, np.ndarray]) \
+def encode_tokens(encoder: Encoder, tokens: Iterable[Text], dtype=np.float32) \
         -> np.ndarray:
     # TODO update docs
     # TODO tests
@@ -76,11 +79,13 @@ def encode_sample(sample: Sequence[Interval], text: Text,
     :param sample: a sample of intervals
     :return: (encoded tokens, token anno), (encoded characters, character anno)
     """
-    if not len(sample):
-        raise EncodingError("The sample is empty")
-    tokens = extract_intervals(text, sample)
-    return np.array(encoder[tk] for tk in tokens)
-
+    tokens_ = list(tokens)
+    if not len(tokens_):
+        raise EncodingError("The tokens is empty")
+    try:
+        return np.array(encoder[tokens_]).astype(dtype)
+    except (TypeError, KeyError, ValueError):
+        return np.array([encoder[tk] for tk in tokens_]).astype(dtype)
 
 
 if __name__ == "__main__":

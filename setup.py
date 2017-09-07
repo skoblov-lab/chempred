@@ -11,7 +11,7 @@ if sys.version_info < (3, 5, 2):
 # os.environ['CFLAGS'] = '-O3 -Wall'
 
 setup(
-    name="chempred",
+    name="sciner",
     version="0.1dev",
     packages=find_packages("./"),
     scripts=["chem-pred"],

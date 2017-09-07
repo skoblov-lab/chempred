@@ -1,2 +1,2 @@
-# chempred
-Character-level RNN for tagging chemical entities in unparsed text.
+# sciNER
+Character-level RNN for named entity recognition in plain text

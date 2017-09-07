@@ -5,49 +5,50 @@ import re
 import shutil
 from contextlib import contextmanager
 from itertools import chain, starmap
-from typing import Tuple, List, Iterable, Callable, Text, Sequence
+from typing import Tuple, List, Iterator, Iterable, Callable, Text, Sequence
 
 import numpy as np
 from fn import F
 
-from chempred import chemdner, util, encoding
-from chempred.encoding import annotate_sample
-from chempred.chemdner import Abstract, AbstractAnnotation
-from chempred.util import Interval
+from sciner import chemdner, util, encoding
+from sciner.encoding import annotate_sample, encode_annotation
+from sciner.chemdner import Abstract, AbstractAnnotation
+from sciner.util import Interval, extract_intervals
 
 
-def process_data(pairs: Iterable[Tuple[Abstract, AbstractAnnotation]],
-                 parser: Callable[[Text], Sequence[Interval]], window: int,
-                 validator: Callable) \
-        -> Tuple[Tuple[int], Tuple[str], Tuple[Interval], Tuple[np.ndarray]]:
+ProcessedSample = Tuple[int, Text, Sequence[Interval], Sequence[Text], np.ndarray]
+
+
+def process_pair(pair: Tuple[Abstract, AbstractAnnotation],
+                 parser: Callable[[Text], Sequence[Interval]], window: int) \
+        -> Iterator[ProcessedSample]:
     # TODO update docs
     # TODO tests
     """
     :param window: context window width (in raw tokens)
-    :return: text ids, sample sources (title or body), sampled intervals,
-    sample annotations
-    # >>> mapping = {"SYSTEMATIC": 1}
-    # >>> abstracts = chemdner.read_abstracts("testdata/abstracts.txt")
-    # >>> anno = chemdner.read_annotations("testdata/annotations.txt", mapping)
-    # >>> pairs = chemdner.align_abstracts_and_annotations(abstracts, anno)
-    # >>> ids, sources, spans, x, y, mask = (
-    # ...     process_data(pairs, util.tokenise, 100, 50)
-    # ... )
-    # >>> len(ids) == len(sources) == x.shape[0] == y.shape[0] == mask.shape[0]
-    # True
+    :return: Iterator[(text ids, sample sources (title or body),
+    sampled intervals, sample tokens, sample annotations)]
     """
-    ids, srcs, texts, annotations = zip(
-        *chain.from_iterable(map(chemdner.flatten_aligned_pair, pairs)))
-    samples = (util.sample_windows(intervals, window)
-               for intervals in [parser(text) for text in texts])
-    annotations = [encoding.encode_annotation(anno, len(text))
-                   for text, anno in zip(texts, annotations)]
+    ids, srcs, texts, annotations = zip(*chemdner.flatten_aligned_pair(pair))
+    sampled_ivs = (util.sample_windows(intervals, window)
+                   for intervals in [parser(text) for text in texts])
+    encoded_anno = [encode_annotation(anno, len(text))
+                    for text, anno in zip(texts, annotations)]
+    annotators = (F(annotate_sample, anno) for anno in encoded_anno)
+    extractors = (F(extract_intervals, text) for text in texts)
+    groups = zip(ids, srcs, sampled_ivs, extractors, annotators)
     processed = chain.from_iterable(
-        ((id_, src, s, annotate_sample(s, anno)) for s in samples if len(s))
-        for id_, src, samples, anno in zip(ids, srcs, samples, annotations)
+        [(id_, src, s, extractor(s), anno(s)) for s in samples if len(s)]
+        for id_, src, samples, extractor, anno in groups
     )
-    ids_, src_, samples_, sample_anno = zip(*filter(validator, processed))
-    return ids_, src_, samples_, sample_anno
+    return processed
+
+
+def flatten_processed_samples(processed_samples: Iterable[ProcessedSample]) \
+    -> Tuple[Tuple[int], Tuple[Text], Tuple[Sequence[Interval]],
+             Tuple[Sequence[Text]], Tuple[np.ndarray]]:
+    ids, srcs, samples, tokens, annotations = zip(*processed_samples)
+    return ids, srcs, samples, tokens, annotations
 
 
 def pick_best(filenames: List[str]) -> Tuple[str, Tuple[int, float]]:

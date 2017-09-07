@@ -18,8 +18,8 @@ from sciner.util import Interval, extract_intervals
 ProcessedSample = Tuple[int, Text, Sequence[Interval], Sequence[Text], np.ndarray]
 
 
-def process_pair(flat_pairs: Tuple[int, Text, Text, Sequence[Interval]],
-                 parser: Callable[[Text], Sequence[Interval]], window: int) \
+def process_pairs(flat_pairs: Tuple[int, Text, Text, Sequence[Interval]],
+                  parser: Callable[[Text], Sequence[Interval]], window: int) \
         -> Iterator[ProcessedSample]:
     # TODO update docs
     # TODO tests

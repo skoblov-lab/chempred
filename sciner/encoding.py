@@ -5,12 +5,11 @@
 """
 
 
-from typing import Sequence, Iterable, Text, Mapping, Union
+from typing import Sequence, Iterable, Text, Mapping, Union, Iterator, Optional
 
 import numpy as np
 
 from sciner.util import Interval, extract_intervals
-from sciner.training import sample_span
 
 MAXCHAR = 127
 MAXCLS = 255
@@ -88,5 +87,33 @@ def encode_tokens(encoder: Encoder, tokens: Iterable[Text], dtype=np.float32) \
         return np.array([encoder[tk] for tk in tokens_]).astype(dtype)
 
 
+def sample_windows(intervals: Sequence[Interval], window: int) \
+        -> Iterator[Sequence[Interval]]:
+    # TODO update docs
+    # TODO test
+    """
+    Sample windows using a sliding window approach. Sampling windows start at
+    the beginning of each interval in `intervals`
+    :param intervals: a sequence (preferable a numpy array) of interval objects
+    :param window: sampling window width in tokens
+    """
+    samples = (
+        iter([intervals]) if len(intervals) <= window else
+        (intervals[i:i+window] for i in range(len(intervals)-window+1))
+    )
+    return samples
+
+
+def sample_length(sample: Sequence[Interval]) -> int:
+    # TODO docs
+    return 0 if not len(sample) else sample[-1].stop - sample[0].start
+
+
+def sample_span(sample: Sequence[Interval]) -> Optional[Interval]:
+    return Interval(sample[0].start, sample[-1].stop) if len(sample) else None
+
+
 if __name__ == "__main__":
     raise RuntimeError
+
+

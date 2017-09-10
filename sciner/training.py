@@ -12,7 +12,7 @@ import numpy as np
 from fn import F
 from sklearn.utils import class_weight
 
-from sciner.encoding import annotate_sample, encode_annotation
+from sciner.encoding import annotate_sample, encode_annotation, sample_windows
 from sciner.text import AbstractAnnotation, Abstract, flatten_aligned_pair
 from sciner.util import Interval, extract_intervals
 
@@ -91,32 +91,6 @@ def training(rootdir: str, name: str):
             best_checkpoint, stats = pick_best(all_checkpoints)
             shutil.move(best_checkpoint, destination)
         shutil.rmtree(training_dir)
-
-
-def sample_windows(intervals: Sequence[Interval], window: int) \
-        -> Iterator[Sequence[Interval]]:
-    # TODO update docs
-    # TODO test
-    """
-    Sample windows using a sliding window approach. Sampling windows start at
-    the beginning of each interval in `intervals`
-    :param intervals: a sequence (preferable a numpy array) of interval objects
-    :param window: sampling window width in tokens
-    """
-    samples = (
-        iter([intervals]) if len(intervals) <= window else
-        (intervals[i:i+window] for i in range(len(intervals)-window+1))
-    )
-    return samples
-
-
-def sample_length(sample: Sequence[Interval]) -> int:
-    # TODO docs
-    return 0 if not len(sample) else sample[-1].stop - sample[0].start
-
-
-def sample_span(sample: Sequence[Interval]) -> Optional[Interval]:
-    return Interval(sample[0].start, sample[-1].stop) if len(sample) else None
 
 
 def balance_class_weights(y: np.ndarray, mask: Optional[np.ndarray]=None) \

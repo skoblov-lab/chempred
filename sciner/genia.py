@@ -1,27 +1,27 @@
-from typing import Sequence, NamedTuple, Tuple, Iterable, Text, Optional, List, \
-    Iterator
-from itertools import starmap
-from numbers import Integral
-from functools import reduce
-from xml.etree.ElementTree import Element, parse
 import operator as op
 import re
+from functools import reduce
+from itertools import starmap
+from numbers import Integral
+from typing import Sequence, NamedTuple, Tuple, Iterable, Text, Optional, List, \
+    Iterator
+from xml.etree.ElementTree import Element, parse
 
-from pyrsistent import v, pvector
 from fn import F
+from pyrsistent import v, pvector
 
 from sciner.text import AbstractAnnotation, Abstract, ClassMapping, \
-    AnnotationError, ClassifiedInterval, TITLE, BODY
+    AnnotationError, ClassifiedInterval
 from sciner.util import Interval
 
+ANNO_PATT = re.compile("G#(\w+)")
+SENTENCE_TAG = "sentence"
+ANNO_TAG = "sem"
+ARTICLE = "article"
 
 LevelAnnotation = NamedTuple("Annotation", [("level", int),
                                             ("anno", Sequence[Optional[Text]]),
                                             ("terminal", bool)])
-SENTENCE_TAG = "sentence"
-ANNO_TAG = "sem"
-CODE_PREF = "G#"
-ARTICLE = "article"
 
 
 def flatten_sentence(sentence: Element) \
@@ -56,13 +56,11 @@ def text_boundaries(texts: Iterable[Text]) -> List[Tuple[int, int]]:
     # TODO docs
     def aggregate_boundaries(boundaries: pvector, text):
         return (
-        boundaries + [(boundaries[-1][1], boundaries[-1][1] + len(text))]
-        if boundaries else v((0, len(text))))
+            boundaries + [(boundaries[-1][1], boundaries[-1][1] + len(text))]
+            if boundaries else v((0, len(text)))
+        )
 
     return list(reduce(aggregate_boundaries, texts, v()))
-
-
-ANNO_PATT = re.compile("G#(\w+)")
 
 
 def parse_sentences(root: Element, mapping: ClassMapping,

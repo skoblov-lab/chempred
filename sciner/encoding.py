@@ -23,6 +23,10 @@ class EncodingError(ValueError):
     pass
 
 
+class AmbiguousAnnotation(EncodingError):
+    pass
+
+
 def encode_annotation(annotations: Iterable[Interval], size: int) -> np.ndarray:
     # TODO update docs
     """
@@ -64,7 +68,8 @@ def annotate_sample(annotation: np.ndarray, sample: Sequence[Interval],
     for i, tk_anno in enumerate(token_annotations):
         positive_anno = tk_anno[tk_anno > 0]
         if len(positive_anno) > 1:
-            raise EncodingError("ambiguous annotation")
+            raise AmbiguousAnnotation(
+                "ambiguous annotation: {}".format(positive_anno))
         encoded_token_anno[i] = positive_anno[0] if positive_anno else 0
     return encoded_token_anno
 

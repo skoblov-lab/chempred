@@ -9,8 +9,8 @@ from typing import Sequence, Iterable, Text, Mapping, Union
 
 import numpy as np
 
-from sciner.util import Interval, sample_span, \
-    extract_intervals
+from sciner.util import Interval, extract_intervals
+from sciner.training import sample_span
 
 MAXCHAR = 127
 MAXCLS = 255

@@ -5,16 +5,16 @@ import re
 import shutil
 from contextlib import contextmanager
 from itertools import chain, starmap
-from typing import Tuple, List, Iterator, Iterable, Callable, Text, Sequence
+from typing import Tuple, List, Iterator, Iterable, Callable, Text, Sequence, \
+    Optional, Mapping
 
 import numpy as np
 from fn import F
+from sklearn.utils import class_weight
 
-from sciner import chemdner, util, encoding
 from sciner.encoding import annotate_sample, encode_annotation
-from sciner.chemdner import Abstract, AbstractAnnotation
+from sciner.text import AbstractAnnotation, Abstract, flatten_aligned_pair
 from sciner.util import Interval, extract_intervals
-
 
 ProcessedSample = Tuple[int, Text, Sequence[Interval], Sequence[Text], np.ndarray]
 
@@ -30,8 +30,8 @@ def process_pair(pair: Tuple[Abstract, AbstractAnnotation],
     :return: Iterator[(text ids, sample sources (title or body),
     sampled intervals, sample tokens, sample annotations)]
     """
-    ids, srcs, texts, annotations = zip(*chemdner.flatten_aligned_pair(pair))
-    sampled_ivs = (util.sample_windows(intervals, window)
+    ids, srcs, texts, annotations = zip(*flatten_aligned_pair(pair))
+    sampled_ivs = (sample_windows(intervals, window)
                    for intervals in [parser(text) for text in texts])
     encoded_anno = [encode_annotation(anno, len(text))
                     for text, anno in zip(texts, annotations)]
@@ -91,6 +91,67 @@ def training(rootdir: str, name: str):
             best_checkpoint, stats = pick_best(all_checkpoints)
             shutil.move(best_checkpoint, destination)
         shutil.rmtree(training_dir)
+
+
+def sample_windows(intervals: Sequence[Interval], window: int) \
+        -> Iterator[Sequence[Interval]]:
+    # TODO update docs
+    # TODO test
+    """
+    Sample windows using a sliding window approach. Sampling windows start at
+    the beginning of each interval in `intervals`
+    :param intervals: a sequence (preferable a numpy array) of interval objects
+    :param window: sampling window width in tokens
+    """
+    samples = (
+        iter([intervals]) if len(intervals) <= window else
+        (intervals[i:i+window] for i in range(len(intervals)-window+1))
+    )
+    return samples
+
+
+def sample_length(sample: Sequence[Interval]) -> int:
+    # TODO docs
+    return 0 if not len(sample) else sample[-1].stop - sample[0].start
+
+
+def sample_span(sample: Sequence[Interval]) -> Optional[Interval]:
+    return Interval(sample[0].start, sample[-1].stop) if len(sample) else None
+
+
+def balance_class_weights(y: np.ndarray, mask: Optional[np.ndarray]=None) \
+        -> Optional[Mapping[int, float]]:
+    """
+    :param y: a numpy array encoding sample classes; samples are encoded along
+    the 0-axis
+    :param mask: a boolean array of shape compatible with `y`, wherein True
+    shows that the corresponding value(s) in `y` should be used to calculate
+    weights; if `None` the function will consider all values in `y`
+    :return: class weights
+    """
+    if not len(y):
+        raise ValueError("`y` is empty")
+    y_flat = (y.flatten() if mask is None else
+              np.concatenate([sample[mask] for sample, mask in zip(y, mask)]))
+    classes = np.unique(y_flat)
+    weights = class_weight.compute_class_weight("balanced", classes, y_flat)
+    weights_scaled = weights / weights.min()
+    return {cls: weight for cls, weight in zip(classes, weights_scaled)}
+
+
+def sample_weights(y: np.ndarray, class_weights: Mapping[int, float]) \
+        -> np.ndarray:
+    """
+    :param y: a 2D array encoding sample classes; each sample is a row of
+    integers representing class code
+    :param class_weights: a class to weight mapping
+    :return: a 2D array of the same shape as `y`, wherein each position stores
+    a weight for the corresponding position in `y`
+    """
+    weights_mask = np.zeros(shape=y.shape, dtype=np.float32)
+    for cls, weight in class_weights.items():
+        weights_mask[y == cls] = weight
+    return weights_mask
 
 
 if __name__ == "__main__":

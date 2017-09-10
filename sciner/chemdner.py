@@ -4,34 +4,23 @@ Parsers, preprocessors and type annotations for the chemdner dataset.
 
 """
 
+import operator as op
 from itertools import groupby
 from numbers import Integral
-from typing import List, Tuple, Iterator, Text, Iterable, NamedTuple, Sequence
+from typing import List, Tuple, Text
 
-import operator as op
 from fn import F
 
-from sciner.util import ClassMapping, Interval
-
-OTHER = "OTHER"
-TITLE = "T"
-BODY = "A"
-
-ClassifiedInterval = Interval[Integral]
-Annotation = Sequence[ClassifiedInterval]
-AbstractAnnotation = NamedTuple("AbstractAnnotation", [("id", int),
-                                                       ("title", Annotation),
-                                                       ("body", Annotation)])
-Abstract = NamedTuple("Abstract",
-                      [("id", int), ("title", Text), ("body", Text)])
+from sciner.text import TITLE, BODY, AbstractAnnotation, Abstract, ClassMapping
+from sciner.util import Interval
 
 
-def read_abstracts(path: Text) -> List[Abstract]:
+def parse_abstracts(path: Text) -> List[Abstract]:
     """
     Read chemdner abstracts
     :return: list[(abstract id, title, body)]
     >>> path = "testdata/abstracts.txt"
-    >>> abstracts = read_abstracts(path)
+    >>> abstracts = parse_abstracts(path)
     >>> ids = {21826085, 22080034, 22080035, 22080037}
     >>> all(id_ in ids for id_, *_ in abstracts)
     True
@@ -42,7 +31,7 @@ def read_abstracts(path: Text) -> List[Abstract]:
                 for abstract_n, title, abstract in parsed_buffer]
 
 
-def read_annotations(path: Text, mapping: ClassMapping, default: Integral=None) \
+def parse_annotations(path: Text, mapping: ClassMapping, default: Integral=None) \
         -> List[AbstractAnnotation]:
     # TODO log empty annotations
     # TODO more tests
@@ -51,9 +40,9 @@ def read_annotations(path: Text, mapping: ClassMapping, default: Integral=None) 
     :param path: path to a CHEMDNER-formatted annotation files
     :param mapping: a class mapping
     :param default: default class integer value for out-of-mapping classes; if
-    None is given objects with out-of-mapping classes are discarded
+    None is given, objects with out-of-mapping classes are discarded
     >>> path = "testdata/annotations.txt"
-    >>> anno = read_annotations(path, {"SYSTEMATIC": 1}, 0)
+    >>> anno = parse_annotations(path, {"SYSTEMATIC": 1}, 0)
     >>> ids = {21826085, 22080034, 22080035, 22080037}
     >>> all(id_ in ids for id_, *_ in anno)
     True
@@ -86,37 +75,6 @@ def read_annotations(path: Text, mapping: ClassMapping, default: Integral=None) 
                                    list(parts.get(TITLE, [])),
                                    list(parts.get(BODY, [])))
                 for id_, parts in mapped_parts]
-
-
-def align_abstracts_and_annotations(abstracts: Iterable[Abstract],
-                                    annotations: Iterable[AbstractAnnotation]) \
-        -> Iterator[Tuple[Abstract, AbstractAnnotation]]:
-    # TODO tests
-    """
-    Align abstracts and annotations (i.e. match abstract ids)
-    :param abstracts: parsed abstracts (e.g. produces by `read_abstracts`)
-    :param annotations: parsed annotations (e.g. produces by `read_annotations`)
-    :return: Iterator[(parsed abstract, parsed annotation)]
-    """
-    def empty(id_: int) -> AbstractAnnotation:
-        return AbstractAnnotation(id_, [], [])
-
-    anno_mapping = {anno.id: anno for anno in annotations}
-    return ((abstract, anno_mapping.get(abstract.id, empty(abstract.id)))
-            for abstract in abstracts)
-
-
-def flatten_aligned_pair(pair: Tuple[Abstract, AbstractAnnotation]) \
-        -> List[Tuple[int, Text, Text, Sequence[Interval]]]:
-    # TODO tests
-    """
-    :return: list[(abstract id, source, text, annotation)]
-    """
-    (abstract_id, title, body), (anno_id, title_anno, body_anno) = pair
-    if abstract_id != anno_id:
-        raise ValueError("Abstract ids do not match")
-    return [(abstract_id, TITLE, title, title_anno),
-            (abstract_id, BODY, body, body_anno)]
 
 
 if __name__ == "__main__":

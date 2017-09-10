@@ -1,27 +1,21 @@
+import csv
 import json
+import operator as op
+import re
+import sys
+from functools import reduce
 from io import TextIOWrapper
 from itertools import chain
-from functools import reduce
-import operator as op
 from typing import List, Tuple, Optional, Text, Pattern, Sequence, Mapping, \
-    Callable, Union, Iterator, Sized, Iterable, overload, TypeVar, NamedTuple, \
-    Container, Generic
-from numbers import Integral
-import csv
-import sys
-import re
+    Callable, Union, Iterator, Iterable, TypeVar, Container, Generic
 
 import numpy as np
-from sklearn.utils import class_weight
-from fn import F
 import pandas as pd
-
+from fn import F
 
 _slots_supported = (sys.version_info >= (3, 6, 2) or
                     (3, 5, 3) <= sys.version_info < (3, 6))
 
-
-ClassMapping = Mapping[Text, Integral]
 WS_PATT = re.compile("\S+")
 PUNCT_PATT = re.compile(r"[\w]+|[^\s\w]")
 PUNCT_WS_PATT = re.compile(r"[\w]+|[^\w]")
@@ -147,32 +141,6 @@ def parse(text: Text, pattern: Pattern) -> np.ndarray:
         raise TypeError("`{}` is not a valid unicode string".format(repr(text)))
 
 
-def sample_windows(intervals: Sequence[Interval], window: int) \
-        -> Iterator[Sequence[Interval]]:
-    # TODO update docs
-    # TODO test
-    """
-    Sample windows using a sliding window approach. Sampling windows start at
-    the beginning of each interval in `intervals`
-    :param intervals: a sequence (preferable a numpy array) of interval objects
-    :param window: sampling window width in tokens
-    """
-    samples = (
-        iter([intervals]) if len(intervals) <= window else
-        (intervals[i:i+window] for i in range(len(intervals)-window+1))
-    )
-    return samples
-
-
-def sample_length(sample: Sequence[Interval]) -> int:
-    # TODO docs
-    return 0 if not len(sample) else sample[-1].stop - sample[0].start
-
-
-def sample_span(sample: Sequence[Interval]) -> Optional[Interval]:
-    return Interval(sample[0].start, sample[-1].stop) if len(sample) else None
-
-
 def extract_intervals(sequence: Sequence[T], intervals: Iterable[Interval]) \
         -> List[Sequence[T]]:
     return [sequence[iv.start:iv.stop] for iv in intervals]
@@ -251,56 +219,6 @@ def maskfalse(array: np.ndarray, mask: np.ndarray) -> np.ndarray:
     copy = array.copy()
     copy[~mask] = 0
     return copy
-
-
-def parse_mapping(classmaps: Iterable[str]) -> ClassMapping:
-    """
-    :param classmaps:
-    :return:
-    >>> classmaps = ["a:1", "b:1", "c:2"]
-    >>> parse_mapping(classmaps) == dict(a=1, b=1, c=2)
-    True
-    """
-    try:
-        return {cls: int(val)
-                for cls, val in [classmap.split(":") for classmap in classmaps]}
-    except ValueError as err:
-        raise ValueError("Badly formatted mapping: {}".format(err))
-
-
-def balance_class_weights(y: np.ndarray, mask: Optional[np.ndarray]=None) \
-        -> Optional[Mapping[int, float]]:
-    """
-    :param y: a numpy array encoding sample classes; samples are encoded along
-    the 0-axis
-    :param mask: a boolean array of shape compatible with `y`, wherein True
-    shows that the corresponding value(s) in `y` should be used to calculate
-    weights; if `None` the function will consider all values in `y`
-    :return: class weights
-    """
-    if not len(y):
-        raise ValueError("`y` is empty")
-    y_flat = (y.flatten() if mask is None else
-              np.concatenate([sample[mask] for sample, mask in zip(y, mask)]))
-    classes = np.unique(y_flat)
-    weights = class_weight.compute_class_weight("balanced", classes, y_flat)
-    weights_scaled = weights / weights.min()
-    return {cls: weight for cls, weight in zip(classes, weights_scaled)}
-
-
-def sample_weights(y: np.ndarray, class_weights: Mapping[int, float]) \
-        -> np.ndarray:
-    """
-    :param y: a 2D array encoding sample classes; each sample is a row of
-    integers representing class code
-    :param class_weights: a class to weight mapping
-    :return: a 2D array of the same shape as `y`, wherein each position stores
-    a weight for the corresponding position in `y`
-    """
-    weights_mask = np.zeros(shape=y.shape, dtype=np.float32)
-    for cls, weight in class_weights.items():
-        weights_mask[y == cls] = weight
-    return weights_mask
 
 
 # def merge_predictions(intervals: List[Interval], predictions: np.ndarray) \

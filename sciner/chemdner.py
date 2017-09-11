@@ -7,7 +7,7 @@ Parsers, preprocessors and type annotations for the chemdner dataset.
 import operator as op
 from itertools import groupby
 from numbers import Integral
-from typing import List, Tuple, Text
+from typing import List, Tuple, Text, Iterable, Iterator
 
 from fn import F
 
@@ -77,5 +77,25 @@ def parse_annotations(path: Text, mapping: ClassMapping, default: Integral=None)
                 for id_, parts in mapped_parts]
 
 
+def align_abstracts_and_annotations(abstracts: Iterable[Abstract],
+                                    annotations: Iterable[AbstractAnnotation]) \
+        -> Iterator[Tuple[Abstract, AbstractAnnotation]]:
+    # TODO tests
+    """
+    Align abstracts and annotations (i.e. match abstract ids)
+    :param abstracts: parsed abstracts (e.g. produces by `read_abstracts`)
+    :param annotations: parsed annotations (e.g. produces by `read_annotations`)
+    :return: Iterator[(parsed abstract, parsed annotation)]
+    """
+    def empty(id_: int) -> AbstractAnnotation:
+        return AbstractAnnotation(id_, [], [])
+
+    anno_mapping = {anno.id: anno for anno in annotations}
+    return ((abstract, anno_mapping.get(abstract.id, empty(abstract.id)))
+            for abstract in abstracts)
+
+
 if __name__ == "__main__":
     raise RuntimeError
+
+

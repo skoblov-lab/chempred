@@ -1,5 +1,5 @@
 from numbers import Integral
-from typing import Sequence, NamedTuple, Text, Iterable, Iterator, Tuple, List, \
+from typing import Sequence, NamedTuple, Text, Iterable, Tuple, List, \
     Mapping
 
 from sciner.util import Interval
@@ -19,24 +19,6 @@ Abstract = NamedTuple("Abstract",
 
 class AnnotationError(ValueError):
     pass
-
-
-def align_abstracts_and_annotations(abstracts: Iterable[Abstract],
-                                    annotations: Iterable[AbstractAnnotation]) \
-        -> Iterator[Tuple[Abstract, AbstractAnnotation]]:
-    # TODO tests
-    """
-    Align abstracts and annotations (i.e. match abstract ids)
-    :param abstracts: parsed abstracts (e.g. produces by `read_abstracts`)
-    :param annotations: parsed annotations (e.g. produces by `read_annotations`)
-    :return: Iterator[(parsed abstract, parsed annotation)]
-    """
-    def empty(id_: int) -> AbstractAnnotation:
-        return AbstractAnnotation(id_, [], [])
-
-    anno_mapping = {anno.id: anno for anno in annotations}
-    return ((abstract, anno_mapping.get(abstract.id, empty(abstract.id)))
-            for abstract in abstracts)
 
 
 def flatten_aligned_pair(pair: Tuple[Abstract, AbstractAnnotation]) \

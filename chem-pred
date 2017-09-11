@@ -11,6 +11,7 @@ import sys
 
 import click
 
+import sciner.chemdner
 import sciner.text
 import sciner.training
 from sciner import chemdner
@@ -104,8 +105,8 @@ def train(ctx, abstracts, annotations, epochs, batchsize, val_split):
         os.path.abspath(abstracts))
     parsed_anno = chemdner.parse_annotations(
         os.path.abspath(annotations), mapping)
-    pairs = sciner.text.align_abstracts_and_annotations(parsed_abstracts,
-                                                        parsed_anno)
+    pairs = sciner.chemdner.align_abstracts_and_annotations(parsed_abstracts,
+                                                            parsed_anno)
     nonempty_pairs = [(abstact, abstract_annotations) for
                       abstact, abstract_annotations in pairs
                       if any(abstract_annotations[1:])]

@@ -247,7 +247,9 @@ Historically three main approaches to biomedical NER exist: rule-based methods\c
 Some examples of the latter group include Support Vector Machines\cite{Kazama,Lee2003}, Hidden Markov Models\cite{J2010}, Maximum Entropy Markov Models\cite{Finkel2004} and Conditional Random Fields\cite{Settles2004,McDonald2005}.
 Most of todays state of the art model use stand-alone CRFs or in conjunction with other machine learning approaches such as ANN\cite{Li2016,Crichton2017,Gridach2017,Habibi2017}.
 
-Due to the prevalence of supervised machine learning methods several projects have been created to provide curated corpora for NER tasks. Some of the more well-established corpora in Biomedical NER are BioCreAtIvE II Gene Mention (GM)\cite{Smith2008} and JNLPBA corpus\cite{Kim2004} based on the annotations of the GENIA Term corpus version 3.02\cite{Kim2003}.
+Due to the prevalence of supervised machine learning methods several projects have been created to provide curated corpora for NER tasks. Some of the more well-established corpora in Biomedical NER are BioCreAtIvE II Gene Mention (GM)\cite{Smith2008} and JNLPBA corpus\cite{Kim2004} based on the annotations of the GENIA Term corpus version 3.02\cite{Kim2003}. We used JNLPBA corpus to train and evaluate our model.
+
+To our knowledge the method that yielded highest F1-score on JNLPBA corpus was described in (Gridach et al., 2017)\cite{Gridach2017}. It took advantage of combination of CRF and bidirectional long short-term memory (LSTM) to combine both word- and character-level text embeddings. This model proved to improve the quality of NER allbeit by a small margin. 
 
 
 

@@ -2,6 +2,8 @@ import sys
 from distutils.core import setup
 from setuptools import find_packages
 
+# TODO add loggers and warnings
+
 if sys.version_info < (3, 5, 2):
     print("ChemPred required Python >= 3.5.2")
     sys.exit(1)

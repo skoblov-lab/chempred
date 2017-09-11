@@ -1,0 +1,462 @@
+% bmc_article.bib
+% 
+%  An example of bibtex entries.
+%  Entries taken from BMC instructions for authors page.
+
+% uncomment next line to make author-year bibliography
+% @settings{label, options="nameyear"}
+
+@article{blank,
+	author  = {}, 
+	title   = {},
+	journal = {}, 
+	year  = {},
+	  month = {}, 
+	  volume= {}, 
+	  number= {}, 
+	  pages = {},
+	  note  = {} 
+}	
+
+@article{Fukuda1998,
+	abstract = {To solve the mystery of the life phenomenon, we must clarify when genes are ex-pressed and how their products interact with each other. But since the amount of continuously updated knowledge on these interactions is massive and is only avail-able in the form of published articles, an intelligent information extraction (IE) system is needed. To extract these information directly from articles, the system must rstly identify the material names. However, medical and biological docu-ments often include proper nouns newly made by the authors, and conventional methods based on domain specic dictionaries cannot detect such unknown words or coinages. In this study, we propose a new method of extracting material names, PROPER, using surface clue on character strings. It extracts material names in the sentence with 94.70{\%} precision and 98.84{\%} recall, regardless of whether it is already known or newly dened. 1 Introduction Genome projects are now determining whole DNA sequences and genes of various species. The next target is to analyze the function of each gene. To understand the role of each gene, we must clarify when it is expressed and how its product interacts with other materials. Typical interaction includes protein-nucleotide and protein-protein bindings and many researchers are submitting articles on such kind of interactions. The quality and amount of continuously updated knowledge has become powerful enough to grapple with the mystery of life phenomenon. However, reading every article in the world requires too much time and labor. Therefore, we need an intelligent information extracting system to save time. To extract information on interactions directly from each article, the sys-tem must rstly identify material names, e.g. gene names and protein names. Identifying technical terms from quantities of unrestricted text is a challeng-ing task for natural language processing, especially in medical and biological papers. One will encounter the following diculties: unknown word process-ing, long compound word recognition, and requirement of robustness against ambiguous expressions that are used only among the area experts. As far as we know, there is no technical term extracting system that overcome these problems at once.},
+	author = {Fukuda, K and Tsunoda, T and Tamura, A and Takagi, T},
+	file = {:home/maxim/Desktop/rule/fukuda.pdf:pdf},
+	isbn = {1793-5091 (Print)},
+	issn = {1793-5091},
+	journal = {Proceedings of the 3rd Pacific Symposium on Biocomputing},
+	pages = {707--718},
+	pmid = {9697224},
+	title = {{Information Extraction: Identifying Protein Names from Biological Papers}},
+	year = {1998}
+}
+@article{Savova2010,
+	abstract = {We aim to build and evaluate an open-source natural language processing system for information extraction from electronic medical record clinical free-text. We describe and evaluate our system, the clinical Text Analysis and Knowledge Extraction System (cTAKES), released open-source at http://www.ohnlp.org. The cTAKES builds on existing open-source technologies—the Unstructured Information Management Architecture framework and OpenNLP natural language processing toolkit. Its components, specifically trained for the clinical domain, create rich linguistic and semantic annotations. Performance of individual components: sentence boundary detector accuracy=0.949; tokenizer accuracy=0.949; part-of-speech tagger accuracy=0.936; shallow parser F-score=0.924; named entity recognizer and system-level evaluation F-score=0.715 for exact and 0.824 for overlapping spans, and accuracy for concept mapping, negation, and status attributes for exact and overlapping spans of 0.957, 0.943, 0.859, and 0.580, 0.939, and 0.839, respectively. Overall performance is discussed against five applications. The cTAKES annotations are the foundation for methods and modules for higher-level semantic processing of clinical free-text.},
+	author = {Savova, Guergana K and Masanz, James J and Ogren, Philip V and Zheng, Jiaping and Sohn, Sunghwan and Kipper-Schuler, Karin C and Chute, Christopher G},
+	doi = {10.1136/jamia.2009.001560},
+	file = {:home/maxim/Desktop/rule/amiajnl1560.pdf:pdf},
+	isbn = {1527-974X (Electronic) 1067-5027 (Linking)},
+	issn = {1067-5027},
+	journal = {Journal of the American Medical Informatics Association},
+	number = {5},
+	pages = {507--513},
+	pmid = {20819853},
+	title = {{Mayo clinical Text Analysis and Knowledge Extraction System (cTAKES): architecture, component evaluation and applications}},
+	url = {https://academic.oup.com/jamia/article-lookup/doi/10.1136/jamia.2009.001560},
+	volume = {17},
+	year = {2010}
+}
+@article{Zeng2006,
+	abstract = {BACKGROUND: The text descriptions in electronic medical records are a rich source of information. We have developed a Health Information Text Extraction (HITEx) tool and used it to extract key findings for a research study on airways disease.$\backslash$n$\backslash$nMETHODS: The principal diagnosis, co-morbidity and smoking status extracted by HITEx from a set of 150 discharge summaries were compared to an expert-generated gold standard.$\backslash$n$\backslash$nRESULTS: The accuracy of HITEx was 82{\%} for principal diagnosis, 87{\%} for co-morbidity, and 90{\%} for smoking status extraction, when cases labeled "Insufficient Data" by the gold standard were excluded.$\backslash$n$\backslash$nCONCLUSION: We consider the results promising, given the complexity of the discharge summaries and the extraction tasks.},
+	author = {Zeng, Qing T and Goryachev, Sergey and Weiss, Scott and Sordo, Margarita and Murphy, Shawn N and Lazarus, Ross},
+	doi = {10.1186/1472-6947-6-30},
+	file = {:home/maxim/Desktop/rule/1472-6947-6-30.pdf:pdf},
+	isbn = {10.1186/1472-6947-6-30},
+	issn = {1472-6947},
+	journal = {BMC Medical Informatics and Decision Making},
+	number = {1},
+	pages = {30},
+	pmid = {16872495},
+	title = {{Extracting principal diagnosis, co-morbidity and smoking status for asthma research: evaluation of a natural language processing system}},
+	url = {http://bmcmedinformdecismak.biomedcentral.com/articles/10.1186/1472-6947-6-30},
+	volume = {6},
+	year = {2006}
+}
+
+@article{Rindflesch2000,
+	abstract = {EDGAR (Extraction of Drugs, Genes and Relations) is a natural language processing system that extracts information about drugs and genes relevant to cancer from the biomedical literature. This automatically extracted information has remarkable potential to facilitate computational analysis in the molecular biology of cancer, and the technology is straightforwardly generalizable to many areas of biomedicine. This paper reports on the mechanisms for automatically generating such assertions and on a simple application, conceptual clustering of documents. The system uses a stochastic part of speech tagger, generates an underspecified syntactic parse and then uses semantic and pragmatic information to construct its assertions. The system builds on two important existing resources: the MEDLINE database of biomedical citations and abstracts and the Unified Medical Language System, which provides syntactic and semantic information about the terms found in biomedical abstracts.},
+	archivePrefix = {arXiv},
+	arxivId = {NIHMS150003},
+	author = {Rindflesch, T C and Tanabe, L and Weinstein, J N and Hunter, L},
+	doi = {10.1016/j.bbi.2008.05.010},
+	eprint = {NIHMS150003},
+	file = {:home/maxim/Desktop/dict/nihms58771.pdf:pdf},
+	isbn = {2122633255},
+	issn = {2335-6936},
+	journal = {Pacific Symposium on Biocomputing. Pacific Symposium on Biocomputing},
+	pages = {517--28},
+	pmid = {10902199},
+	title = {{EDGAR: extraction of drugs, genes and relations from the biomedical literature.}},
+	url = {http://www.ncbi.nlm.nih.gov/pubmed/10902199{\%}5Cnhttp://www.pubmedcentral.nih.gov/articlerender.fcgi?artid=PMC2709525},
+	year = {2000}
+}
+@article{Song2015,
+	abstract = {BACKGROUND:Bio-entity extraction is a pivotal component for information extraction from biomedical literature. The dictionary-based bio-entity extraction is the first generation of Named Entity Recognition (NER) techniques.METHODS:This paper presents a hybrid dictionary-based bio-entity extraction technique. The approach expands the bio-entity dictionary by combining different data sources and improves the recall rate through the shortest path edit distance algorithm. In addition, the proposed technique adopts text mining techniques in the merging stage of similar entities such as Part of Speech (POS) expansion, stemming, and the exploitation of the contextual cues to further improve the performance.RESULTS:The experimental results show that the proposed technique achieves the best or at least equivalent performance among compared techniques, GENIA, MESH, UMLS, and combinations of these three resources in F-measure.CONCLUSIONS:The results imply that the performance of dictionary-based extraction techniques is largely influenced by information resources used to build the dictionary. In addition, the edit distance algorithm shows steady performance with three different dictionaries in precision whereas the context-only technique achieves a high-end performance with three difference dictionaries in recall.},
+	author = {Song, Min and Yu, Hwanjo and Han, Wook-Shin},
+	doi = {10.1186/1472-6947-15-S1-S9},
+	file = {:home/maxim/Desktop/dict/1472-6947-15-S1-S9.pdf:pdf},
+	isbn = {1472-6947 (Electronic)
+	1472-6947 (Linking)},
+	issn = {1472-6947},
+	journal = {BMC Medical Informatics and Decision Making},
+	number = {Suppl 1},
+	pages = {S9},
+	pmid = {26043907},
+	publisher = {BioMed Central Ltd},
+	title = {{Developing a hybrid dictionary-based bio-entity recognition technique}},
+	url = {http://www.biomedcentral.com/1472-6947/15/S1/S9},
+	volume = {15},
+	year = {2015}
+}
+@article{Yang2008,
+	abstract = {Bio-entity name recognition is the key step for information extraction from biomedical literature. This paper presents a dictionary-based bio-entity name recognition approach. The approach expands the bio-entity name dictionary via the Abbreviation Definitions identifying algorithm, improves the recall rate through the improved edit distance algorithm and adopts some post-processing methods including Pre-keyword and Post-keyword expansion, Part of Speech expansion, merge of adjacent bio-entity names and the exploitation of the contextual cues to further improve the performance. Experiment results show that with this approach even an internal dictionary-based system could achieve a fairly good performance. ?? 2008 Elsevier Ltd. All rights reserved.},
+	author = {Yang, Zhihao and Lin, Hongfei and Li, Yanpeng},
+	doi = {10.1016/j.compbiolchem.2008.03.008},
+	file = {:home/maxim/Desktop/dict/yang2008.pdf:pdf},
+	isbn = {364204929X},
+	issn = {14769271},
+	journal = {Computational Biology and Chemistry},
+	keywords = {Conditional random fields,Edit distance,Entity recognition,Text mining},
+	number = {4},
+	pages = {287--291},
+	pmid = {18467180},
+	title = {{Exploiting the performance of dictionary-based bio-entity name recognition in biomedical literature}},
+	volume = {32},
+	year = {2008}
+}
+
+@article{Finkel2004,
+	abstract = {We describe a machine learning system for the recognition of names in biomedical texts. The system makes extensive use of local and syntactic features within the text, as well as external resources including the web and gazetteers. It achieves an F-score of 70{\%} on the Coling 2004 NLPBA/BioNLP shared task of identifying five biomedical named entities in the GENIA corpus.},
+	author = {Finkel, Jenny and Dingare, Shipra and Nguyen, Huy and Nissim, Malvina and Manning, Christopher and Sinclair, Gail},
+	file = {:home/maxim/Desktop/ml/W04-1217.pdf:pdf},
+	journal = {JNLPBA '04 Proceedings of the International Joint Workshop on Natural Language Processing in Biomedicine and its Applications},
+	pages = {88--91},
+	title = {{Exploiting Context for Biomedical Entity Recognition : From Syntax to the Web}},
+	url = {http://dl.acm.org/citation.cfm?id=1567614},
+	year = {2004}
+}
+@article{J2010,
+	abstract = {Many NLP tasks need accurate knowledge for semantic inference. To this end, mostly WordNet is utilized. Yet WordNet is limited, especially for inference between predicates. To help filling this gap, we present an algorithm that generates inference rules between predicates from FrameNet. Our experiment shows that the novel resource is effective and complements WordNet in terms of rule coverage.},
+	author = {J, Zhang and D, Shen and G, Zhou},
+	file = {:home/maxim/Desktop/ml/p96-guodong.pdf:pdf},
+	journal = {J Biomed Inform},
+	number = {37},
+	pages = {411--22},
+	title = {{Exploring deep knowledge resources in biomedical name recognition}},
+	url = {http://www.aclweb.org/anthology/P10-2045},
+	volume = {2004},
+	year = {2010}
+}
+@article{Kazama,
+	abstract = {We explore the use of Support Vector Ma-chines (SVMs) for biomedical named en-tity recognition. To make the SVM train-ing with the available largest corpus – the GENIA corpus – tractable, we propose to split the non-entity class into sub-classes, using part-of-speech information. In ad-dition, we explore new features such as word cache and the states of an HMM trained by unsupervised learning. Experi-ments on the GENIA corpus show that our class splitting technique not only enables the training with the GENIA corpus but also improves the accuracy. The proposed new features also contribute to improve the accuracy. We compare our SVM-based recognition system with a system using Maximum Entropy tagging method.},
+	author = {Kazama, Jun 'ichi and Makino, Takaki and Ohta, Yoshihiro and Tsujii, Jun 'ichi},
+	file = {:home/maxim/.local/share/data/Mendeley Ltd./Mendeley Desktop/Downloaded/Kazama et al. - Unknown - Tuning Support Vector Machines for Biomedical Named Entity Recognition.pdf:pdf},
+	title = {{Tuning Support Vector Machines for Biomedical Named Entity Recognition}},
+	url = {http://delivery.acm.org/10.1145/1120000/1118150/p1-kazama.pdf?ip=217.79.12.98{\&}id=1118150{\&}acc=OPEN{\&}key=4D4702B0C3E38B35.4D4702B0C3E38B35.4D4702B0C3E38B35.6D218144511F3437{\&}CFID=797604101{\&}CFTOKEN=51802601{\&}{\_}{\_}acm{\_}{\_}=1503041475{\_}7ffb30175854bf5cb9edc7a52854801d}
+}
+@article{Lee2003,
+	author = {Lee, Ki-Joong and Hwang, Young-Sook and Rim, Hae-Chang},
+	doi = {10.3115/1118958.1118963},
+	file = {:home/maxim/Desktop/ml/W03-1305.pdf:pdf},
+	journal = {Proceedings of the ACL 2003 workshop on Natural language processing in biomedicine -},
+	pages = {33--40},
+	title = {{Two-phase biomedical NE recognition based on SVMs}},
+	url = {http://portal.acm.org/citation.cfm?doid=1118958.1118963},
+	volume = {13},
+	year = {2003}
+}
+@inbook{Li2016,
+	abstract = {As a fundamental step in biomedical information extraction tasks, biomedical named entity recognition remains challenging. In recent years, the neural network has been applied on the entity recognition to avoid the complex hand-designed features, which are derived from various linguistic analyses. However, performance of the conventional neural network systems is always limited to exploiting long range dependencies in sentences. In this paper, we mainly adopt the bidirectional recurrent neural network with LSTM unit to identify biomedical entities, in which the twin word embeddings and sentence vector are added to rich input information. Therefore, the complex feature extraction can be skipped. In the testing phase, Viterbi algorithm is also used to filter the illogical label sequences. The experimental results conducted on the BioCreative II GM corpus show that our system can achieve an F-score of 88.61 {\{}{\%}{\}}, which outperforms CRF models using the complex hand-designed features and is 6.74 {\{}{\%}{\}} higher than RNNs.},
+	address = {Cham},
+	author = {Li, Lishuang and Jin, Liuke and Jiang, Yuxin and Huang, Degen},
+	booktitle = {Chinese Computational Linguistics and Natural Language Processing Based on Naturally Annotated Big Data: 15th China National Conference, CCL 2016, and 4th International Symposium, NLP-NABD 2016, Yantai, China, October 15-16, 2016, Proceedings},
+	doi = {10.1007/978-3-319-47674-2_15},
+	editor = {Sun, Maosong and Huang, Xuanjing and Lin, Hongfei and Liu, Zhiyuan and Liu, Yang},
+	isbn = {978-3-319-47674-2},
+	pages = {165--176},
+	publisher = {Springer International Publishing},
+	title = {{Recognizing Biomedical Named Entities Based on the Sentence Vector/Twin Word Embeddings Conditioned Bidirectional LSTM}},
+	url = {https://doi.org/10.1007/978-3-319-47674-2{\_}15},
+	year = {2016}
+}
+@article{McDonald2005,
+	abstract = {BACKGROUND: We present a model for tagging gene and protein mentions from text using the probabilistic sequence tagging framework of conditional random fields (CRFs). Conditional random fields model the probability P(t/o) of a tag sequence given an observation sequence directly, and have previously been employed successfully for other tagging tasks. The mechanics of CRFs and their relationship to maximum entropy are discussed in detail.$\backslash$n$\backslash$nRESULTS: We employ a diverse feature set containing standard orthographic features combined with expert features in the form of gene and biological term lexicons to achieve a precision of 86.4{\%} and recall of 78.7{\%}. An analysis of the contribution of the various features of the model is provided.},
+	author = {McDonald, Ryan and Pereira, Fernando},
+	doi = {10.1186/1471-2105-6-S1-S6},
+	file = {:home/maxim/Desktop/ml/3c9567263e05a066f4c36e592d4bf560d8da.pdf:pdf},
+	issn = {1471-2105},
+	journal = {BMC bioinformatics},
+	keywords = {Genes,Pattern Recognition, Automated,Pattern Recognition, Automated: classification,Pattern Recognition, Automated: methods,Probability,Proteins,Proteins: classification,Proteins: genetics,Vocabulary, Controlled},
+	number = {Suppl 1},
+	pages = {S6},
+	pmid = {15960840},
+	title = {{Identifying gene and protein mentions in text using conditional random fields.}},
+	url = {http://www.pubmedcentral.nih.gov/articlerender.fcgi?artid=1869020{\&}tool=pmcentrez{\&}rendertype=abstract},
+	volume = {6 Suppl 1},
+	year = {2005}
+}
+@article{Settles2004,
+	author = {Settles, Burr},
+	file = {:home/maxim/Desktop/ml/W04-1221.pdf:pdf},
+	pages = {104--107},
+	title = {{Biomedical named entity recognition using conditional random fields and rich feature sets}},
+	url = {http://dl.acm.org/citation.cfm?id=1567594.1567618},
+	year = {2004}
+}
+
+@article{Crichton2017,
+	abstract = {Background: Named Entity Recognition (NER) is a key task in biomedical text mining. Accurate NER systems require task-specific, manually-annotated datasets, which are expensive to develop and thus limited in size. Since such datasets contain related but different information, an interesting question is whether it might be possible to use them together to improve NER performance. To investigate this, we develop supervised, multi-task, convolutional neural network models and apply them to a large number of varied existing biomedical named entity datasets. Additionally, we investigated the effect of dataset size on performance in both single-and multi-task settings. Results: We present a single-task model for NER, a Multi-output multi-task model and a Dependent multi-task model. We apply the three models to 15 biomedical datasets containing multiple named entities including Anatomy, Chemical, Disease, Gene/Protein and Species. Each dataset represent a task. The results from the single-task model and the multi-task models are then compared for evidence of benefits from Multi-task Learning. With the Multi-output multi-task model we observed an average F-score improvement of 0.8{\%} when compared to the single-task model from an average baseline of 78.4{\%}. Although there was a significant drop in performance on one dataset, performance improves significantly for five datasets by up to 6.3{\%}. For the Dependent multi-task model we observed an average improvement of 0.4{\%} when compared to the single-task model. There were no significant drops in performance on any dataset, and performance improves significantly for six datasets by up to 1.1{\%}. The dataset size experiments found that as dataset size decreased, the multi-output model's performance increased compared to the single-task model's. Using 50, 25 and 10{\%} of the training data resulted in an average drop of approximately 3.4, 8 and 16.7{\%} respectively for the single-task model but approximately 0.2, 3.0 and 9.8{\%} for the multi-task model. Conclusions: Our results show that, on average, the multi-task models produced better NER results than the single-task models trained on a single NER dataset. We also found that Multi-task Learning is beneficial for small datasets. Across the various settings the improvements are significant, demonstrating the benefit of Multi-task Learning for this task.},
+	author = {Crichton, Gamal and Pyysalo, Sampo and Chiu, Billy and Korhonen, Anna},
+	doi = {10.1186/s12859-017-1776-8},
+	file = {:home/maxim/.local/share/data/Mendeley Ltd./Mendeley Desktop/Downloaded/Crichton et al. - 2017 - A neural network multi-task learning approach to biomedical named entity recognition(2).pdf:pdf},
+	issn = {1471-2105},
+	journal = {BMC Bioinformatics},
+	keywords = {Biomedical text mining Background,Convolutional neural networks,Multi-task learning,Named entity recognition},
+	mendeley-groups = {BioPred},
+	pages = {1--14},
+	publisher = {BMC Bioinformatics},
+	title = {{A neural network multi-task learning approach to biomedical named entity recognition}},
+	url = {https://www.repository.cam.ac.uk/bitstream/handle/1810/265855/Crichton.pdf?sequence=9{\&}isAllowed=y},
+	volume = {18},
+	year = {2017}
+}
+@article{Gridach2017,
+	author = {Gridach, Mourad},
+	doi = {10.1016/j.jbi.2017.05.002},
+	file = {:home/maxim/.local/share/data/Mendeley Ltd./Mendeley Desktop/Downloaded/Gridach - 2017 - Character-level neural network for biomedical named entity recognition.pdf:pdf},
+	issn = {15320464},
+	journal = {Journal of Biomedical Informatics},
+	mendeley-groups = {BioPred},
+	month = {jun},
+	pages = {85--91},
+	title = {{Character-level neural network for biomedical named entity recognition}},
+	url = {http://linkinghub.elsevier.com/retrieve/pii/S1532046417300977},
+	volume = {70},
+	year = {2017}
+}
+@article{Habibi2017,
+	author = {Habibi, Maryam and Weber, Leon and Neves, Mariana and Wiegandt, David Luis and Leser, Ulf},
+	doi = {10.1093/bioinformatics/btx228},
+	file = {:home/maxim/.local/share/data/Mendeley Ltd./Mendeley Desktop/Downloaded/Habibi et al. - 2017 - Deep learning with word embeddings improves biomedical named entity recognition.pdf:pdf},
+	issn = {1367-4803},
+	journal = {Bioinformatics},
+	mendeley-groups = {BioPred},
+	number = {14},
+	pages = {i37--i48},
+	title = {{Deep learning with word embeddings improves biomedical named entity recognition}},
+	url = {https://academic.oup.com/bioinformatics/article-lookup/doi/10.1093/bioinformatics/btx228},
+	volume = {33},
+	year = {2017}
+}
+
+@article{Kim2003,
+	abstract = {Motivation: Natural language processing (NLP) methods are regarded as being useful to raise the potential of text mining from biological literature. The lack of an extensively annotated corpus of this literature, however, causes a major bottleneck for applying NLP techniques. GENIA corpus is being developed to provide reference materials to let NLP techniques work for bio-textmining. Results: GENIA corpus version 3.0 consisting of 2000 MEDLINE abstracts has been released with more than 400 000 words and almost 100 000 annotations for biological terms. Availability: GENIA corpus is freely available at http://www-tsujii.is.s.u-tokyo.ac.jp/GENIA Keywords: Text Mining, Information Extraction, Corpus, Natural Language Processing, Computational Molecular Biology},
+	author = {Kim, J. D. and Ohta, T. and Tateisi, Y. and Tsujii, J.},
+	doi = {10.1093/bioinformatics/btg1023},
+	file = {:home/maxim/Desktop/watermark.pdf:pdf},
+	isbn = {1367-4803},
+	issn = {13674803},
+	journal = {Bioinformatics},
+	keywords = {Computational Molecular Biology,Corpus,Information Extraction,Natural Language Processing,Text Mining},
+	mendeley-groups = {BioPred/corpora},
+	number = {SUPPL. 1},
+	pages = {180--182},
+	pmid = {12855455},
+	title = {{GENIA corpus - A semantically annotated corpus for bio-textmining}},
+	volume = {19},
+	year = {2003}
+}
+@article{Kim2004,
+	abstract = {We describe here the JNLPBA shared task of bio-entity recognition using an extended version of the GENIA version 3 named entity corpus of MEDLINE abstracts. We provide background information on the task and present a general discussion of the approaches taken by participating systems.},
+	author = {Kim, Jin-Dong and Ohta, Tomoko and Tsuruoka, Yoshimasa and Tateisi, Yuka and Collier, Nigel},
+	doi = {10.3115/1567594.1567610},
+	file = {:home/maxim/Desktop/10.1.1.65.7307.pdf:pdf},
+	journal = {Proceedings of the International Joint Workshop on Natural Language Processing in Biomedicine and Its Applications},
+	mendeley-groups = {BioPred/corpora},
+	pages = {70--75},
+	title = {{Introduction to the Bio-entity Recognition Task at JNLPBA}},
+	url = {http://dl.acm.org/citation.cfm?id=1567594.1567610},
+	year = {2004}
+}
+@article{Smith2008,
+	abstract = {Nineteen teams presented results for the Gene Mention Task at the BioCreative II Workshop. In this task participants designed systems to identify substrings in sentences corresponding to gene name mentions. A variety of different methods were used and the results varied with a highest achieved F1 score of 0.8721. Here we present brief descriptions of all the methods used and a statistical analysis of the results. We also demonstrate that, by combining the results from all submissions, an F score of 0.9066 is feasible, and furthermore that the best result makes use of the lowest scoring submissions.},
+	author = {Smith, Larry and Tanabe, Lorraine K and nee Ando, Rie Johnson and Kuo, Cheng-Ju and Chung, I-Fang and Hsu, Chun-Nan and Lin, Yu-Shi and Klinger, Roman and Friedrich, Christoph M and Ganchev, Kuzman and Torii, Manabu and Liu, Hongfang and Haddow, Barry and Struble, Craig A and Povinelli, Richard J and Vlachos, Andreas and Baumgartner, William A and Hunter, Lawrence and Carpenter, Bob and Tsai, Richard Tzong-Han and Dai, Hong-Jie and Liu, Feng and Chen, Yifei and Sun, Chengjie and Katrenko, Sophia and Adriaans, Pieter and Blaschke, Christian and Torres, Rafael and Neves, Mariana and Nakov, Preslav and Divoli, Anna and Ma{\~{n}}a-L{\'{o}}pez, Manuel and Mata, Jacinto and Wilbur, W John and Wilbur, W John},
+	doi = {10.1186/gb-2008-9-s2-s2},
+	file = {:home/maxim/Desktop/gb-2008-9-s2-s2.pdf:pdf},
+	isbn = {1465-6914 (Linking)},
+	issn = {1474-760X},
+	journal = {Genome biology},
+	mendeley-groups = {BioPred/corpora},
+	number = {Suppl 2},
+	pages = {S2},
+	pmid = {18834493},
+	title = {{Overview of BioCreative II gene mention recognition.}},
+	url = {http://www.ncbi.nlm.nih.gov/pubmed/18834493{\%}5Cnhttp://www.pubmedcentral.nih.gov/articlerender.fcgi?artid=PMC2559986},
+	volume = {9 Suppl 2},
+	year = {2008}
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+% Article within a journal
+@ARTICLE{koon,
+	author  = {Koonin, E V and Altschul, S F and P Bork}, 
+	title   = {BRCA1 protein products: functional motifs}, 
+	journal = {Nat Genet}, 
+	year    = {1996},
+	volume  = {13}, 
+	pages   = {266-267}
+}	
+
+% Article within a journal supplement
+@ARTICLE{oreg,
+	author  = {Orengo, C A and Bray, J E and Hubbard, 
+		   T and LoConte, L and Sillitoe, I}, 
+	title   = {Analysis and assessment of ab initio 
+		   three-dimensional prediction, secondary 
+		   structure, and contacts prediction},
+	journal = {Proteins}, 
+	year    = {1999},
+	volume  = {Suppl 3}, 
+	pages   = {149-170}
+}	
+
+% In press article
+@inpress{khar,
+	author  = {Kharitonov, S A and Barnes, P J}, 
+	title   = {Clinical aspects of exhaled nitric oxide},
+	journal = {Eur Respir J}, 
+	note    = {in press} 
+}	
+
+%
+% Published abstract
+%
+@ARTICLE{zvai,
+	author  = {Zvaifler, N J and Burger, J A and Marinova-Mutafchieva, 
+		   L and Taylor, P and Maini, R N},
+	title   = {Mesenchymal cells, stromal derived factor-1 and 
+		   rheumatoid arthritis [abstract]},
+	journal = {Arthritis Rheum}, 
+	year    = {1999},
+	volume  = {42}, 
+	pages   = {s250},
+}	
+
+
+%
+% Article within conference proceedings
+%
+@Inproceedings{xjon,
+	author    = {X Jones}, 
+	title     = {Zeolites and synthetic mechanisms},
+	booktitle = {Proceedings of the First National Conference on 
+		     Porous Sieves: 27-30 June 1996; Baltimore},
+	year      = {1996},
+	  editor  = {Y Smith}, 
+	  pages   = {16-27},
+	  organization  = {Stoneham: Butterworth-Heinemann}
+}	
+
+%%%%%%%%
+%  Book chapter, or article within a book
+%
+@incollection{schn,
+	author    = {E Schnepf}, 
+	title     = {From prey via endosymbiont to plastids: 
+		     comparative studies in dinoflagellates},
+	booktitle = {Origins of Plastids}, 
+	editor    = {R A Lewin}, 
+	publisher = {Chapman and Hall},
+	pages     = {53-76}, 
+	year      = {1993},
+	  address = {New York}, 
+	  volume  = {2}, 
+	  edition = {2nd} 
+}	
+
+%%%%%%%%
+% Whole issue of journal
+%
+@wholejournal{pond,
+	editor  = {B Ponder and S Johnston and L Chodosh}, 
+	title   = {Innovative oncology},
+	journal = {Breast Cancer Res}, 
+	year  = {1998},
+	  volume= {10}, 
+	  pages = {1-72}
+}	
+
+
+%%%%%%%%
+% Whole conference proceedings
+%
+@proceedings{smith,
+	editor  = {Y Smith}, 
+	title   = {Proceedings of the First National Conference
+		   on Porous Sieves: 27-30 June 1996; Baltimore},
+	year = 1996,
+	  address= {Stoneham}, 
+	  publisher = {Butterworth-Heinemann},
+}	
+
+
+%%%%%%%%
+% Complete book
+%
+@book{marg,
+	author    = {L Margulis}, 
+	title     = {Origin of Eukaryotic Cells},
+	publisher = {Yale University Press}, 
+	year      = {1970},
+	address   = {New Haven} 
+}
+
+
+
+%%%%%%%%
+% Monograph or book in series 
+%
+@incollection{hunn,
+	author    = {G W Hunninghake and J E Gadek}, 
+	title     = {The alveloar macrophage},
+	booktitle = {Cultured Human Cells and Tissues},
+	publisher = {Academic Press}, 
+	year      = {1995},
+  pages      = {54-56},
+	  editor   = {T J R Harris}, 
+	  address  = {New York}, 
+	  note     = {Stoner G (Series Editor): Methods and Perspectives in Cell Biology, vol 1} 
+}
+
+
+%%%%%%%%
+% Book with institutional author
+@manual{advi,
+	  title   = {Annual Report}, 
+	  organization  = {Advisory Committee on Genetic Modification}, 
+	  address = {London},
+	  year    = {1999}
+}
+
+
+%%%%%%%%
+% PHD Thesis
+%
+@phdthesis{koha,
+	author = {R Kohavi}, 
+	title  = {Wrappers for performance enhancement and
+		  obvious decision graphs},
+	school = {Stanford University, Computer Science Department},
+	year   = {1995}
+}
+
+%%%%%%%%
+% Webpage Link / URL
+%
+@webpage{mouse,
+	title  = {The Mouse Tumor Biology Database},
+	url = {http://tumor.informatics.jax.org/cancer\_links.html}
+}
+
+

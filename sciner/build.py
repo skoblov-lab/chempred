@@ -15,7 +15,9 @@ NCHAR = encoding.MAXCHAR + 1
 
 
 def build_conv(nfilters: Sequence[int],
-               filter_width: Union[int, Sequence[int]]) \
+               filter_width: Union[int, Sequence[int]],
+               dropout: Union[Optional[float], Sequence[Optional[float]]]=None,
+               name_template: str="l_conv_{}") \
         -> Callable:
     # TODO extend documentation
     # TODO more tests
@@ -26,21 +28,24 @@ def build_conv(nfilters: Sequence[int],
     :return:
     >>> conv = build_conv([30, 30], 5)
     """
-    def stack_conv(prev, param: Tuple[str, int, int]):
-        name, nfilt, kern_size = param
-        return layers.Convolution1D(
+    def stack_conv(prev, param: Tuple[str, int, int, float]):
+        name, nfilt, kern_size, drop_p = param
+        l = layers.Convolution1D(
             nfilt, kern_size, activation="relu", name=name,
         )(prev)
+        return layers.Dropout(drop_p)(l) if drop_p else l
 
     filter_width = (filter_width if isinstance(filter_width, Sequence) else
                     [filter_width] * len(nfilters))
+    dropout = (dropout if isinstance(dropout, Sequence) else
+               [dropout] * len(nfilters))
 
-    if not len(nfilters) == len(filter_width):
-        raise ValueError("Parameter sequences have different length")
+    if not len(nfilters) == len(filter_width) == len(dropout):
+        raise ValueError("Parameter sequences have different lengths")
 
     def conv(incomming):
-        conv_names = ("conv_{}".format(i) for i in range(1, len(nfilters)+1))
-        parameters = zip(conv_names, nfilters, filter_width)
+        conv_names = (name_template.format(i+1) for i in range(0, len(nfilters)))
+        parameters = zip(conv_names, nfilters, filter_width, dropout)
         cnn = reduce(stack_conv, parameters, incomming)
         return cnn
 

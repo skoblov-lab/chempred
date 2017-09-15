@@ -3,6 +3,7 @@ from distutils.core import setup
 from setuptools import find_packages
 
 # TODO add loggers and warnings
+# TODO lazy module improting (https://github.com/bwesterb/py-demandimport)
 
 if sys.version_info < (3, 5, 2):
     print("ChemPred required Python >= 3.5.2")

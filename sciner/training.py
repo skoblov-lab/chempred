@@ -23,7 +23,7 @@ ProcessedSample = Tuple[int, Text, Sequence[Interval], Sequence[Text], np.ndarra
 
 def process_pair(pair: Tuple[Abstract, AbstractAnnotation],
                  parser: Callable[[Text], Sequence[Interval]], window: int,
-                 warn_overlapping: True) \
+                 warn_overlapping: bool=False) \
         -> Iterator[ProcessedSample]:
     # TODO update docs
     # TODO tests

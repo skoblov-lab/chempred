@@ -186,7 +186,7 @@ def join(arrays: List[np.ndarray], length: int, padval=0) \
     return joined, masks
 
 
-def one_hot(array: np.ndarray, ncls: int) -> np.ndarray:
+def one_hot(ncls: int, array: np.ndarray) -> np.ndarray:
     """
     One-hot encode an integer array; the output inherits the array's dtype.
     >>> nclasses = 10

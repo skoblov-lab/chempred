@@ -186,7 +186,7 @@ def join(arrays: List[np.ndarray], length: int, padval=0) \
     return joined, masks
 
 
-def one_hot(array: np.ndarray) -> np.ndarray:
+def one_hot(array: np.ndarray, ncls: int) -> np.ndarray:
     """
     One-hot encode an integer array; the output inherits the array's dtype.
     >>> nclasses = 10
@@ -199,7 +199,7 @@ def one_hot(array: np.ndarray) -> np.ndarray:
         raise ValueError("`array.dtype` must be integral")
     if not len(array):
         return array
-    vectors = np.eye(array.max()+1, dtype=array.dtype)
+    vectors = np.eye(ncls, dtype=array.dtype)
     return vectors[array]
 
 

@@ -39,7 +39,7 @@ def process_pair(pair: Tuple[Abstract, AbstractAnnotation],
             sample_anno = annotate_sample(anno, sample)
             return id_, src, sample, sample_text, sample_anno
         except AmbiguousAnnotation as err:
-            message = "Failed to annotate a sample in {}'s {} due {}".format(
+            message = "Failed to annotate a sample in {}'s {} due to {}".format(
                 id_, "body" if src == BODY else "title", err)
             if not warn_overlapping:
                 raise AmbiguousAnnotation(message)

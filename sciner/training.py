@@ -107,7 +107,5 @@ def training(rootdir: str, name: str):
         shutil.rmtree(training_dir)
 
 
-у
-
 if __name__ == "__main__":
     raise RuntimeError

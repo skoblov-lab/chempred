@@ -7,9 +7,9 @@ import numpy as np
 from sciner.util import Interval
 
 
-def merge_predictions(spans: Sequence[Interval],
-                      predictions: Sequence[np.ndarray]) \
-        -> np.ndarray:
+def merge_predictions(samples: Sequence[Sequence[Interval[int]]],
+                      predictions: Sequence[np.ndarray]) -> np.ndarray:
+    # the intervals are half-inclusive and zero-indexed
     """
     :param spans: intervals (non-inclusive on the right side)
     :param predictions:
@@ -37,16 +37,18 @@ def merge_predictions(spans: Sequence[Interval],
     # True
     """
     # the intervals are half-inclusive and zero-indexed
+    sorted_samples = [sorted(s, key=lambda x: x.data) for s in samples]
+    spans = [Interval(s[0].data, s[-1].data) for s in sorted_samples]
     length = max(span.stop for span in spans)
     shape = (length, *predictions[0].shape[1:])
     buckets = np.zeros(shape, dtype=np.float64)
     nsamples = np.zeros(length, dtype=np.int32)
-    for iv, pred in zip(spans, predictions):
+    for span, pred in zip(spans, predictions):
         # `predictions` are zero-padded – we must remove the padded tail
-        true_length = iv.stop - iv.start
-        buckets[iv.start:iv.stop] += pred[:true_length]
-        nsamples[iv.start:iv.stop] += 1
-    slice_ = (slice(length), *repeat(None, predictions[0].ndim-1))
+        pad_start = span.stop - span.start
+        buckets[span.start:span.stop] += pred[:pad_start]
+        nsamples[span.start:span.stop] += 1
+    slice_ = (slice(length), *repeat(None, predictions[0].ndim - 1))
     with np.errstate(divide='ignore', invalid="ignore"):
         return buckets / op.getitem(nsamples, slice_)
 

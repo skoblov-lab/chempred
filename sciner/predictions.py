@@ -7,11 +7,11 @@ import numpy as np
 from sciner.util import Interval
 
 
-def merge_predictions(intervals: Sequence[Interval],
+def merge_predictions(spans: Sequence[Interval],
                       predictions: Sequence[np.ndarray]) \
         -> np.ndarray:
     """
-    :param intervals: intervals (non-inclusive on the right side)
+    :param spans: intervals (non-inclusive on the right side)
     :param predictions:
     :return:
     # TODO update tests
@@ -37,11 +37,11 @@ def merge_predictions(intervals: Sequence[Interval],
     # True
     """
     # the intervals are half-inclusive and zero-indexed
-    length = max(iv.stop for iv in intervals)
+    length = max(iv.stop for iv in spans)
     shape = (length, *predictions[0].shape[1:])
     buckets = np.zeros(shape, dtype=np.float64)
     nsamples = np.zeros(length, dtype=np.int32)
-    for iv, pred in zip(intervals, predictions):
+    for iv, pred in zip(spans, predictions):
         # `predictions` are zero-padded – we must remove the padded tail
         true_length = iv.stop - iv.start
         buckets[iv.start:iv.stop] += pred[:true_length]

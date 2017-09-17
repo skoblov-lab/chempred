@@ -92,7 +92,7 @@ def encode_tokens(encoder: Encoder, tokens: Iterable[Text], dtype=np.float32) \
         return np.array([encoder[tk] for tk in tokens_]).astype(dtype)
 
 
-def sample_windows(intervals: Sequence[Interval], window: int) \
+def sample_windows(intervals: Sequence[Interval], window: int, step: int=1) \
         -> Iterator[Sequence[Interval]]:
     # TODO update docs
     # TODO test
@@ -102,11 +102,12 @@ def sample_windows(intervals: Sequence[Interval], window: int) \
     :param intervals: a sequence (preferable a numpy array) of interval objects
     :param window: sampling window width in tokens
     """
-    samples = (
-        iter([intervals]) if len(intervals) <= window else
-        (intervals[i:i+window] for i in range(len(intervals)-window+1))
-    )
-    return samples
+    if len(intervals) <= window:
+        return iter([intervals])
+    steps = list(range(0, len(intervals)-window+1, step))
+    if steps[-1] + window < len(intervals):
+        steps.append(steps[-1] + step)
+    return (intervals[i:i+window] for i in steps)
 
 
 def sample_length(sample: Sequence[Interval]) -> int:

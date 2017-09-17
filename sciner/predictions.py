@@ -37,7 +37,7 @@ def merge_predictions(spans: Sequence[Interval],
     # True
     """
     # the intervals are half-inclusive and zero-indexed
-    length = max(iv.stop for iv in spans)
+    length = max(span.stop for span in spans)
     shape = (length, *predictions[0].shape[1:])
     buckets = np.zeros(shape, dtype=np.float64)
     nsamples = np.zeros(length, dtype=np.int32)

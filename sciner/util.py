@@ -6,7 +6,7 @@ import sys
 from functools import reduce
 from io import TextIOWrapper
 from itertools import chain
-from typing import List, Tuple, Optional, Text, Pattern, Sequence, Mapping, \
+from typing import List, Tuple, Optional, Text, Sequence, Mapping, \
     Callable, Union, Iterator, Iterable, TypeVar, Container, Generic
 
 import numpy as np
@@ -124,21 +124,6 @@ class EmbeddingsWrapper(Mapping):
     def get(self, token: Text):
         tk = self.transform(token)
         return self.vectors[self.token_index.get(tk, self.token_index[self.oov])]
-
-
-def parse(text: Text, pattern: Pattern) -> np.ndarray:
-    # TODO tests
-    """
-    Tokenise text
-    :param text: text to parse
-    :param pattern: token pattern
-    :return: a sorted array of matches intervals
-    """
-    try:
-        intervals = [m.span() for m in pattern.finditer(text)]
-        return np.array([Interval(start, end) for start, end in intervals])
-    except TypeError:
-        raise TypeError("`{}` is not a valid unicode string".format(repr(text)))
 
 
 def extract_intervals(sequence: Sequence[T], intervals: Iterable[Interval]) \

@@ -1,6 +1,8 @@
 from numbers import Integral
 from typing import Sequence, NamedTuple, Text, Iterable, Tuple, List, \
-    Mapping
+    Mapping, Pattern
+
+import numpy as np
 
 from sciner.util import Interval
 
@@ -49,5 +51,24 @@ def parse_mapping(classmaps: Iterable[str]) -> ClassMapping:
         raise AnnotationError("Badly formatted mapping: {}".format(err))
 
 
+def parse_text(text: Text, pattern: Pattern) -> np.ndarray:
+    # TODO tests
+    """
+    Parse text into a sequence (numpy array) of intervals. Each interval
+    contains its index in the `data` attribute
+    :param text: text to parse
+    :param pattern: token pattern
+    :return: a sorted array of matches intervals
+    """
+    try:
+        intervals = [m.span() for m in pattern.finditer(text)]
+        return np.array([Interval(start, end, i)
+                         for i, (start, end) in enumerate(intervals)])
+    except TypeError:
+        raise TypeError("`{}` is not a valid unicode string".format(repr(text)))
+
+
 if __name__ == "__main__":
     raise RuntimeError
+
+

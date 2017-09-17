@@ -18,7 +18,8 @@ from sciner.encoding import AmbiguousAnnotation, annotate_sample, encode_annotat
 from sciner.text import AbstractAnnotation, Abstract, flatten_aligned_pair, BODY
 from sciner.util import Interval, extract_intervals
 
-ProcessedSample = Tuple[int, Text, Sequence[Interval], Sequence[Text], np.ndarray]
+ProcessedSample = Tuple[int, Text, Sequence[Interval], Sequence[Text],
+                        Optional[np.ndarray]]
 
 
 def process_pair(pair: Tuple[Abstract, AbstractAnnotation],

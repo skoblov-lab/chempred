@@ -36,6 +36,9 @@ class Interval(Container, Generic[T]):
     def __contains__(self, item: T) -> bool:
         return False if self.data is None or item is None else self.data == item
 
+    def __eq__(self, other: "Interval"):
+        return (self.start, self.stop) == (other.start, other.stop)
+
     def __lt__(self, other: "Interval"):
         return self.start < other.start
 

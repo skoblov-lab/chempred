@@ -37,10 +37,10 @@ class Interval(Container, Generic[T]):
         return False if self.data is None or item is None else self.data == item
 
     def __eq__(self, other: "Interval"):
-        return (self.start, self.stop) == (other.start, other.stop)
+        return (self.start, self.stop, self.data) == (other.start, other.stop, other.data)
 
-    def __lt__(self, other: "Interval"):
-        return self.start < other.start
+    def __hash__(self):
+        return hash((self.start, self.stop, self.data))
 
     def __len__(self):
         return self.stop - self.start

@@ -27,7 +27,7 @@ def parse_abstracts(path: Text) -> List[Abstract]:
     """
     with open(path) as buffer:
         parsed_buffer = (line.strip().split("\t") for line in buffer)
-        return [Abstract(int(abstract_n), title, abstract)
+        return [Abstract(int(abstract_n), title.rstrip(), abstract.rstrip())
                 for abstract_n, title, abstract in parsed_buffer]
 
 

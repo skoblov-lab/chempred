@@ -86,14 +86,15 @@ def combine_predictions_max(samples: Sequence[Sequence[Interval[int]]],
     sorted_samples = [sorted(s, key=lambda x: x.start) for s in samples]
     spans = [Interval(s[0].data, s[-1].data+1) for s in sorted_samples]
     length = max(span.stop for span in spans)
-    buckets = np.zeros(length, dtype=np.float64)
+    positive_prob = np.zeros(length, dtype=np.float64)
     for span, pred in zip(spans, predictions):
         # `predictions` are zero-padded – we must remove the padded tail
         pad_start = span.stop - span.start
-        current = buckets[span.start:span.stop]
+        current = positive_prob[span.start:span.stop]
         new = pred[:pad_start, 1]
-        buckets[span.start:span.stop] = np.vstack((current, new)).max(0)
-    return buckets
+        positive_prob[span.start:span.stop] = np.vstack((current, new)).max(0)
+    negative_prob = np.ones(length) - positive_prob
+    return np.vstack((negative_prob, positive_prob)).T
 
 
 if __name__ == "__main__":

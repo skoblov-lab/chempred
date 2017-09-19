@@ -105,7 +105,7 @@ def parse_corpus(path: Text, mapping: ClassMapping, default: Integral = None) \
 
     def parse_article(id_: int, title_root: Element, body_root: Element) \
             -> Tuple[Abstract, AbstractAnnotation]:
-        title_text, title_anno = parser(title_root)
+        title_text, title_anno = map(str.rstrip, parser(title_root))
         body_text, body_anno = parser(body_root)
         abstract = Abstract(id_, title_text, body_text)
         annotation = AbstractAnnotation(id_, title_anno, body_anno)

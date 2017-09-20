@@ -24,8 +24,8 @@ ProcessedSample = Tuple[int, Text, Sequence[Interval], Sequence[Text],
 
 def process_pair(pair: Tuple[Abstract, AbstractAnnotation],
                  parser: Callable[[Text], Sequence[Interval]], window: int,
-                 warn_overlapping: bool=False,
-                 annotate: bool=True) \
+                 stepsize: int=1, warn_overlapping: bool=False,
+                 annotate: bool=True,) \
         -> Iterator[ProcessedSample]:
     # TODO update docs
     # TODO tests
@@ -49,7 +49,7 @@ def process_pair(pair: Tuple[Abstract, AbstractAnnotation],
             return None
 
     ids, srcs, texts, annotations = zip(*flatten_aligned_pair(pair))
-    sampled_ivs = (sample_windows(intervals, window)
+    sampled_ivs = (sample_windows(intervals, window, stepsize)
                    for intervals in [parser(text) for text in texts])
     encoded_anno = [encode_annotation(anno, len(text))
                     for text, anno in zip(texts, annotations)]

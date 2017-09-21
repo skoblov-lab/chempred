@@ -27,6 +27,11 @@ LevelAnnotation = NamedTuple("Annotation", [("level", int),
 def flatten_sentence(sentence: Element) \
         -> List[Tuple[Text, Sequence[LevelAnnotation]]]:
     # TODO docs
+    """
+    Turn `sentence` Element from xml format to normal text.
+    :param sentence:
+    :return: list of strings with corresponding annotations
+    """
     def isterminal(element: Element):
         return next(iter(element), None) is None
 
@@ -49,11 +54,19 @@ def flatten_sentence(sentence: Element) \
         texts.append(child.text)
         annotations.append(child_anno)
         stack.append((child, iter(child), child_anno))
+
     return list(zip(texts, annotations))
 
 
 def text_boundaries(texts: Iterable[Text]) -> List[Tuple[int, int]]:
     # TODO docs
+    """
+    Returns list of start/stop positions of words' starts/ends in `texts`.
+    :param texts: list of strings
+    :return: list of (start position, stop position)
+    >>> genia.text_boundaries(['amino acid', 'is any']) == [(0, 10), (10, 16)]
+    True
+    """
     def aggregate_boundaries(boundaries: pvector, text):
         return (
             boundaries + [(boundaries[-1][1], boundaries[-1][1] + len(text))]
@@ -67,7 +80,21 @@ def parse_sentences(root: Element, mapping: ClassMapping,
                     default: Integral = None) \
         -> Tuple[Text, List[ClassifiedInterval]]:
     # TODO docs
-    def wrap_interval(start: int, stop: int, levels: Sequence[LevelAnnotation]):
+    """
+    Get text form `root` Element with given mapping dictionary.
+    :param root:
+    :param mapping:
+    :param default:
+    :return:
+    """
+    def wrap_interval(start: int, stop: int, levels: Sequence[LevelAnnotation]) -> ClassifiedInterval:
+        """
+        Wrap `start`, `stop` and `levels` into an Interval.
+        :param start: start position
+        :param stop: stop position
+        :param levels: list of annotations
+        :return: Interval(`start`, `stop`, mappings)
+        """
         # get the first nonempty annotation bottom to top
         anno = next(filter(bool, (l.anno for l in reversed(levels))), "")
         codes = set(ANNO_PATT.findall(anno))
@@ -90,13 +117,25 @@ def parse_sentences(root: Element, mapping: ClassMapping,
 
 def parse_corpus(path: Text, mapping: ClassMapping, default: Integral = None) \
         -> List[Tuple[Abstract, AbstractAnnotation]]:
+    """
+    Extract text from xml file `path`.
+    :param path: xml file's path
+    :param mapping: mapping entity to number
+    :param default:
+    :return:
+    """
     parser = F(parse_sentences, mapping=mapping, default=default)
 
     def getid(article: Element) -> int:
         raw = article.find("articleinfo").find("bibliomisc").text
         return int(raw.replace("MEDLINE:", ""))
 
-    def accumulate_articles(root) -> Iterator[Tuple[int, Element, Element]]:
+    def accumulate_articles(root: Element) -> Iterator[Tuple[int, Element, Element]]:
+        """
+        Collects articles inside `root`.
+        :param root:
+        :return:
+        """
         articles = root.findall(ARTICLE)
         ids = map(getid, articles)
         title_roots = [article.find("title") for article in articles]
@@ -105,7 +144,14 @@ def parse_corpus(path: Text, mapping: ClassMapping, default: Integral = None) \
 
     def parse_article(id_: int, title_root: Element, body_root: Element) \
             -> Tuple[Abstract, AbstractAnnotation]:
-        title_text, title_anno = map(str.rstrip, parser(title_root))
+        """
+        Extract title and body texts from `title_root` and `body_root`.
+        :param id_: article's id
+        :param title_root:
+        :param body_root:
+        :return:
+        """
+        title_text, title_anno = parser(title_root)
         body_text, body_anno = parser(body_root)
         abstract = Abstract(id_, title_text, body_text)
         annotation = AbstractAnnotation(id_, title_anno, body_anno)

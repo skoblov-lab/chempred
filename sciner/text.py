@@ -23,7 +23,7 @@ AbstractAnnotation = NamedTuple("AbstractAnnotation", [("id", int),
                                                        ("body", Annotation)])
 Abstract = NamedTuple("Abstract",
                       [("id", int), ("title", Text), ("body", Text)])
-SPACY_TOKENISER = F(spacy.load("en")) >> (map, lambda tk: tk.text)
+spacy_tokeniser = F(spacy.load("en")) >> (map, lambda tk: tk.text)
 
 
 class AnnotationError(ValueError):

@@ -26,7 +26,7 @@ class TestText(unittest.TestCase):
 
     @given(text_strategy)
     def test_parse_text(self, txt):
-        parsed = text.parser(text.SPACY_TOKENISER, txt)
+        parsed = text.parser(text.spacy_tokeniser, txt)
         mod_text = re.sub("\s", " ", txt)
         self.assertEqual(self.unparse(txt, parsed), mod_text.rstrip())
 

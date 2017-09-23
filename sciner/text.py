@@ -62,7 +62,8 @@ def parse_mapping(classmaps: Iterable[str]) -> ClassMapping:
         raise AnnotationError("Badly formatted mapping: {}".format(err))
 
 
-def parser(tokeniser: Callable[[str], Iterable[str]], text: Text) -> np.ndarray:
+def tointervals(tokeniser: Callable[[str], Iterable[str]], text: Text) \
+        -> np.ndarray:
 
     def mark_boundaries(boundaries: PVector, token: str):
         if not boundaries:

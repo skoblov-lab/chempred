@@ -12,7 +12,7 @@ from sciner import intervals, text, genia
 class TestText(unittest.TestCase):
 
     text_strategy = st.text(
-        st.characters(min_codepoint=32, max_codepoint=126), 0, 500, 1000)
+        st.characters(min_codepoint=32, max_codepoint=255), 0, 500, 1000)
 
     @staticmethod
     def unparse(txt, intervals_: Sequence[intervals.Interval]):
@@ -26,7 +26,7 @@ class TestText(unittest.TestCase):
 
     @given(text_strategy)
     def test_parse_text(self, txt):
-        parsed = text.parser(text.spacy_tokeniser, txt)
+        parsed = text.tointervals(text.spacy_tokeniser, txt)
         mod_text = re.sub("\s", " ", txt)
         self.assertEqual(self.unparse(txt, parsed), mod_text.rstrip())
 

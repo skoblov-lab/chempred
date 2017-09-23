@@ -7,7 +7,7 @@ their predictions
 from functools import reduce
 from typing import Sequence, Tuple, Optional, Union, Callable
 
-from keras import layers, models
+from keras import layers
 
 from sciner import encoding
 

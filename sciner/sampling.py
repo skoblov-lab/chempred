@@ -16,17 +16,16 @@ def annotate_sample(annotation: np.ndarray, nlabels: int,
     # TODO update docs
     # TODO tests
     """
-    :param text: the complete text from which the sample was drawn
     :param sample: a sequence of Intervals
     :param dtype: output data type; it must be an integral numpy dtype
     :return: encoded annotation
     """
     if not np.issubdtype(dtype, np.int):
         raise EncodingError("`dtype` must be integral")
-    span = span(sample)
-    if span is None:
+    span_ = span(sample)
+    if span_ is None:
         raise EncodingError("The sample is empty")
-    if span.stop > len(annotation):
+    if span_.stop > len(annotation):
         raise EncodingError("The annotation doesn't fully cover the sample")
     if nlabels > 1:
         tk_annotations = extract(annotation, sample)

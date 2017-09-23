@@ -24,8 +24,8 @@ ProcessedSample = Tuple[int, Text, Sequence[Interval], Sequence[Text],
 
 def process_pair(pair: Tuple[Abstract, AbstractAnnotation],
                  parser: Callable[[Text], Sequence[Interval]], window: int,
-                 stepsize: int=1, warn_overlapping: bool=False,
-                 annotate: bool=True,) \
+                 stepsize: int=1, annotate: bool=True, nlabels=1,
+                 warn_overlapping: bool=False) \
         -> Iterator[ProcessedSample]:
     # TODO update docs
     # TODO tests
@@ -38,7 +38,8 @@ def process_pair(pair: Tuple[Abstract, AbstractAnnotation],
     def wrap_sample(id_, src, text, anno, sample):
         try:
             sample_text = extract_intervals(text, sample)
-            sample_anno = annotate_sample(anno, sample) if annotate else None
+            sample_anno = (None if not annotate else
+                           annotate_sample(anno, nlabels, sample))
             return id_, src, sample, sample_text, sample_anno
         except AmbiguousAnnotation as err:
             message = "Failed to annotate a sample in {}'s {} due to {}".format(

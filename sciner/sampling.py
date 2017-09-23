@@ -10,7 +10,8 @@ class AmbiguousAnnotation(EncodingError):
     pass
 
 
-def annotate_sample(annotation: np.ndarray, sample: Sequence[Interval],
+def annotate_sample(annotation: np.ndarray, nlabels: int,
+                    sample: Sequence[Interval],
                     dtype=np.int32) -> np.ndarray:
     # TODO update docs
     # TODO tests
@@ -27,14 +28,20 @@ def annotate_sample(annotation: np.ndarray, sample: Sequence[Interval],
         raise EncodingError("The sample is empty")
     if span.stop > len(annotation):
         raise EncodingError("The annotation doesn't fully cover the sample")
-    token_annotations = map(np.unique, extract_intervals(annotation, sample))
-    encoded_token_anno = np.zeros(len(sample), dtype=np.int32)
-    for i, tk_anno in enumerate(token_annotations):
-        positive_anno = tk_anno[tk_anno > 0]
-        if len(positive_anno) > 1:
-            raise AmbiguousAnnotation(
-                "ambiguous annotation: {}".format(positive_anno))
-        encoded_token_anno[i] = positive_anno[0] if positive_anno else 0
+    if nlabels > 1:
+        tk_annotations = extract_intervals(annotation, sample)
+        encoded_token_anno = np.zeros((len(sample), nlabels), dtype=np.int32)
+        for i, tk_anno in enumerate(tk_annotations):
+            encoded_token_anno[i, tk_anno] = 1
+    else:
+        tk_annotations = map(np.unique, extract_intervals(annotation, sample))
+        encoded_token_anno = np.zeros(len(sample), dtype=np.int32)
+        for i, tk_anno in enumerate(tk_annotations):
+            positive_anno = tk_anno[tk_anno > 0]
+            if len(positive_anno) > 1:
+                raise AmbiguousAnnotation(
+                    "ambiguous annotation: {}".format(positive_anno))
+            encoded_token_anno[i] = positive_anno[0] if positive_anno else 0
     return encoded_token_anno
 
 

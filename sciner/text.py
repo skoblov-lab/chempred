@@ -1,13 +1,14 @@
 from numbers import Integral
 from typing import Sequence, NamedTuple, Text, Iterable, Tuple, List, \
-    Mapping, Pattern
+    Mapping, Pattern, Callable
 from functools import reduce
 from itertools import chain
 from pyrsistent import PVector, pvector
 import re
 
 import numpy as np
-from nltk.tokenize import word_tokenize
+import spacy
+from fn import F
 
 from sciner import intervals
 
@@ -22,6 +23,7 @@ AbstractAnnotation = NamedTuple("AbstractAnnotation", [("id", int),
                                                        ("body", Annotation)])
 Abstract = NamedTuple("Abstract",
                       [("id", int), ("title", Text), ("body", Text)])
+SPACY_TOKENISER = F(spacy.load("en")) >> (map, lambda tk: tk.text)
 
 
 class AnnotationError(ValueError):
@@ -60,24 +62,7 @@ def parse_mapping(classmaps: Iterable[str]) -> ClassMapping:
         raise AnnotationError("Badly formatted mapping: {}".format(err))
 
 
-def parse_text(text: Text, pattern: Pattern) -> np.ndarray:
-    # TODO tests
-    """
-    Parse text into a sequence (numpy array) of intervals. Each interval
-    contains its index in the `data` attribute
-    :param text: text to parse
-    :param pattern: token pattern
-    :return: a sorted array of matches intervals
-    """
-    try:
-        intervals_ = [m.span() for m in pattern.finditer(text)]
-        return np.array([intervals.Interval(start, end, i)
-                         for i, (start, end) in enumerate(intervals_)])
-    except TypeError:
-        raise TypeError("`{}` is not a valid unicode string".format(repr(text)))
-
-
-def parse_text_nltk(text: Text) -> np.ndarray:
+def parser(tokeniser: Callable[[str], Iterable[str]], text: Text) -> np.ndarray:
 
     def mark_boundaries(boundaries: PVector, token: str):
         if not boundaries:
@@ -93,7 +78,7 @@ def parse_text_nltk(text: Text) -> np.ndarray:
     ws = re.compile("\s")
     tokens = all_tk.findall(text)
     fine_grained = chain.from_iterable(
-        word_tokenize(tk) if not ws.match(tk) else [tk] for tk in tokens)
+        tokeniser(tk) if not ws.match(tk) else [tk] for tk in tokens)
     intervals_ = reduce(mark_boundaries, fine_grained, pvector())
     ws_less = (iv for iv in intervals_ if not ws.match(iv.data))
     return np.array([iv.reload(i) for i, iv in enumerate(ws_less)])

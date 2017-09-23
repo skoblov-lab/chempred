@@ -1,9 +1,10 @@
-from typing import Sequence
+import re
 import unittest
+from typing import Sequence
 
+import numpy as np
 from hypothesis import given, note
 from hypothesis import strategies as st
-import numpy as np
 
 from sciner import intervals, text, genia
 
@@ -14,23 +15,23 @@ class TestText(unittest.TestCase):
         st.characters(min_codepoint=32, max_codepoint=126), 0, 500, 1000)
 
     @staticmethod
-    def unparse(text, intervals_: Sequence[intervals.Interval]):
-        span = intervals.span(intervals_)
-        codes = np.repeat([ord(" ")], len(span))
+    def unparse(txt, intervals_: Sequence[intervals.Interval]):
+        if not len(intervals_):
+            return ""
+        codes = np.repeat([ord(" ")], intervals_[-1].stop)
         for iv in intervals_:
-            token = intervals.extract(text, [iv])[0]
+            token = intervals.extract(txt, [iv])[0]
             codes[iv.start:iv.stop] = list(map(ord, token))
         return "".join(map(chr, codes))
 
     @given(text_strategy)
-    def test_parse_text_nltk(self, txt):
-        self.assertEqual(
-            self.unparse(txt, text.parse_text_nltk(txt)), txt.rstrip()
-        )
+    def test_parse_text(self, txt):
+        parsed = text.parser(text.SPACY_TOKENISER, txt)
+        mod_text = re.sub("\s", " ", txt)
+        self.assertEqual(self.unparse(txt, parsed), mod_text.rstrip())
 
 
 class TestGenia(unittest.TestCase):
-
     @given(st.lists(st.text()))
     def test_text_boundaries(self, texts: list):
         """

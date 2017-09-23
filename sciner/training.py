@@ -16,7 +16,7 @@ from sklearn.utils import class_weight
 from sciner.encoding import encode_annotation
 from sciner.sampling import AmbiguousAnnotation, annotate_sample, sample_windows
 from sciner.text import AbstractAnnotation, Abstract, flatten_aligned_pair, BODY
-from sciner.intervals import Interval, extract_intervals
+from sciner.intervals import Interval, extract
 
 ProcessedSample = Tuple[int, Text, Sequence[Interval], Sequence[Text],
                         Optional[np.ndarray]]
@@ -37,7 +37,7 @@ def process_pair(pair: Tuple[Abstract, AbstractAnnotation],
     """
     def wrap_sample(id_, src, text, anno, sample):
         try:
-            sample_text = extract_intervals(text, sample)
+            sample_text = extract(text, sample)
             sample_anno = (None if not annotate else
                            annotate_sample(anno, nlabels, sample))
             return id_, src, sample, sample_text, sample_anno
@@ -122,8 +122,11 @@ def balance_class_weights(y: np.ndarray, mask: Optional[np.ndarray]=None) \
     """
     if not len(y):
         raise ValueError("`y` is empty")
-    y_flat = (y.flatten() if mask is None else
-              np.concatenate([sample[mask] for sample, mask in zip(y, mask)]))
+    if y.ndim == 2:
+        y_flat = (y.flatten() if mask is None else
+                  np.concatenate([sample[mask] for sample, mask in zip(y, mask)]))
+    # elif y.ndim == 3:
+    #     y_flat = (y.)
     classes = np.unique(y_flat)
     weights = class_weight.compute_class_weight("balanced", classes, y_flat)
     weights_scaled = weights / weights.min()

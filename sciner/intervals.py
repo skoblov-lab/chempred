@@ -42,10 +42,19 @@ class Interval(Container, Generic[T]):
         return type(self)(self.start, self.stop, value)
 
 
-if __name__ == "__main__":
-    raise ValueError
-
-
-def extract_intervals(sequence: Sequence[T], intervals: Iterable[Interval]) \
+def extract(sequence: Sequence[T], intervals: Iterable[Interval]) \
         -> List[Sequence[T]]:
     return [sequence[iv.start:iv.stop] for iv in intervals]
+
+
+def length(sample: Sequence[Interval]) -> int:
+    # TODO docs
+    return 0 if not len(sample) else sample[-1].stop - sample[0].start
+
+
+def span(sample: Sequence[Interval]) -> Optional[Interval]:
+    return Interval(sample[0].start, sample[-1].stop) if len(sample) else None
+
+
+if __name__ == "__main__":
+    raise ValueError

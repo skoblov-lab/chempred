@@ -9,13 +9,13 @@ import re
 import numpy as np
 from nltk.tokenize import word_tokenize
 
-from sciner.intervals import Interval
+from sciner import intervals
 
 OTHER = "OTHER"
 TITLE = "T"
 BODY = "A"
 ClassMapping = Mapping[Text, Integral]
-ClassifiedInterval = Interval[Integral]
+ClassifiedInterval = intervals.Interval[Integral]
 Annotation = Sequence[ClassifiedInterval]
 AbstractAnnotation = NamedTuple("AbstractAnnotation", [("id", int),
                                                        ("title", Annotation),
@@ -33,7 +33,7 @@ WORD_LIKE_PATT = re.compile(r"[\w]+|[^\s\w]")
 
 
 def flatten_aligned_pair(pair: Tuple[Abstract, AbstractAnnotation]) \
-        -> List[Tuple[int, Text, Text, Sequence[Interval]]]:
+        -> List[Tuple[int, Text, Text, Sequence[intervals.Interval]]]:
     # TODO tests
     """
     :return: list[(abstract id, source, text, annotation)]
@@ -70,39 +70,33 @@ def parse_text(text: Text, pattern: Pattern) -> np.ndarray:
     :return: a sorted array of matches intervals
     """
     try:
-        intervals = [m.span() for m in pattern.finditer(text)]
-        return np.array([Interval(start, end, i)
-                         for i, (start, end) in enumerate(intervals)])
+        intervals_ = [m.span() for m in pattern.finditer(text)]
+        return np.array([intervals.Interval(start, end, i)
+                         for i, (start, end) in enumerate(intervals_)])
     except TypeError:
         raise TypeError("`{}` is not a valid unicode string".format(repr(text)))
 
 
 def parse_text_nltk(text: Text) -> np.ndarray:
+
+    def mark_boundaries(boundaries: PVector, token: str):
+        if not boundaries:
+            return boundaries.append(intervals.Interval(0, len(token), token))
+        prev = boundaries[-1]
+        start = prev.stop
+        stop = start + len(token)
+        return boundaries.append(intervals.Interval(start, stop, token))
+
     if not text:
         return np.array([])
-
     all_tk = re.compile("\S+|\s+")
     ws = re.compile("\s")
     tokens = all_tk.findall(text)
     fine_grained = chain.from_iterable(
         word_tokenize(tk) if not ws.match(tk) else [tk] for tk in tokens)
-
-    def mark_boundaries(boundaries: PVector, token: str):
-        if not boundaries:
-            return boundaries.append(Interval(0, len(token), token))
-        prev = boundaries[-1]
-        start = prev.stop
-        stop = start + len(token)
-        return boundaries.append(Interval(start, stop, token))
-
-    intervals = reduce(mark_boundaries, fine_grained, pvector())
-    ws_less = (iv for iv in intervals if not ws.match(iv.data))
+    intervals_ = reduce(mark_boundaries, fine_grained, pvector())
+    ws_less = (iv for iv in intervals_ if not ws.match(iv.data))
     return np.array([iv.reload(i) for i, iv in enumerate(ws_less)])
-
-
-def _unparse(intervals):
-    # reqiered for tests
-    pass
 
 
 if __name__ == "__main__":

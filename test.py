@@ -46,3 +46,7 @@ class TestGenia(unittest.TestCase):
                             range(len(boundaries) - 1)]))
         if boundaries:
             self.assertTrue(boundaries[0][0] == 0)
+
+
+if __name__ == "__main__":
+    unittest.main()

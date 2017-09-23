@@ -14,10 +14,10 @@ from sciner import encoding
 NCHAR = encoding.MAXCHAR + 1
 
 
-def build_conv(nfilters: Sequence[int],
-               filter_width: Union[int, Sequence[int]],
-               dropout: Union[Optional[float], Sequence[Optional[float]]]=None,
-               name_template: str="l_conv_{}") \
+def build_cnn(nfilters: Sequence[int],
+              filter_width: Union[int, Sequence[int]],
+              dropout: Union[Optional[float], Sequence[Optional[float]]]=None,
+              name_template: str="l_conv_{}") \
         -> Callable:
     # TODO extend documentation
     # TODO more tests
@@ -26,7 +26,7 @@ def build_conv(nfilters: Sequence[int],
     :param nfilters:
     :param filter_width:
     :return:
-    >>> conv = build_conv([30, 30], 5)
+    >>> conv = build_cnn([30, 30], 5)
     """
     def stack_conv(prev, param: Tuple[str, int, int, float]):
         name, nfilt, kern_size, drop_p = param
@@ -52,7 +52,7 @@ def build_conv(nfilters: Sequence[int],
     return conv
 
 
-def build_rec(nsteps: Sequence[int],
+def build_rnn(nsteps: Sequence[int],
               inp_drop: Optional[Union[float, Sequence[float]]]=None,
               rec_drop: Optional[Union[float, Sequence[float]]]=None,
               bidirectional: Union[bool, Sequence[bool]]=False,
@@ -63,9 +63,9 @@ def build_rec(nsteps: Sequence[int],
     :param lstm_inp_drop:
     :param lstm_rec_drop:
     :param bidirectional:
-    :param stateful: use stateful LSTM-cells
+    :param stateful: use stateful RNN-cells
     :return:
-    >>> rec = build_rec([200, 200], 0.1, 0.1, True)
+    >>> rec = build_rnn([200, 200], 0.1, 0.1, True)
     """
 
     def stack_layers(prev, param: Tuple[str, int, float, float, bool]):

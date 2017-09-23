@@ -12,7 +12,7 @@ from typing import List, Tuple, Text, Iterable, Iterator
 from fn import F
 
 from sciner.text import TITLE, BODY, AbstractAnnotation, Abstract, ClassMapping
-from sciner.util import Interval
+from sciner.intervals import Interval
 
 
 def parse_abstracts(path: Text) -> List[Abstract]:
@@ -97,5 +97,3 @@ def align_abstracts_and_annotations(abstracts: Iterable[Abstract],
 
 if __name__ == "__main__":
     raise RuntimeError
-
-

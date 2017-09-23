@@ -13,10 +13,10 @@ import numpy as np
 from fn import F
 from sklearn.utils import class_weight
 
-from sciner.encoding import AmbiguousAnnotation, annotate_sample, encode_annotation, \
-    sample_windows
+from sciner.encoding import encode_annotation
+from sciner.sampling import AmbiguousAnnotation, annotate_sample, sample_windows
 from sciner.text import AbstractAnnotation, Abstract, flatten_aligned_pair, BODY
-from sciner.util import Interval, extract_intervals
+from sciner.intervals import Interval, extract_intervals
 
 ProcessedSample = Tuple[int, Text, Sequence[Interval], Sequence[Text],
                         Optional[np.ndarray]]

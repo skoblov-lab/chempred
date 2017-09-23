@@ -12,7 +12,7 @@ from pyrsistent import v, pvector
 
 from sciner.text import AbstractAnnotation, Abstract, ClassMapping, \
     AnnotationError, ClassifiedInterval
-from sciner.util import Interval
+from sciner.intervals import Interval
 
 ANNO_PATT = re.compile("G#(\w+)")
 SENTENCE_TAG = "sentence"

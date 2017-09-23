@@ -4,7 +4,7 @@ from typing import Sequence
 
 import numpy as np
 
-from sciner.util import Interval
+from sciner.intervals import Interval
 
 
 def combine_predictions_average(samples: Sequence[Sequence[Interval[int]]],

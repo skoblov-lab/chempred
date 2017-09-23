@@ -1,58 +1,15 @@
 import csv
 import json
 import operator as op
-import re
-import sys
 from functools import reduce
 from io import TextIOWrapper
 from itertools import chain
-from typing import List, Tuple, Optional, Text, Sequence, Mapping, \
-    Callable, Union, Iterator, Iterable, TypeVar, Container, Generic
+from typing import List, Tuple, Text, Mapping, \
+    Callable, Union, Iterator, Iterable
 
 import numpy as np
 import pandas as pd
 from fn import F
-
-_slots_supported = (sys.version_info >= (3, 6, 2) or
-                    (3, 5, 3) <= sys.version_info < (3, 6))
-
-WS_PATT = re.compile("\S+")
-PUNCT_PATT = re.compile(r"[\w]+|[^\s\w]")
-PUNCT_WS_PATT = re.compile(r"[\w]+|[^\w]")
-
-T = TypeVar("T")
-
-
-class Interval(Container, Generic[T]):
-
-    if _slots_supported:
-        __slots__ = ("start", "stop", "data")
-
-    def __init__(self, start: int, stop: int, data: Optional[T]=None):
-        self.start = start
-        self.stop = stop
-        self.data = data
-
-    def __contains__(self, item: T) -> bool:
-        return False if self.data is None or item is None else self.data == item
-
-    def __eq__(self, other: "Interval"):
-        return (self.start, self.stop, self.data) == (other.start, other.stop, other.data)
-
-    def __hash__(self):
-        return hash((self.start, self.stop, self.data))
-
-    def __len__(self):
-        return self.stop - self.start
-
-    def __bool__(self):
-        return bool(len(self))
-
-    def __repr__(self):
-        return "{}(start={}, stop={}, data={})".format(type(self).__name__,
-                                                       self.start,
-                                                       self.stop,
-                                                       self.data)
 
 
 class Config(dict):
@@ -130,11 +87,6 @@ class EmbeddingsWrapper(Mapping):
     def get(self, token: Text):
         tk = self.transform(token)
         return self.vectors[self.token_index.get(tk, self.token_index[self.oov])]
-
-
-def extract_intervals(sequence: Sequence[T], intervals: Iterable[Interval]) \
-        -> List[Sequence[T]]:
-    return [sequence[iv.start:iv.stop] for iv in intervals]
 
 
 flatmap = F(map) >> chain.from_iterable

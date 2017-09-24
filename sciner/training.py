@@ -112,6 +112,8 @@ def training(rootdir: str, name: str):
 
 def balance_class_weights(y: np.ndarray, mask: Optional[np.ndarray]=None) \
         -> Optional[Mapping[int, float]]:
+    # TODO update docs
+    # TODO tests
     """
     :param y: a numpy array encoding sample classes; samples are encoded along
     the 0-axis
@@ -125,8 +127,11 @@ def balance_class_weights(y: np.ndarray, mask: Optional[np.ndarray]=None) \
     if y.ndim == 2:
         y_flat = (y.flatten() if mask is None else
                   np.concatenate([sample[mask] for sample, mask in zip(y, mask)]))
-    # elif y.ndim == 3:
-    #     y_flat = (y.)
+    elif y.ndim == 3:
+        y_flat = (y.nonzero()[1] if mask is None else
+                  y[mask].nonzero()[1])
+    else:
+        raise ValueError("`y` should be either a 2D or a 3D array")
     classes = np.unique(y_flat)
     weights = class_weight.compute_class_weight("balanced", classes, y_flat)
     weights_scaled = weights / weights.min()
@@ -135,6 +140,8 @@ def balance_class_weights(y: np.ndarray, mask: Optional[np.ndarray]=None) \
 
 def sample_weights(y: np.ndarray, class_weights: Mapping[int, float]) \
         -> np.ndarray:
+    # TODO update docs
+    # TODO tests
     """
     :param y: a 2D array encoding sample classes; each sample is a row of
     integers representing class code

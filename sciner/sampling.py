@@ -1,4 +1,6 @@
-from typing import Sequence, Iterator
+from typing import Sequence, Iterator, Iterable, cast
+import warnings
+import sys
 
 import numpy as np
 
@@ -49,6 +51,33 @@ def sample_windows(intervals: Sequence[Interval], window: int, step: int=1) \
     if steps[-1] + window < len(intervals):
         steps.append(steps[-1] + step)
     return (intervals[i:i+window] for i in steps)
+
+
+def flatten_multilabel_annotation(sample_annotation: np.ndarray,
+                                  warn_overlapping: bool=True):
+    """
+    Flatten 2D multi-label annotation. Time-steps are supposed to be encoded
+    along the first axis, i.e. sample_annotation[i] encodes the i-th sample. If
+    a time-step has two labels, one of which corresponds to the negative class
+    (sample_annotation[:, 0]), the function returns the other (positive) label.
+    If there are several positive labels for a time-step, the function raises
+    an error or (if warn_overlapping == True) makes a warning and returns None.
+    :param sample_annotation: a 2D array
+    :param warn_overlapping: make a warning and return None instead of raising
+    an error when a time-step has several positive labels.
+    :return:
+    """
+    time_steps = cast(Iterable[np.ndarray], sample_annotation)
+    labels = [step.nonzero()[-1] for step in time_steps]
+    positive_labels = [step_labels[step_labels > 0] for step_labels in labels]
+    if any(len(pos_labels) > 1 for pos_labels in positive_labels):
+        if not warn_overlapping:
+            raise AmbiguousAnnotation("Couldn't flatten multilabel annotation"
+                                      "due to ambiguity")
+        print("ambiguous annotation: ignoring sample", file=sys.stderr)
+        # warnings.warn("ambiguous annotation", AnnotationWarning)
+        return None
+    return np.concatenate([pos_labels or [0] for pos_labels in positive_labels])
 
 
 if __name__ == "__main__":

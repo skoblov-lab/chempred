@@ -36,7 +36,6 @@ WORD_LIKE_PATT = re.compile(r"[\w]+|[^\s\w]")
 
 def flatten_aligned_pair(pair: Tuple[Abstract, AbstractAnnotation]) \
         -> List[Tuple[int, Text, Text, Sequence[intervals.Interval]]]:
-    # TODO tests
     """
     :return: list[(abstract id, source, text, annotation)]
     """

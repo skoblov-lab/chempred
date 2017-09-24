@@ -58,6 +58,7 @@ def build_rnn(nsteps: Sequence[int],
               bidirectional: Union[bool, Sequence[bool]]=False,
               stateful=False, layer=layers.LSTM) -> Callable:
     # TODO extend documentation
+    # TODO tests
     """
     :param nsteps:
     :param lstm_inp_drop:

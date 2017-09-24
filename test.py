@@ -4,28 +4,17 @@ from typing import Sequence, Iterable, cast
 
 import numpy as np
 from hypothesis import given, note
-from hypothesis import strategies as st
+from hypothesis import settings, strategies as st
 
-from sciner import intervals, text, genia, sampling
+from sciner import intervals, text, genia, sampling, util
+
+
+MAX_TESTS = 5000
 
 
 # strategies
 
 texts = st.text(st.characters(min_codepoint=32, max_codepoint=255), 0, 500, 1000)
-
-
-@st.composite
-def annotations_and_samples(draw, ncls, l, nintervals):
-    ncls = draw(ncls)
-    length = draw(l)
-    n = draw(nintervals) + 1
-
-    anno = np.random.choice(ncls, length)
-    split_points = sorted(np.random.choice(length, n, False))
-    ivs = [range(arr[0], arr[-1] + 1) for arr in
-           np.split(np.arange(length), split_points)[1:-1]]
-
-    return ncls, anno, ivs
 
 
 # test cases
@@ -43,6 +32,7 @@ class TestText(unittest.TestCase):
         return "".join(map(chr, codes))
 
     @given(texts)
+    @settings(max_examples=MAX_TESTS)
     def test_parse_text(self, txt):
         parsed = text.tointervals(text.spacy_tokeniser, txt)
         mod_text = re.sub("\s", " ", txt)
@@ -50,7 +40,9 @@ class TestText(unittest.TestCase):
 
 
 class TestGenia(unittest.TestCase):
+
     @given(st.lists(st.text()))
+    @settings(max_examples=MAX_TESTS)
     def test_text_boundaries(self, texts: list):
         """
         Test of text_boundaries() function.
@@ -69,16 +61,36 @@ class TestGenia(unittest.TestCase):
 
 class TestSampling(unittest.TestCase):
 
-    @given(annotations_and_samples(st.integers(1, 10),
-                                   st.integers(100, 500),
-                                   st.integers(1, 100)))
-    def test_annotate_sample(self, annotation_and_intervals):
-        ncls, anno, sample = annotation_and_intervals
-        sample_anno = sampling.annotate_sample(anno, ncls, sample)
+    @given(st.integers(1, 10), st.integers(100, 500), st.integers(10, 50))
+    @settings(max_examples=MAX_TESTS)
+    def test_annotate_sample(self, ncls, length, nintervals):
+        anno = np.random.choice(ncls, length)
+        split_points = sorted(np.random.choice(length, nintervals, False))
+        ivs = [intervals.Interval(arr[0], arr[-1]+1) for arr in
+               np.split(np.arange(length), split_points)[1:-1]]
+
+        sample_anno = sampling.annotate_sample(anno, ncls, ivs)
         sample_anno_cls = [set(s_anno.nonzero()[-1])
                            for s_anno in cast(Iterable[np.ndarray], sample_anno)]
-        self.assertSequenceEqual([set(anno[iv.start:iv.stop]) for iv in sample],
+        self.assertSequenceEqual([set(anno[iv.start:iv.stop]) for iv in ivs],
                                  sample_anno_cls)
+        self.assertEqual(len(ivs), len(sample_anno))
+
+    @given(st.integers(1, 10), st.integers(1, 100), st.integers(0, 100))
+    @settings(max_examples=MAX_TESTS)
+    def test_flatten_multilabel_annotation(self, ncls, nsteps, maxmixed):
+        anno = np.random.choice(ncls, nsteps)
+        nested = util.one_hot(ncls, anno)
+        mixed_steps = np.random.choice(nsteps, min(nsteps, maxmixed), False)
+        nested[mixed_steps, 0] = 1
+        self.assertTrue(
+            (anno == sampling.flatten_multilabel_annotation(nested)).all()
+        )
+        nested[mixed_steps, np.random.choice(ncls)] = 1
+        if ncls > 2 and (nested[:, 1:].sum(1) > 1).any():
+            self.assertIsNone(sampling.flatten_multilabel_annotation(nested))
+            with self.assertRaises(sampling.AmbiguousAnnotation):
+                sampling.flatten_multilabel_annotation(nested, False)
 
 
 if __name__ == "__main__":

@@ -52,8 +52,8 @@ def length(sample: Sequence[Interval]) -> int:
     return 0 if not len(sample) else sample[-1].stop - sample[0].start
 
 
-def span(sample: Sequence[Interval]) -> Optional[Interval]:
-    return Interval(sample[0].start, sample[-1].stop) if len(sample) else None
+def span(ivs: Sequence[Interval]) -> Optional[Interval]:
+    return Interval(ivs[0].start, ivs[-1].stop) if len(ivs) else None
 
 
 if __name__ == "__main__":

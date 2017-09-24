@@ -1,18 +1,36 @@
 import re
 import unittest
-from typing import Sequence
+from typing import Sequence, Iterable, cast
 
 import numpy as np
 from hypothesis import given, note
 from hypothesis import strategies as st
 
-from sciner import intervals, text, genia
+from sciner import intervals, text, genia, sampling
 
+
+# strategies
+
+texts = st.text(st.characters(min_codepoint=32, max_codepoint=255), 0, 500, 1000)
+
+
+@st.composite
+def annotations_and_samples(draw, ncls, l, nintervals):
+    ncls = draw(ncls)
+    length = draw(l)
+    n = draw(nintervals) + 1
+
+    anno = np.random.choice(ncls, length)
+    split_points = sorted(np.random.choice(length, n, False))
+    ivs = [range(arr[0], arr[-1] + 1) for arr in
+           np.split(np.arange(length), split_points)[1:-1]]
+
+    return ncls, anno, ivs
+
+
+# test cases
 
 class TestText(unittest.TestCase):
-
-    text_strategy = st.text(
-        st.characters(min_codepoint=32, max_codepoint=255), 0, 500, 1000)
 
     @staticmethod
     def unparse(txt, intervals_: Sequence[intervals.Interval]):
@@ -24,7 +42,7 @@ class TestText(unittest.TestCase):
             codes[iv.start:iv.stop] = list(map(ord, token))
         return "".join(map(chr, codes))
 
-    @given(text_strategy)
+    @given(texts)
     def test_parse_text(self, txt):
         parsed = text.tointervals(text.spacy_tokeniser, txt)
         mod_text = re.sub("\s", " ", txt)
@@ -47,6 +65,20 @@ class TestGenia(unittest.TestCase):
                             range(len(boundaries) - 1)]))
         if boundaries:
             self.assertTrue(boundaries[0][0] == 0)
+
+
+class TestSampling(unittest.TestCase):
+
+    @given(annotations_and_samples(st.integers(1, 10),
+                                   st.integers(100, 500),
+                                   st.integers(1, 100)))
+    def test_annotate_sample(self, annotation_and_intervals):
+        ncls, anno, sample = annotation_and_intervals
+        sample_anno = sampling.annotate_sample(anno, ncls, sample)
+        sample_anno_cls = [set(s_anno.nonzero()[-1])
+                           for s_anno in cast(Iterable[np.ndarray], sample_anno)]
+        self.assertSequenceEqual([set(anno[iv.start:iv.stop]) for iv in sample],
+                                 sample_anno_cls)
 
 
 if __name__ == "__main__":

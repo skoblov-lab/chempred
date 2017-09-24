@@ -27,20 +27,10 @@ def annotate_sample(annotation: np.ndarray, nlabels: int,
         raise EncodingError("The sample is empty")
     if span_.stop > len(annotation):
         raise EncodingError("The annotation doesn't fully cover the sample")
-    if nlabels > 1:
-        tk_annotations = extract(annotation, sample)
-        encoded_token_anno = np.zeros((len(sample), nlabels), dtype=np.int32)
-        for i, tk_anno in enumerate(tk_annotations):
-            encoded_token_anno[i, tk_anno] = 1
-    else:
-        tk_annotations = map(np.unique, extract(annotation, sample))
-        encoded_token_anno = np.zeros(len(sample), dtype=np.int32)
-        for i, tk_anno in enumerate(tk_annotations):
-            positive_anno = tk_anno[tk_anno > 0]
-            if len(positive_anno) > 1:
-                raise AmbiguousAnnotation(
-                    "ambiguous annotation: {}".format(positive_anno))
-            encoded_token_anno[i] = positive_anno[0] if positive_anno else 0
+    tk_annotations = extract(annotation, sample)
+    encoded_token_anno = np.zeros((len(sample), nlabels), dtype=np.int32)
+    for i, tk_anno in enumerate(tk_annotations):
+        encoded_token_anno[i, tk_anno] = 1
     return encoded_token_anno
 
 

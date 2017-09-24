@@ -24,8 +24,7 @@ ProcessedSample = Tuple[int, Text, Sequence[Interval], Sequence[Text],
 
 def process_pair(pair: Tuple[Abstract, AbstractAnnotation],
                  parser: Callable[[Text], Sequence[Interval]], window: int,
-                 stepsize: int=1, annotate: bool=True, nlabels=1,
-                 warn_overlapping: bool=False) \
+                 stepsize: int=1, annotate: bool=True, nlabels=1) \
         -> Iterator[ProcessedSample]:
     # TODO update docs
     # TODO tests
@@ -36,18 +35,10 @@ def process_pair(pair: Tuple[Abstract, AbstractAnnotation],
     sampled intervals, sample tokens, sample annotations)]
     """
     def wrap_sample(id_, src, text, anno, sample):
-        try:
-            sample_text = extract(text, sample)
-            sample_anno = (None if not annotate else
-                           annotate_sample(anno, nlabels, sample))
-            return id_, src, sample, sample_text, sample_anno
-        except AmbiguousAnnotation as err:
-            message = "Failed to annotate a sample in {}'s {} due to {}".format(
-                id_, "body" if src == BODY else "title", err)
-            if not warn_overlapping:
-                raise AmbiguousAnnotation(message)
-            warnings.warn(message)
-            return None
+        sample_text = extract(text, sample)
+        sample_anno = (None if not annotate else
+                       annotate_sample(anno, nlabels, sample))
+        return id_, src, sample, sample_text, sample_anno
 
     ids, srcs, texts, annotations = zip(*flatten_aligned_pair(pair))
     sampled_ivs = (sample_windows(intervals, window, stepsize)
@@ -128,8 +119,8 @@ def balance_class_weights(y: np.ndarray, mask: Optional[np.ndarray]=None) \
         y_flat = (y.flatten() if mask is None else
                   np.concatenate([sample[mask] for sample, mask in zip(y, mask)]))
     elif y.ndim == 3:
-        y_flat = (y.nonzero()[1] if mask is None else
-                  y[mask].nonzero()[1])
+        y_flat = (y.nonzero()[-1] if mask is None else
+                  y[mask].nonzero()[-1])
     else:
         raise ValueError("`y` should be either a 2D or a 3D array")
     classes = np.unique(y_flat)

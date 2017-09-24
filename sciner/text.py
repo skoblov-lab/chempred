@@ -64,7 +64,7 @@ def parse_mapping(classmaps: Iterable[str]) -> ClassMapping:
 
 def tointervals(tokeniser: Callable[[str], Iterable[str]], text: Text) \
         -> np.ndarray:
-
+    # TODO docs
     def mark_boundaries(boundaries: PVector, token: str):
         if not boundaries:
             return boundaries.append(intervals.Interval(0, len(token), token))

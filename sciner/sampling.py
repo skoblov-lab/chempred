@@ -14,7 +14,6 @@ def annotate_sample(annotation: np.ndarray, nlabels: int,
                     sample: Sequence[Interval],
                     dtype=np.int32) -> np.ndarray:
     # TODO update docs
-    # TODO tests
     """
     :param sample: a sequence of Intervals
     :param dtype: output data type; it must be an integral numpy dtype

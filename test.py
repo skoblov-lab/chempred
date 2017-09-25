@@ -9,7 +9,7 @@ from hypothesis import settings, strategies as st
 from sciner import intervals, text, genia, sampling, util
 
 
-MAX_TESTS = 5000
+MAX_TESTS = 1000
 
 
 # strategies
@@ -88,9 +88,8 @@ class TestSampling(unittest.TestCase):
         )
         nested[mixed_steps, np.random.choice(ncls)] = 1
         if ncls > 2 and (nested[:, 1:].sum(1) > 1).any():
-            self.assertIsNone(sampling.flatten_multilabel_annotation(nested))
             with self.assertRaises(sampling.AmbiguousAnnotation):
-                sampling.flatten_multilabel_annotation(nested, False)
+                sampling.flatten_multilabel_annotation(nested)
 
 
 if __name__ == "__main__":

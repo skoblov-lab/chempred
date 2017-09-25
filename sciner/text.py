@@ -1,6 +1,6 @@
 from numbers import Integral
 from typing import Sequence, NamedTuple, Text, Iterable, Tuple, List, \
-    Mapping, Pattern, Callable
+    Mapping, Callable
 from functools import reduce
 from itertools import chain
 from pyrsistent import PVector, pvector
@@ -11,6 +11,7 @@ import spacy
 from fn import F
 
 from sciner import intervals
+from sciner.util import flatmap
 
 OTHER = "OTHER"
 TITLE = "T"
@@ -23,15 +24,14 @@ AbstractAnnotation = NamedTuple("AbstractAnnotation", [("id", int),
                                                        ("body", Annotation)])
 Abstract = NamedTuple("Abstract",
                       [("id", int), ("title", Text), ("body", Text)])
-spacy_tokeniser = F(spacy.load("en")) >> (map, lambda tk: tk.text)
+
+spacy_tokeniser = (F(spacy.load("en").tokenizer) >>
+                   (map, lambda tk: tk.text) >>
+                   (flatmap, re.compile(r"[()&/|]|[^()&/|]+").findall))
 
 
 class AnnotationError(ValueError):
     pass
-
-
-NO_WS_PATT = re.compile("\S+")
-WORD_LIKE_PATT = re.compile(r"[\w]+|[^\s\w]")
 
 
 def flatten_aligned_pair(pair: Tuple[Abstract, AbstractAnnotation]) \

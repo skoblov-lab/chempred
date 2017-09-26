@@ -27,8 +27,10 @@ Abstract = NamedTuple("Abstract",
 
 spacy_tokeniser = (F(spacy.load("en").tokenizer) >>
                    (map, lambda tk: tk.text) >>
-                   (flatmap, re.compile(r"[()&/|]|[^()&/|]+").findall))
-
+                   (flatmap, re.compile(r"[&/|]|[^&/|]+").findall))
+# spacy_tokeniser = (F(spacy.load("en").tokenizer) >>
+#                    (map, lambda tk: tk.text) >>
+#                    (flatmap, re.compile(r"[()&/|+·]|[^()&/|+·]+").findall))
 
 class AnnotationError(ValueError):
     pass

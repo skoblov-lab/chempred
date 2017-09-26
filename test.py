@@ -69,7 +69,7 @@ class TestSampling(unittest.TestCase):
         ivs = [intervals.Interval(arr[0], arr[-1]+1) for arr in
                np.split(np.arange(length), split_points)[1:-1]]
 
-        sample_anno = sampling.annotate_sample(anno, ncls, ivs)
+        sample_anno = sampling.annotate_sample(ncls, anno, ivs)
         sample_anno_cls = [set(s_anno.nonzero()[-1])
                            for s_anno in cast(Iterable[np.ndarray], sample_anno)]
         self.assertSequenceEqual([set(anno[iv.start:iv.stop]) for iv in ivs],

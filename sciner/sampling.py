@@ -1,20 +1,21 @@
-from typing import Sequence, Iterator, Iterable, cast
-import warnings
-import sys
+from typing import Sequence, Iterator, Iterable, Callable, cast
 
 import numpy as np
 
 from sciner.encoding import EncodingError
-from sciner.intervals import Interval, extract, span
+from sciner.intervals import Interval, Intervals, extract, span
+
+Sample = Sequence[Interval]
+Sampler = Callable[[Sequence[Interval]], Iterable[Sample]]
+Annotator = Callable[[Sample], np.ndarray]
 
 
 class AmbiguousAnnotation(EncodingError):
     pass
 
 
-def annotate_sample(annotation: np.ndarray, nlabels: int,
-                    sample: Sequence[Interval],
-                    dtype=np.int32) -> np.ndarray:
+def annotate_sample(nlabels: int, annotation: np.ndarray,
+                    sample: Intervals, dtype=np.int32) -> np.ndarray:
     # TODO update docs
     """
     :param sample: a sequence of Intervals
@@ -35,22 +36,44 @@ def annotate_sample(annotation: np.ndarray, nlabels: int,
     return encoded_token_anno
 
 
-def sample_windows(intervals: Sequence[Interval], window: int, step: int=1) \
-        -> Iterator[Sequence[Interval]]:
+def sample_windows(window: int, step: int, text_intervals: Intervals) \
+        -> Iterator[Intervals]:
     # TODO update docs
     # TODO test
     """
     Sample windows using a sliding window approach. Sampling windows start at
     the beginning of each interval in `intervals`
-    :param intervals: a sequence (preferable a numpy array) of interval objects
+    :param text_intervals: a sequence (preferable a numpy array) of interval objects
     :param window: sampling window width in tokens
     """
-    if len(intervals) <= window:
-        return iter([intervals])
-    steps = list(range(0, len(intervals)-window+1, step))
-    if steps[-1] + window < len(intervals):
+    if len(text_intervals) <= window:
+        return iter([text_intervals])
+    steps = list(range(0, len(text_intervals) - window + 1, step))
+    if steps[-1] + window < len(text_intervals):
         steps.append(steps[-1] + step)
-    return (intervals[i:i+window] for i in steps)
+    return (text_intervals[i:i + window] for i in steps)
+
+
+def sample_sentences(borders: Intervals, text_intervals: Intervals) \
+        -> Sequence[Sequence[Interval]]:
+    # TODO docs
+    # TODO tests
+    if not len(text_intervals) or not len(borders):
+        raise ValueError("empty intervals and/or borders")
+    ends = iter(sorted(border.stop for border in borders))
+    end = next(ends)
+    samples = [[]]
+    for iv in sorted(text_intervals, key=lambda x: x.start):
+        if iv.stop <= end:
+            samples[-1].append(iv)
+        else:
+            end = next(ends, None)
+            if end is None:
+                raise RuntimeError
+            samples.append([iv])
+    if len(samples) != len(borders):
+        raise RuntimeError
+    return samples
 
 
 def flatten_multilabel_annotation(sample_annotation: np.ndarray) -> np.ndarray:

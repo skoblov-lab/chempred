@@ -60,5 +60,10 @@ def encode_tokens(encoder: Encoder, tokens: Iterable[Text], dtype=np.float32) \
         return np.array([encoder[tk] for tk in tokens_]).astype(dtype)
 
 
+def encode_characters(characters: Text) -> np.ndarray:
+    codes = np.fromiter(map(ord, characters), np.int32, len(characters))
+    return np.clip(codes, 0, MAXCHAR)
+
+
 if __name__ == "__main__":
     raise RuntimeError

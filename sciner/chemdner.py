@@ -95,8 +95,8 @@ def parse_borders(path: Text) -> List[AbstractSentenceBorders]:
 
 
 def align_abstracts(abstracts: Iterable[AbstractText],
-                    annotations: Iterable[AbstractAnnotation],
-                    borders: Iterable[AbstractSentenceBorders]) \
+                    annotations: Iterable[AbstractAnnotation]=None,
+                    borders: Iterable[AbstractSentenceBorders]=None) \
         -> Iterator[Abstract]:
     # TODO tests
     """
@@ -111,8 +111,11 @@ def align_abstracts(abstracts: Iterable[AbstractText],
     def empty_borders(id_: int) -> AbstractSentenceBorders:
         return AbstractSentenceBorders(id_, [], [])
 
+    annotations = annotations if annotations is not None else []
+    borders = borders if borders is not None else []
+
     anno_mapping = {anno.id: anno for anno in annotations}
-    borders_mapping = {b.id: b for b in borders}
+    borders_mapping = {b.id: b for b in borders or []}
 
     return ((abstract,
              anno_mapping.get(abstract.id, empty_anno(abstract.id)),

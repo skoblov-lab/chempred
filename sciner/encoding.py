@@ -9,8 +9,7 @@ from typing import Sequence, Iterable, Text, Mapping, Union
 
 import numpy as np
 
-from sciner.util import Interval, sample_span, \
-    extract_intervals
+from sciner.intervals import Interval
 
 MAXCHAR = 127
 MAXCLS = 255
@@ -41,33 +40,6 @@ def encode_annotation(annotations: Iterable[Interval], size: int) -> np.ndarray:
             raise EncodingError("class codes must be in [0, {}]".format(MAXCLS))
         encoded_anno[anno.start:anno.stop] = anno.data
     return encoded_anno
-
-
-def annotate_sample(annotation: np.ndarray, sample: Sequence[Interval],
-                    dtype=np.int32) -> np.ndarray:
-    # TODO update docs
-    # TODO tests
-    """
-    :param text: the complete text from which the sample was drawn
-    :param sample: a sequence of Intervals
-    :param dtype: output data type; it must be an integral numpy dtype
-    :return: encoded annotation
-    """
-    if not np.issubdtype(dtype, np.int):
-        raise EncodingError("`dtype` must be integral")
-    span = sample_span(sample)
-    if span is None:
-        raise EncodingError("The sample is empty")
-    if span.stop > len(annotation):
-        raise EncodingError("The annotation doesn't fully cover the sample")
-    token_annotations = map(np.unique, extract_intervals(annotation, sample))
-    encoded_token_anno = np.zeros(len(sample), dtype=np.int32)
-    for i, tk_anno in enumerate(token_annotations):
-        positive_anno = tk_anno[tk_anno > 0]
-        if len(positive_anno) > 1:
-            raise EncodingError("ambiguous annotation")
-        encoded_token_anno[i] = positive_anno[0] if positive_anno else 0
-    return encoded_token_anno
 
 
 def encode_tokens(encoder: Encoder, tokens: Iterable[Text], dtype=np.float32) \

@@ -4,24 +4,24 @@ import os
 import re
 import shutil
 from contextlib import contextmanager
-from itertools import chain, starmap
-from typing import Tuple, List, Iterator, Iterable, Callable, Text, Sequence
+from itertools import starmap
+from typing import Tuple, List, Iterable, Text, Sequence, \
+    Optional, Mapping, cast
 
 import numpy as np
 from fn import F
+from sklearn.utils import class_weight
 
-from sciner import chemdner, util, encoding
-from sciner.encoding import annotate_sample, encode_annotation
-from sciner.chemdner import Abstract, AbstractAnnotation
-from sciner.util import Interval, extract_intervals
+from sciner.intervals import Interval, Intervals, extract
+from sciner.sampling import Annotator, Sampler, Sample
+
+ProcessedSample = Tuple[int, Text, Sequence[Interval], Sequence[Text],
+                        Optional[np.ndarray]]
 
 
-ProcessedSample = Tuple[int, Text, Sequence[Interval], Sequence[Text], np.ndarray]
-
-
-def process_pair(pair: Tuple[Abstract, AbstractAnnotation],
-                 parser: Callable[[Text], Sequence[Interval]], window: int) \
-        -> Iterator[ProcessedSample]:
+def process_record(id_: int, src: Text, text: Text, parsed_text: Intervals,
+                   sampler: Sampler, annotator: Optional[Annotator]=None) \
+        -> Sequence[ProcessedSample]:
     # TODO update docs
     # TODO tests
     """
@@ -30,19 +30,14 @@ def process_pair(pair: Tuple[Abstract, AbstractAnnotation],
     :return: Iterator[(text ids, sample sources (title or body),
     sampled intervals, sample tokens, sample annotations)]
     """
-    ids, srcs, texts, annotations = zip(*chemdner.flatten_aligned_pair(pair))
-    sampled_ivs = (util.sample_windows(intervals, window)
-                   for intervals in [parser(text) for text in texts])
-    encoded_anno = [encode_annotation(anno, len(text))
-                    for text, anno in zip(texts, annotations)]
-    annotators = (F(annotate_sample, anno) for anno in encoded_anno)
-    extractors = (F(extract_intervals, text) for text in texts)
-    groups = zip(ids, srcs, sampled_ivs, extractors, annotators)
-    processed = chain.from_iterable(
-        [(id_, src, s, extractor(s), anno(s)) for s in samples if len(s)]
-        for id_, src, samples, extractor, anno in groups
-    )
-    return processed
+    def wrap_sample(sample: Sample) \
+            -> Tuple[int, Text, Sample, Sequence[Text], Optional[np.ndarray]]:
+        sample_text = cast(Sequence[Text], extract(text, sample))
+        sample_anno = None if annotator is None else annotator(sample)
+        return id_, src, sample, sample_text, sample_anno
+
+    samples = sampler(parsed_text)
+    return [wrap_sample(sample) for sample in samples if len(sample)]
 
 
 def flatten_processed_samples(processed_samples: Iterable[ProcessedSample]) \
@@ -91,6 +86,51 @@ def training(rootdir: str, name: str):
             best_checkpoint, stats = pick_best(all_checkpoints)
             shutil.move(best_checkpoint, destination)
         shutil.rmtree(training_dir)
+
+
+def balance_class_weights(y: np.ndarray, mask: Optional[np.ndarray]=None) \
+        -> Optional[Mapping[int, float]]:
+    # TODO update docs
+    # TODO tests
+    """
+    :param y: a numpy array encoding sample classes; samples are encoded along
+    the 0-axis
+    :param mask: a boolean array of shape compatible with `y`, wherein True
+    shows that the corresponding value(s) in `y` should be used to calculate
+    weights; if `None` the function will consider all values in `y`
+    :return: class weights
+    """
+    if not len(y):
+        raise ValueError("`y` is empty")
+    if y.ndim == 2:
+        y_flat = (y.flatten() if mask is None else
+                  np.concatenate([sample[mask] for sample, mask in zip(y, mask)]))
+    elif y.ndim == 3:
+        y_flat = (y.nonzero()[-1] if mask is None else
+                  y[mask].nonzero()[-1])
+    else:
+        raise ValueError("`y` should be either a 2D or a 3D array")
+    classes = np.unique(y_flat)
+    weights = class_weight.compute_class_weight("balanced", classes, y_flat)
+    weights_scaled = weights / weights.min()
+    return {cls: weight for cls, weight in zip(classes, weights_scaled)}
+
+
+def sample_weights(y: np.ndarray, class_weights: Mapping[int, float]) \
+        -> np.ndarray:
+    # TODO update docs
+    # TODO tests
+    """
+    :param y: a 2D array encoding sample classes; each sample is a row of
+    integers representing class code
+    :param class_weights: a class to weight mapping
+    :return: a 2D array of the same shape as `y`, wherein each position stores
+    a weight for the corresponding position in `y`
+    """
+    weights_mask = np.zeros(shape=y.shape, dtype=np.float32)
+    for cls, weight in class_weights.items():
+        weights_mask[y == cls] = weight
+    return weights_mask
 
 
 if __name__ == "__main__":

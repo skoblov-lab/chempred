@@ -11,9 +11,12 @@ import sys
 
 import click
 
+import sciner.chemdner
+import sciner.text
+import sciner.training
 from sciner import chemdner
 from sciner import encoding
-from sciner.training import process_pair, training
+from sciner.training import process_record, training
 from sciner import util
 
 
@@ -77,7 +80,7 @@ def train(ctx, abstracts, annotations, epochs, batchsize, val_split):
     model_destination = os.path.join(directory, "{}.json".format(MODEL))
 
     # extract configurations
-    mapping = util.parse_mapping(config[MAPPING])
+    mapping = sciner.text.parse_mapping(config[MAPPING])
     minlen = config[MINLEN]
     window_width = config[WINDOW]
 
@@ -98,12 +101,12 @@ def train(ctx, abstracts, annotations, epochs, batchsize, val_split):
     ncls = len(set(mapping.values()) | {0})
 
     # read data
-    parsed_abstracts = chemdner.read_abstracts(
+    parsed_abstracts = chemdner.parse_abstracts(
         os.path.abspath(abstracts))
-    parsed_anno = chemdner.read_annotations(
+    parsed_anno = chemdner.parse_annotations(
         os.path.abspath(annotations), mapping)
-    pairs = chemdner.align_abstracts_and_annotations(parsed_abstracts,
-                                                     parsed_anno)
+    pairs = sciner.chemdner.align_abstracts_and_annotations(parsed_abstracts,
+                                                            parsed_anno)
     nonempty_pairs = [(abstact, abstract_annotations) for
                       abstact, abstract_annotations in pairs
                       if any(abstract_annotations[1:])]
@@ -114,10 +117,10 @@ def train(ctx, abstracts, annotations, epochs, batchsize, val_split):
     pairs_test = nonempty_pairs[-n_val_pairs or len(nonempty_pairs):]
 
     # generate training samples
-    tokeniser = util.parse
-    ids, src, samples, x, y, mask = process_pair(
+    tokeniser = sciner.text.parse_text
+    ids, src, samples, x, y, mask = process_record(
         pairs_train, tokeniser, window_width, minlen)
-    ids_test, src_test, samples_test, x_test, y_test, mask_test = process_pair(
+    ids_test, src_test, samples_test, x_test, y_test, mask_test = process_record(
         pairs_test, tokeniser,  window_width, minlen)
     y_onehot = (util.maskfalse(util.one_hot(y)) if not nfilters else
                 util.one_hot(y))
@@ -131,8 +134,8 @@ def train(ctx, abstracts, annotations, epochs, batchsize, val_split):
         print("No testing samples collected")
         sys.exit(1)
     # calculate sample weights
-    class_weights = util.balance_class_weights(y, mask) if weighted else None
-    sample_weights = util.sample_weights(y, class_weights) if weighted else None
+    class_weights = sciner.training.balance_class_weights(y, mask) if weighted else None
+    sample_weights = sciner.training.sample_weights(y, class_weights) if weighted else None
 
     # build.py, serialise and train the model
     from keras import callbacks

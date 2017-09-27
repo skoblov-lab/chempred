@@ -4,45 +4,36 @@ Parsers, preprocessors and type annotations for the chemdner dataset.
 
 """
 
-from itertools import groupby
-from numbers import Integral
-from typing import List, Tuple, Iterator, Text, Iterable, NamedTuple, Sequence
-
 import operator as op
+from itertools import groupby, starmap
+from numbers import Integral
+from typing import List, Tuple, Text, Iterable, Iterator, Optional
+
+import pandas as pd
 from fn import F
 
-from sciner.util import ClassMapping, Interval
-
-OTHER = "OTHER"
-TITLE = "T"
-BODY = "A"
-
-ClassifiedInterval = Interval[Integral]
-Annotation = Sequence[ClassifiedInterval]
-AbstractAnnotation = NamedTuple("AbstractAnnotation", [("id", int),
-                                                       ("title", Annotation),
-                                                       ("body", Annotation)])
-Abstract = NamedTuple("Abstract",
-                      [("id", int), ("title", Text), ("body", Text)])
+from sciner.text import TITLE, BODY, Abstract, AbstractAnnotation, AbstractText, \
+    AbstractSentenceBorders, ClassMapping
+from sciner.intervals import Interval
 
 
-def read_abstracts(path: Text) -> List[Abstract]:
+def parse_abstracts(path: Text) -> List[AbstractText]:
     """
     Read chemdner abstracts
     :return: list[(abstract id, title, body)]
     >>> path = "testdata/abstracts.txt"
-    >>> abstracts = read_abstracts(path)
+    >>> abstracts = parse_abstracts(path)
     >>> ids = {21826085, 22080034, 22080035, 22080037}
     >>> all(id_ in ids for id_, *_ in abstracts)
     True
     """
     with open(path) as buffer:
         parsed_buffer = (line.strip().split("\t") for line in buffer)
-        return [Abstract(int(abstract_n), title, abstract)
-                for abstract_n, title, abstract in parsed_buffer]
+        return [AbstractText(int(id_), title.rstrip(), body.rstrip())
+                for id_, title, body in parsed_buffer]
 
 
-def read_annotations(path: Text, mapping: ClassMapping, default: Integral=None) \
+def parse_annotations(path: Text, mapping: ClassMapping, default: Integral=None) \
         -> List[AbstractAnnotation]:
     # TODO log empty annotations
     # TODO more tests
@@ -51,9 +42,9 @@ def read_annotations(path: Text, mapping: ClassMapping, default: Integral=None) 
     :param path: path to a CHEMDNER-formatted annotation files
     :param mapping: a class mapping
     :param default: default class integer value for out-of-mapping classes; if
-    None is given objects with out-of-mapping classes are discarded
+    None is given, objects with out-of-mapping classes are discarded
     >>> path = "testdata/annotations.txt"
-    >>> anno = read_annotations(path, {"SYSTEMATIC": 1}, 0)
+    >>> anno = parse_annotations(path, {"SYSTEMATIC": 1}, 0)
     >>> ids = {21826085, 22080034, 22080035, 22080037}
     >>> all(id_ in ids for id_, *_ in anno)
     True
@@ -88,9 +79,25 @@ def read_annotations(path: Text, mapping: ClassMapping, default: Integral=None) 
                 for id_, parts in mapped_parts]
 
 
-def align_abstracts_and_annotations(abstracts: Iterable[Abstract],
-                                    annotations: Iterable[AbstractAnnotation]) \
-        -> Iterator[Tuple[Abstract, AbstractAnnotation]]:
+def parse_borders(path: Text) -> List[AbstractSentenceBorders]:
+    def pack_borders(id_: int, borders_: pd.DataFrame):
+        src_mapped = {
+            src: [Interval(*map(int, b_str.split(":"))) for b_str in bs[2]]
+            for src, bs in borders_.groupby(1)
+        }
+        title_borders = src_mapped.get(TITLE, [])
+        body_borders = src_mapped.get(BODY, [])
+        return AbstractSentenceBorders(id_, title_borders, body_borders)
+
+    borders = pd.read_csv(path, sep="\t", header=None)
+    return ([] if not len(borders) else
+            [pack_borders(id_, bs) for id_, bs in borders.groupby(0)])
+
+
+def align_abstracts(abstracts: Iterable[AbstractText],
+                    annotations: Iterable[AbstractAnnotation],
+                    borders: Iterable[AbstractSentenceBorders]) \
+        -> Iterator[Abstract]:
     # TODO tests
     """
     Align abstracts and annotations (i.e. match abstract ids)
@@ -98,25 +105,19 @@ def align_abstracts_and_annotations(abstracts: Iterable[Abstract],
     :param annotations: parsed annotations (e.g. produces by `read_annotations`)
     :return: Iterator[(parsed abstract, parsed annotation)]
     """
-    def empty(id_: int) -> AbstractAnnotation:
+    def empty_anno(id_: int) -> AbstractAnnotation:
         return AbstractAnnotation(id_, [], [])
 
+    def empty_borders(id_: int) -> AbstractSentenceBorders:
+        return AbstractSentenceBorders(id_, [], [])
+
     anno_mapping = {anno.id: anno for anno in annotations}
-    return ((abstract, anno_mapping.get(abstract.id, empty(abstract.id)))
+    borders_mapping = {b.id: b for b in borders}
+
+    return ((abstract,
+             anno_mapping.get(abstract.id, empty_anno(abstract.id)),
+             borders_mapping.get(abstract.id, empty_borders(abstract.id)))
             for abstract in abstracts)
-
-
-def flatten_aligned_pair(pair: Tuple[Abstract, AbstractAnnotation]) \
-        -> List[Tuple[int, Text, Text, Sequence[Interval]]]:
-    # TODO tests
-    """
-    :return: list[(abstract id, source, text, annotation)]
-    """
-    (abstract_id, title, body), (anno_id, title_anno, body_anno) = pair
-    if abstract_id != anno_id:
-        raise ValueError("Abstract ids do not match")
-    return [(abstract_id, TITLE, title, title_anno),
-            (abstract_id, BODY, body, body_anno)]
 
 
 if __name__ == "__main__":

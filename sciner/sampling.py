@@ -54,8 +54,7 @@ def sample_windows(window: int, step: int, text_intervals: Intervals) \
     return (text_intervals[i:i + window] for i in steps)
 
 
-def sample_sentences(borders: Intervals, text_intervals: Intervals) \
-        -> Sequence[Sequence[Interval]]:
+def sample_sentences(borders, text_intervals):
     # TODO docs
     # TODO tests
     if not len(text_intervals) or not len(borders):

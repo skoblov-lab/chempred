@@ -29,8 +29,8 @@ def parse_abstracts(path: Text) -> List[AbstractText]:
     """
     with open(path) as buffer:
         parsed_buffer = (line.strip().split("\t") for line in buffer)
-        return [AbstractText(int(abstract_n), title.rstrip(), abstract.rstrip())
-                for abstract_n, title, abstract in parsed_buffer]
+        return [AbstractText(int(id_), title.rstrip(), body.rstrip())
+                for id_, title, body in parsed_buffer]
 
 
 def parse_annotations(path: Text, mapping: ClassMapping, default: Integral=None) \
@@ -108,8 +108,8 @@ def align_abstracts(abstracts: Iterable[AbstractText],
     def empty_anno(id_: int) -> AbstractAnnotation:
         return AbstractAnnotation(id_, [], [])
 
-    def empty_borders(id_: int) -> AbstractAnnotation:
-        return AbstractAnnotation(id_, [], [])
+    def empty_borders(id_: int) -> AbstractSentenceBorders:
+        return AbstractSentenceBorders(id_, [], [])
 
     anno_mapping = {anno.id: anno for anno in annotations}
     borders_mapping = {b.id: b for b in borders}

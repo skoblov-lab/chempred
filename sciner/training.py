@@ -3,29 +3,25 @@ import operator as op
 import os
 import re
 import shutil
-import warnings
 from contextlib import contextmanager
-from itertools import chain, starmap
-from typing import Tuple, List, Iterator, Iterable, Callable, Text, Sequence, \
-    Optional, Mapping
+from itertools import starmap
+from typing import Tuple, List, Iterable, Text, Sequence, \
+    Optional, Mapping, cast
 
 import numpy as np
 from fn import F
 from sklearn.utils import class_weight
 
-from sciner.encoding import encode_annotation
-from sciner.sampling import AmbiguousAnnotation, annotate_sample, sample_windows
-from sciner.text import AbstractAnnotation, Abstract, flatten_aligned_pair, BODY
-from sciner.intervals import Interval, extract
+from sciner.intervals import Interval, Intervals, extract
+from sciner.sampling import Annotator, Sampler, Sample
 
 ProcessedSample = Tuple[int, Text, Sequence[Interval], Sequence[Text],
                         Optional[np.ndarray]]
 
 
-def process_pair(pair: Tuple[Abstract, AbstractAnnotation],
-                 parser: Callable[[Text], Sequence[Interval]], window: int,
-                 stepsize: int=1, annotate: bool=True, nlabels=1) \
-        -> Iterator[ProcessedSample]:
+def process_record(id_: int, src: Text, text: Text, parsed_text: Intervals,
+                   sampler: Sampler, annotator: Optional[Annotator]=None) \
+        -> Sequence[ProcessedSample]:
     # TODO update docs
     # TODO tests
     """
@@ -34,23 +30,14 @@ def process_pair(pair: Tuple[Abstract, AbstractAnnotation],
     :return: Iterator[(text ids, sample sources (title or body),
     sampled intervals, sample tokens, sample annotations)]
     """
-    def wrap_sample(id_, src, text, anno, sample):
-        sample_text = extract(text, sample)
-        sample_anno = (None if not annotate else
-                       annotate_sample(anno, nlabels, sample))
+    def wrap_sample(sample: Sample) \
+            -> Tuple[int, Text, Sample, Sequence[Text], Optional[np.ndarray]]:
+        sample_text = cast(Sequence[Text], extract(text, sample))
+        sample_anno = None if annotator is None else annotator(sample)
         return id_, src, sample, sample_text, sample_anno
 
-    ids, srcs, texts, annotations = zip(*flatten_aligned_pair(pair))
-    sampled_ivs = (sample_windows(intervals, window, stepsize)
-                   for intervals in [parser(text) for text in texts])
-    encoded_anno = [encode_annotation(anno, len(text))
-                    for text, anno in zip(texts, annotations)]
-    groups = zip(ids, srcs, texts, encoded_anno, sampled_ivs)
-    processed = chain.from_iterable(
-        [wrap_sample(id_, src, text, anno, s) for s in samples if len(s)]
-        for id_, src, text, anno, samples in groups
-    )
-    return list(filter(bool, processed))
+    samples = sampler(parsed_text)
+    return [wrap_sample(sample) for sample in samples if len(sample)]
 
 
 def flatten_processed_samples(processed_samples: Iterable[ProcessedSample]) \

@@ -42,17 +42,20 @@ class Interval(Container, Generic[T]):
         return type(self)(self.start, self.stop, value)
 
 
+Intervals = Sequence[Interval]
+
+
 def extract(sequence: Sequence[T], intervals: Iterable[Interval]) \
         -> List[Sequence[T]]:
     return [sequence[iv.start:iv.stop] for iv in intervals]
 
 
-def length(sample: Sequence[Interval]) -> int:
+def length(sample: Intervals) -> int:
     # TODO docs
     return 0 if not len(sample) else sample[-1].stop - sample[0].start
 
 
-def span(ivs: Sequence[Interval]) -> Optional[Interval]:
+def span(ivs: Intervals) -> Optional[Interval]:
     return Interval(ivs[0].start, ivs[-1].stop) if len(ivs) else None
 
 

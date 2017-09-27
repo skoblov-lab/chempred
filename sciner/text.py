@@ -1,6 +1,6 @@
 from numbers import Integral
 from typing import Sequence, NamedTuple, Text, Iterable, Tuple, List, \
-    Mapping, Callable
+    Mapping, Callable, Optional
 from functools import reduce
 from itertools import chain
 from pyrsistent import PVector, pvector
@@ -19,33 +19,40 @@ BODY = "A"
 ClassMapping = Mapping[Text, Integral]
 ClassifiedInterval = intervals.Interval[Integral]
 Annotation = Sequence[ClassifiedInterval]
+SentenceBorders = intervals.Intervals
+
+AbstractText = NamedTuple("Abstract",
+                          [("id", int), ("title", Text), ("body", Text)])
 AbstractAnnotation = NamedTuple("AbstractAnnotation", [("id", int),
                                                        ("title", Annotation),
                                                        ("body", Annotation)])
-Abstract = NamedTuple("Abstract",
-                      [("id", int), ("title", Text), ("body", Text)])
+AbstractSentenceBorders = NamedTuple("AbstractSentenceBorders",
+                                     [("id", int), ("title", SentenceBorders),
+                                      ("body", SentenceBorders)])
+Abstract = Tuple[AbstractText, Optional[AbstractAnnotation],
+                 Optional[AbstractSentenceBorders]]
+Record = Tuple[int, Text, Text, Optional[Annotation], Optional[SentenceBorders]]
 
 spacy_tokeniser = (F(spacy.load("en").tokenizer) >>
                    (map, lambda tk: tk.text) >>
                    (flatmap, re.compile(r"[&/|]|[^&/|]+").findall))
-# spacy_tokeniser = (F(spacy.load("en").tokenizer) >>
-#                    (map, lambda tk: tk.text) >>
-#                    (flatmap, re.compile(r"[()&/|+·]|[^()&/|+·]+").findall))
+
 
 class AnnotationError(ValueError):
     pass
 
 
-def flatten_aligned_pair(pair: Tuple[Abstract, AbstractAnnotation]) \
-        -> List[Tuple[int, Text, Text, Sequence[intervals.Interval]]]:
+def flatten_abstract(abstract: Abstract) -> List[Record]:
     """
     :return: list[(abstract id, source, text, annotation)]
     """
-    (abstract_id, title, body), (anno_id, title_anno, body_anno) = pair
+    abstract_id, title, body = abstract[0]
+    anno_id, title_anno, body_anno = abstract[1]
+    borders_id, title_borders, body_borders = abstract[2]
     if abstract_id != anno_id:
         raise AnnotationError("Abstract ids do not match")
-    return [(abstract_id, TITLE, title, title_anno),
-            (abstract_id, BODY, body, body_anno)]
+    return [(abstract_id, TITLE, title, title_anno, title_borders),
+            (abstract_id, BODY, body, body_anno, body_borders)]
 
 
 def parse_mapping(classmaps: Iterable[str]) -> ClassMapping:
@@ -64,7 +71,7 @@ def parse_mapping(classmaps: Iterable[str]) -> ClassMapping:
 
 
 def tointervals(tokeniser: Callable[[str], Iterable[str]], text: Text) \
-        -> np.ndarray:
+        -> intervals.Intervals:
     # TODO docs
     def mark_boundaries(boundaries: PVector, token: str):
         if not boundaries:

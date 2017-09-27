@@ -10,7 +10,7 @@ from xml.etree.ElementTree import Element, parse
 from fn import F
 from pyrsistent import v, pvector
 
-from sciner.text import AbstractAnnotation, Abstract, ClassMapping, \
+from sciner.text import AbstractAnnotation, AbstractText, ClassMapping, \
     AnnotationError, ClassifiedInterval
 from sciner.intervals import Interval
 
@@ -116,7 +116,7 @@ def parse_sentences(root: Element, mapping: ClassMapping,
 
 
 def parse_corpus(path: Text, mapping: ClassMapping, default: Integral = None) \
-        -> List[Tuple[Abstract, AbstractAnnotation]]:
+        -> List[Tuple[AbstractText, AbstractAnnotation]]:
     """
     Extract text from xml file `path`.
     :param path: xml file's path
@@ -143,7 +143,7 @@ def parse_corpus(path: Text, mapping: ClassMapping, default: Integral = None) \
         return zip(ids, title_roots, body_roots)
 
     def parse_article(id_: int, title_root: Element, body_root: Element) \
-            -> Tuple[Abstract, AbstractAnnotation]:
+            -> Tuple[AbstractText, AbstractAnnotation]:
         """
         Extract title and body texts from `title_root` and `body_root`.
         :param id_: article's id
@@ -153,7 +153,7 @@ def parse_corpus(path: Text, mapping: ClassMapping, default: Integral = None) \
         """
         title_text, title_anno = parser(title_root)
         body_text, body_anno = parser(body_root)
-        abstract = Abstract(id_, title_text, body_text)
+        abstract = AbstractText(id_, title_text, body_text)
         annotation = AbstractAnnotation(id_, title_anno, body_anno)
         return abstract, annotation
 

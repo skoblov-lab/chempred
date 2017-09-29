@@ -64,7 +64,7 @@ def text_boundaries(texts: Iterable[Text]) -> List[Tuple[int, int]]:
     Returns list of start/stop positions of words' starts/ends in `texts`.
     :param texts: list of strings
     :return: list of (start position, stop position)
-    >>> genia.text_boundaries(['amino acid', 'is any']) == [(0, 10), (10, 16)]
+    >>> text_boundaries(['amino acid', 'is any']) == [(0, 10), (10, 16)]
     True
     """
     def aggregate_boundaries(boundaries: pvector, text):
@@ -136,10 +136,10 @@ def parse_corpus(path: Text, mapping: ClassMapping, default: Integral = None) \
         :param root:
         :return:
         """
-        articles = root.findall(ARTICLE)
-        ids = map(getid, articles)
-        title_roots = [article.find("title") for article in articles]
-        body_roots = [article.find("abstract") for article in articles]
+        articles_ = root.findall(ARTICLE)
+        ids = map(getid, articles_)
+        title_roots = [article.find("title") for article in articles_]
+        body_roots = [article.find("abstract") for article in articles_]
         return zip(ids, title_roots, body_roots)
 
     def parse_article(id_: int, title_root: Element, body_root: Element) \

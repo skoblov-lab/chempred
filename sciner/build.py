@@ -55,7 +55,7 @@ def build_cnn(nfilters: Sequence[int],
 def build_rnn(nsteps: Sequence[int],
               inp_drop: Optional[Union[float, Sequence[float]]]=None,
               rec_drop: Optional[Union[float, Sequence[float]]]=None,
-              bidirectional: Union[bool, Sequence[bool]]=False,
+              bidirectional: Union[Optional[str], Sequence[Optional[str]]]=False,
               stateful=False, layer=layers.LSTM) -> Callable:
     # TODO extend documentation
     # TODO tests
@@ -69,7 +69,7 @@ def build_rnn(nsteps: Sequence[int],
     >>> rec = build_rnn([200, 200], 0.1, 0.1, True)
     """
 
-    def stack_layers(prev, param: Tuple[str, int, float, float, bool]):
+    def stack_layers(prev, param: Tuple[str, int, float, float, str]):
         """
         :param prev: incomming keras layer
         :param param: [layer name, steps, input dropout, recurrent dropout,
@@ -78,7 +78,7 @@ def build_rnn(nsteps: Sequence[int],
         name, steps, indrop, recdrop, bidir = param
         layer_ = layer(steps, dropout=indrop, recurrent_dropout=recdrop,
                        return_sequences=True, stateful=stateful)
-        return (layers.Bidirectional(layer_) if bidir else layer_)(prev)
+        return (layers.Bidirectional(layer_, bidir) if bidir else layer_)(prev)
 
     bi = (bidirectional if isinstance(bidirectional, Sequence) else
           [bidirectional] * len(nsteps))

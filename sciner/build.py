@@ -55,7 +55,7 @@ def build_cnn(nfilters: Sequence[int],
 def build_rnn(nsteps: Sequence[int],
               inp_drop: Optional[Union[float, Sequence[float]]]=None,
               rec_drop: Optional[Union[float, Sequence[float]]]=None,
-              bidirectional: Union[Optional[str], Sequence[Optional[str]]]=False,
+              bidirectional: Union[Optional[str], Sequence[Optional[str]]]=None,
               stateful=False, layer=layers.LSTM) -> Callable:
     # TODO extend documentation
     # TODO tests
@@ -80,7 +80,7 @@ def build_rnn(nsteps: Sequence[int],
                        return_sequences=True, stateful=stateful)
         return (layers.Bidirectional(layer_, bidir) if bidir else layer_)(prev)
 
-    bi = (bidirectional if isinstance(bidirectional, Sequence) else
+    bi = (bidirectional if isinstance(bidirectional, Sequence) and not isinstance(bidirectional, str) else
           [bidirectional] * len(nsteps))
     inp_drop = (inp_drop if isinstance(inp_drop, Sequence) else
                 [inp_drop or 0] * len(nsteps))

@@ -28,21 +28,17 @@ def precision(y_true, y_pred):
     Calculates the precision, a metric for multi-label classification of
     how many selected items are relevant.
     """
-    true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
-    predicted_positives = K.sum(K.round(K.clip(y_pred, 0, 1)))
-    precision = true_positives / (predicted_positives + K.epsilon())
-    return precision
+    labels_true = K.argmax(y_true, axis=-1)
+    labels_pred = K.argmax(y_pred, axis=-1)
+    negative_true = K.cast(K.equal(labels_true, 0), dtype=K.floatx())
+    positive_pred = K.cast(K.equal(labels_pred, 1), dtype=K.floatx())
+    positive_true = K.cast(K.equal(labels_true, 1), dtype=K.floatx())
+    false_positives = K.sum(positive_pred * negative_true) + K.epsilon()
+    true_positives = K.sum(positive_true * positive_pred) + K.epsilon()
+    return true_positives / (true_positives + false_positives)
 
 
-def recall(y_true, y_pred):
-    """
-    Calculates the recall, a metric for multi-label classification of
-    how many relevant items are selected.
-    """
-    true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
-    possible_positives = K.sum(K.round(K.clip(y_true, 0, 1)))
-    recall = true_positives / (possible_positives + K.epsilon())
-    return recall
+recall = sensitivity
 
 
 def fbeta_score(y_true, y_pred, beta):

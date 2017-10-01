@@ -69,18 +69,30 @@ def encode_characters(characters: Text) -> np.ndarray:
     return np.clip(codes, 0, MAXCHAR)
 
 
+# def encode_entity_borders(step_annotation: Sequence[Integral]) -> np.ndarray:
+#     grouped = groupby(enumerate(step_annotation), op.itemgetter(1))
+#     positive_runs = (list(run) for cls, run in grouped if cls)
+#     # col1 - start, col2 - end, col0 - other
+#     position_types = np.zeros((len(step_annotation), 3), dtype=np.int32)
+#     position_types[:, 0] = 1
+#     for run in positive_runs:
+#         first, _ = run[0]
+#         last, _ = run[-1]
+#         position_types[first, 1] = 1
+#         position_types[last, 2] = 1
+#     return position_types
+
+
 def encode_entity_borders(step_annotation: Sequence[Integral]) -> np.ndarray:
     grouped = groupby(enumerate(step_annotation), op.itemgetter(1))
     positive_runs = (list(run) for cls, run in grouped if cls)
-    # col1 - start, col2 - end, col0 - other
-    position_types = np.zeros((len(step_annotation), 3), dtype=np.int32)
-    position_types[:, 0] = 1
+    border_positions = np.zeros(len(step_annotation), dtype=np.int32)
     for run in positive_runs:
         first, _ = run[0]
         last, _ = run[-1]
-        position_types[first, 1] = 1
-        position_types[last, 2] = 1
-    return position_types
+        border_positions[first] = 1
+        border_positions[last] = 1
+    return border_positions
 
 
 if __name__ == "__main__":

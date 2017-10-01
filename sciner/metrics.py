@@ -38,7 +38,8 @@ def precision(y_true, y_pred):
     return true_positives / (true_positives + false_positives)
 
 
-recall = sensitivity
+def recall(y_true, y_pred):
+    return sensitivity(y_true, y_pred)
 
 
 def fbeta_score(y_true, y_pred, beta):

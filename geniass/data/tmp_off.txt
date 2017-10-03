@@ -1,0 +1,7 @@
+0	231	sentence
+232	439	sentence
+440	535	sentence
+536	836	sentence
+837	998	sentence
+999	1079	sentence
+1080	1206	sentence

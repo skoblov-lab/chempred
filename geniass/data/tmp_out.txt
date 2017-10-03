@@ -1,0 +1,8 @@
+21826085	DPP6 as a candidate gene for neuroleptic-induced tardive dyskinesia.	We implemented a two-step approach to detect potential predictor gene variants for neuroleptic-induced tardive dyskinesia (TD) in schizophrenic subjects.
+First, we screened associations by using a genome-wide (Illumina HumanHapCNV370) SNP array in 61 Japanese schizophrenia patients with treatment-resistant TD and 61 Japanese schizophrenia patients without TD.
+Next, we performed a replication analysis in 36 treatment-resistant TD and 138 non-TD subjects.
+An association of an SNP in the DPP6 (dipeptidyl peptidase-like protein-6) gene, rs6977820, the most promising association identified by the screen, was significant in the replication sample (allelic P=0.008 in the replication sample, allelic P=4.6 Г— 10(-6), odds ratio 2.32 in the combined sample).
+The SNP is located in intron-1 of the DPP6 gene and the risk allele was associated with decreased DPP6 gene expression in the human postmortem prefrontal cortex.
+Chronic administration of haloperidol increased Dpp6 expression in mouse brains.
+DPP6 is an auxiliary subunit of Kv4 and regulates the properties of Kv4, which regulates the activity of dopaminergic neurons.
+The findings of this study indicate that an altered response of Kv4/DPP6 to long-term neuroleptic administration is involved in neuroleptic-induced TD.

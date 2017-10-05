@@ -18,28 +18,6 @@ from sciner.sampling import Annotator, Sampler, Sample
 ProcessedSample = Tuple[int, Text, Sequence[Interval], Sequence[Text],
                         Optional[np.ndarray]]
 
-
-def process_record(id_: int, src: Text, text: Text, parsed_text: Intervals,
-                   sampler: Sampler, annotator: Optional[Annotator]=None) \
-        -> Sequence[ProcessedSample]:
-    # TODO update docs
-    # TODO tests
-    """
-    :param pair: abstract paired with its annotation
-    :param window: context window width (in raw tokens)
-    :return: Iterator[(text ids, sample sources (title or body),
-    sampled intervals, sample tokens, sample annotations)]
-    """
-    def wrap_sample(sample: Sample) \
-            -> Tuple[int, Text, Sample, Sequence[Text], Optional[np.ndarray]]:
-        sample_text = cast(Sequence[Text], extract(text, sample))
-        sample_anno = None if annotator is None else annotator(sample)
-        return id_, src, sample, sample_text, sample_anno
-
-    samples = sampler(parsed_text)
-    return [wrap_sample(sample) for sample in samples if len(sample)]
-
-
 def group(ids, sources, *args):
     """
     Group args by id and source

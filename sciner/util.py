@@ -94,8 +94,8 @@ flatmap = F(map) >> chain.from_iterable
 
 def flatzip(flat, nested):
     flatrep = map(F(map, repeat), flat)
-    iters = (*flatrep, *nested)
-    return (F(zip) >> F(map, lambda x: zip(*x)) >> chain.from_iterable)(iters)
+    iterables = (*flatrep, *nested)
+    return (F(zip) >> F(map, lambda x: zip(*x)) >> chain.from_iterable)(iterables)
 
 
 def join(arrays: List[np.ndarray], length: int, padval=0) \

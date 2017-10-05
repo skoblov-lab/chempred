@@ -4,7 +4,7 @@ import os
 import re
 import shutil
 from contextlib import contextmanager
-from itertools import starmap
+from itertools import starmap, groupby
 from typing import Tuple, List, Iterable, Text, Sequence, \
     Optional, Mapping, cast
 
@@ -40,11 +40,18 @@ def process_record(id_: int, src: Text, text: Text, parsed_text: Intervals,
     return [wrap_sample(sample) for sample in samples if len(sample)]
 
 
-def flatten_processed_samples(processed_samples: Iterable[ProcessedSample]) \
-    -> Tuple[Tuple[int], Tuple[Text], Tuple[Sequence[Interval]],
-             Tuple[Sequence[Text]], Tuple[np.ndarray]]:
-    ids, srcs, samples, tokens, annotations = zip(*processed_samples)
-    return ids, srcs, samples, tokens, annotations
+def group(ids, sources, *args):
+    """
+    Group args by id and source
+    :param ids:
+    :param sources:
+    :param args:
+    :return:
+    """
+    records = zip(ids, sources, *args)
+    id_groups = groupby(records, op.itemgetter(0))
+    return [[list(grp) for _, grp in src_grps] for src_grps in
+            (groupby(list(grp), op.itemgetter(1)) for _, grp in id_groups)]
 
 
 def pick_best(filenames: List[str]) -> Tuple[str, Tuple[int, float]]:

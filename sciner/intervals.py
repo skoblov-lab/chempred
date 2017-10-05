@@ -50,9 +50,9 @@ class Interval(Container, Generic[T]):
 Intervals = Sequence[Interval]
 
 
-def extract(sequence: Sequence[T], ivs: Iterable[Interval]) \
+def extract(sequence: Sequence[T], ivs: Iterable[Interval], offset=0) \
         -> List[Sequence[T]]:
-    return [sequence[iv.start:iv.stop] for iv in ivs]
+    return [sequence[iv.start-offset:iv.stop-offset] for iv in ivs]
 
 
 def span(ivs: Intervals) -> Optional[Interval]:

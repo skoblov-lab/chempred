@@ -37,6 +37,9 @@ class TestText(unittest.TestCase):
         parsed = text.tointervals(text.spacy_tokeniser, txt)
         mod_text = re.sub("\s", " ", txt)
         self.assertEqual(self.unparse(txt, parsed), mod_text.rstrip())
+        parsed = text.tointervals(text.fine_tokeniser, txt)
+        mod_text = re.sub("\s", " ", txt)
+        self.assertEqual(self.unparse(txt, parsed), mod_text.rstrip())
 
 
 class TestGenia(unittest.TestCase):

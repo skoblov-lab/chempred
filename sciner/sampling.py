@@ -1,4 +1,4 @@
-from typing import Sequence, Iterator, Iterable, Callable, Optional, cast
+from typing import Sequence, Iterator, Iterable, Callable, cast
 
 import numpy as np
 
@@ -14,7 +14,7 @@ class AmbiguousAnnotation(EncodingError):
     pass
 
 
-def annotate_sample(nlabels: Optional[int], annotation: np.ndarray,
+def annotate_sample(nlabels: int, annotation: np.ndarray,
                     sample: Intervals, dtype=np.int32) -> np.ndarray:
     # TODO update docs
     """
@@ -30,14 +30,9 @@ def annotate_sample(nlabels: Optional[int], annotation: np.ndarray,
     if span_.stop > len(annotation):
         raise EncodingError("The annotation doesn't fully cover the sample")
     tk_annotations = extract(annotation, sample)
-    if nlabels is None:
-        encoded_token_anno = np.zeros(len(sample), dtype=np.int32)
-        for i, tk_anno in enumerate(tk_annotations):
-            encoded_token_anno[i] = tk_anno
-    else:
-        encoded_token_anno = np.zeros((len(sample), nlabels), dtype=np.int32)
-        for i, tk_anno in enumerate(tk_annotations):
-            encoded_token_anno[i, tk_anno] = 1
+    encoded_token_anno = np.zeros((len(sample), nlabels), dtype=np.int32)
+    for i, tk_anno in enumerate(tk_annotations):
+        encoded_token_anno[i, tk_anno] = 1
     return encoded_token_anno
 
 

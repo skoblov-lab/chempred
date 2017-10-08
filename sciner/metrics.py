@@ -1,21 +1,21 @@
 from keras import backend as K
 
 
-def precision_multilabel(y_true, y_pred):
+def precision(y_true, y_pred):
     true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
     predicted_positives = K.sum(K.round(K.clip(y_pred, 0, 1)))
     precision = true_positives / (predicted_positives + K.epsilon())
     return precision
 
 
-def recall_multilabel(y_true, y_pred):
+def recall(y_true, y_pred):
     true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
     possible_positives = K.sum(K.round(K.clip(y_true, 0, 1)))
     recall = true_positives / (possible_positives + K.epsilon())
     return recall
 
 
-def fbeta_score_multilabel(y_true, y_pred, beta):
+def fbeta_score(y_true, y_pred, beta):
     """
     Calculates the F score, the weighted harmonic mean of precision and recall.
 
@@ -38,21 +38,21 @@ def fbeta_score_multilabel(y_true, y_pred, beta):
     if K.sum(K.round(K.clip(y_true, 0, 1))) == 0:
         return 0
 
-    p = precision_multilabel(y_true, y_pred)
-    r = recall_multilabel(y_true, y_pred)
+    p = precision(y_true, y_pred)
+    r = recall(y_true, y_pred)
     bb = beta ** 2
     fbeta_score = (1 + bb) * (p * r) / (bb * p + r + K.epsilon())
     return fbeta_score
 
 
-def fmeasure_multilabel(y_true, y_pred):
+def fmeasure(y_true, y_pred):
     """
     Calculates the f-measure, the harmonic mean of precision and recall.
     """
-    return fbeta_score_multilabel(y_true, y_pred, beta=1)
+    return fbeta_score(y_true, y_pred, beta=1)
 
 
-def recall(y_true, y_pred):
+def recall_softmax(y_true, y_pred):
     labels_true = K.argmax(y_true, axis=-1)
     labels_pred = K.argmax(y_pred, axis=-1)
     positive_true = K.cast(K.equal(labels_true, 1), dtype=K.floatx())
@@ -61,7 +61,7 @@ def recall(y_true, y_pred):
     return true_positives / (K.sum(positive_true) + K.epsilon())
 
 
-def precision(y_true, y_pred):
+def precision_softmax(y_true, y_pred):
     labels_true = K.argmax(y_true, axis=-1)
     labels_pred = K.argmax(y_pred, axis=-1)
     positive_true = K.cast(K.equal(labels_true, 1), dtype=K.floatx())
@@ -70,9 +70,9 @@ def precision(y_true, y_pred):
     return true_positives / (K.sum(positive_pred) + K.epsilon())
 
 
-def fmeasure(y_true, y_pred):
-    p = precision(y_true, y_pred)
-    r = recall(y_true, y_pred)
+def fmeasure_softmax(y_true, y_pred):
+    p = precision_softmax(y_true, y_pred)
+    r = recall_softmax(y_true, y_pred)
     return 2 * p * r / (p + r)
 
 

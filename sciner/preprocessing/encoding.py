@@ -38,7 +38,7 @@ class WordEncoder:
         return "<Vocabulary> with {} entries".format(len(self._vocab))
 
     def __len__(self):
-        return len(self._vocab) + 1  # including the pad and oov words
+        return len(self._vectors)  # including the pad and oov words
 
     @property
     def vocab(self):
@@ -56,11 +56,13 @@ class WordEncoder:
     def oov(self):
         return self._oov
 
-    def encode(self, words: Iterable[Text]) -> List[int]:
+    def encode(self, words: Iterable[Text]) -> np.ndarray:
         oov = self._vocab[self._oov]
-        return [self._vocab.get(w, oov) for w in map(self._transform, words)]
+        codes = [self._vocab.get(w, oov) for w in map(self._transform, words)]
+        return np.array(codes, dtype=np.int32)
 
-    def _read_embeddings(self, path) -> Tuple[Mapping[str, int], np.ndarray]:
+    @staticmethod
+    def _read_embeddings(path) -> Tuple[Mapping[str, int], np.ndarray]:
         with open(path) as lines:
             parsed = map(str.split, lines)
             words, vectors = zip(*((w, oldmap(float, v)) for w, *v in parsed))
@@ -72,7 +74,7 @@ class WordEncoder:
         padvec = [0.0] * ndim
         word_index = frozendict({word: i+1 for i, word in enumerate(words)})
         vectors_ = np.array(list(chain([padvec], vectors)))
-        vectors_.flags["WRITEABLE"] = False
+        vectors_.setflags(write=False)
         return word_index, vectors_
 
 
@@ -82,19 +84,19 @@ class CharEncoder:
     """
 
     def __init__(self, path):
-        self._alphabet = self._read_characters(path)
-        self._oov = len(self._alphabet) + 1
+        self._chars = self._read_characters(path)
+        self._oov = len(self._chars) + 1
 
     def __len__(self):
-        return len(self._alphabet) + 2  # including the pad and oov characters
+        return len(self._chars) + 2  # including the pad and oov characters
 
     @property
     def oov(self):
         return self._oov
 
     @property
-    def alphabet(self):
-        return self._alphabet
+    def characters(self):
+        return self._chars
 
     @staticmethod
     def _read_characters(path):
@@ -106,9 +108,10 @@ class CharEncoder:
             raise EncodingError("file {} is empty".format(path))
         return char_index
 
-    def encode(self, words: Iterable[Text]) -> List[List[int]]:
-        return [[self._alphabet.get(char, self._oov) for char in word]
-                for word in words]
+    def encode(self, words: Iterable[Text]) -> List[np.ndarray]:
+        oov = self._oov
+        return [np.array([self._chars.get(c, oov) for c in w], dtype=np.int32)
+                for w in words]
 
 
 def encode_annotation(annotations: Iterable[Interval], size: int) -> np.ndarray:

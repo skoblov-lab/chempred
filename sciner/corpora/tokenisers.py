@@ -1,7 +1,9 @@
 
-from typing import Text, Tuple, Pattern, List
+from typing import Text, Tuple, Pattern, List, Iterable, Callable, Union
 from functools import reduce
 import re
+
+from fn import F
 
 from sciner.intervals import Interval, Intervals
 
@@ -11,28 +13,39 @@ wordlike = re.compile("[\w]+")
 misc = re.compile("[^\s\w]")
 
 
-def tokenise(patterns: List[Pattern], string: Text, mask=" ") -> Intervals:
+def tokenise(patterns: List[Pattern], text: Text, mask=" ") -> Intervals:
     """
     Return intervals matched by `patterns`. The patterns are applied
     in iteration order. Before applying pattern `i+1`, the function replaces
     each region `r` matched by pattern `i` with `mask * len(r)`. This means
     the output might be sensitive to pattern order.
     :param patterns: a list of patterns to search for
-    :param string: a unicode string
+    :param text: a unicode string
     :param mask: the masking value
     :return: a list of intervals storing the corresponding string
     """
-
     def repl(match) -> Text:
         return mask * (match.end() - match.start())
 
-    def reducer(acc: Tuple[List, Text], patt: Pattern):
+    def match_mask(acc: Tuple[List[Tuple[int, int]], Text],
+                   patt: Pattern) -> Tuple[List[Tuple[int, int]], Text]:
         spans, s = acc
-        spans.extend(m.span for m in patt.finditer(s))
+        spans.extend(m.span() for m in patt.finditer(s))
         return spans, patt.sub(repl, s)
 
-    return [Interval(start, stop, string[start:stop]) for start, stop in
-            sorted(reduce(reducer, patterns, ([], string))[0])]
+    return [Interval(start, stop, text[start:stop]) for start, stop in
+            sorted(reduce(match_mask, patterns, ([], text))[0])]
+
+
+def transform(transforms: Iterable[Tuple[Pattern, Union[Text, Callable]]],
+              text: Text) -> Text:
+    """
+    :param transforms: pairs of patterns and replacements (refer to `re.sub`'s
+    documentation for more information on possible replacements);
+    :param text: text to transform
+    :return: transformed text
+    """
+    return reduce(lambda s, t: t[0].sub(t[1], s), transforms, text)
 
 
 if __name__ == "__main__":

@@ -4,26 +4,64 @@
 
 """
 
-
-from typing import Sequence, Iterable, Text, Mapping, Union
-from numbers import Integral
-from itertools import groupby
-import operator as op
+from typing import Mapping, Tuple, Text, Iterable, List
+from itertools import chain
 
 import numpy as np
-from fn import F
+from frozendict import frozendict
+from fn.func import identity
 
 from sciner.intervals import Interval
+from sciner.util import oldmap, homogenous
 
-MAXCHAR = 127
+
 MAXCLS = 255
 
 
-Encoder = Union[Mapping[Text, np.ndarray],
-                Mapping[Sequence[Text], np.ndarray]]
+class EmbeddingError(ValueError):
+    pass
 
 
 class EncodingError(ValueError):
+    pass
+
+
+class Vocabulary:
+    """
+    Zero is reserved for padding
+    """
+
+    def __init__(self, path: Text, oov: Text, transform=None):
+        self.oov = oov
+        self.transform = transform if transform else identity
+        word_index, vectors = self._read_embeddings(path)
+        self.vocab = word_index
+        self.vectors = vectors
+
+    def __str__(self):
+        return "<Vocabulary> with {} entries".format(len(self.vocab))
+
+    def encode(self, words: Iterable[Text]) -> List[int]:
+        oov = self.vocab[self.oov]
+        return [self.vocab.get(w, oov) for w in map(self.transform, words)]
+
+    def _read_embeddings(self, path) -> Tuple[Mapping[str, int], np.ndarray]:
+        with open(path) as lines:
+            parsed = map(str.split, lines)
+            words, vectors = zip(*((w, oldmap(float, v)) for w, *v in parsed))
+        if not words:
+            raise EmbeddingError("File {} is empty".format(path))
+        if not homogenous(len, vectors):
+            raise EmbeddingError("Word vectors must be homogeneous")
+        ndim = len(vectors[0])
+        padvec = [0.0] * ndim
+        word_index = frozendict({word: i+1 for i, word in enumerate(words)})
+        vectors_ = np.array(list(chain([padvec], vectors)))
+        vectors_.flags["WRITEABLE"] = False
+        return word_index, vectors_
+
+
+class Alphabet:
     pass
 
 
@@ -46,40 +84,6 @@ def encode_annotation(annotations: Iterable[Interval], size: int) -> np.ndarray:
     return encoded_anno
 
 
-def encode_tokens(encoder: Encoder, tokens: Iterable[Text], dtype=np.float32) \
-        -> np.ndarray:
-    # TODO update docs
-    # TODO tests
-    """
-    :param text: the complete text from which the sample was drawn
-    :param sample: a sample of intervals
-    :return: (encoded tokens, token anno), (encoded characters, character anno)
-    """
-    tokens_ = list(tokens)
-    if not len(tokens_):
-        raise EncodingError("The tokens is empty")
-    try:
-        return np.array(encoder[tokens_]).astype(dtype)
-    except (TypeError, KeyError, ValueError):
-        return np.array([encoder[tk] for tk in tokens_]).astype(dtype)
-
-
-def encode_characters(characters: Text) -> np.ndarray:
-    codes = np.fromiter(map(ord, characters), np.int32, len(characters))
-    return np.clip(codes, 0, MAXCHAR)
-
-
-def encode_entity_borders(step_annotation: Sequence[Integral]) -> np.ndarray:
-    grouped = groupby(enumerate(step_annotation), op.itemgetter(1))
-    positive_runs = (list(run) for cls, run in grouped if cls)
-    border_positions = np.zeros((len(step_annotation), 2), dtype=np.int32)
-    for run in positive_runs:
-        first, _ = run[0]
-        last, _ = run[-1]
-        border_positions[first, 0] = 1
-        border_positions[last, 1] = 1
-    return border_positions
-
-
 if __name__ == "__main__":
-    raise RuntimeError
+    pass
+

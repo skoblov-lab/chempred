@@ -6,7 +6,10 @@ from typing import List, Tuple
 import numpy as np
 from fn import F
 
+
+homogenous = F(map) >> set >> len >> F(op.eq, 1)
 flatmap = F(map) >> chain.from_iterable
+oldmap = F(map) >> list
 
 
 def flatzip(flat, nested):

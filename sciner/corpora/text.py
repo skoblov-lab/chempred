@@ -1,89 +1,51 @@
-import re
+
+from typing import Text, Tuple, Pattern, List, Iterable, Callable, Union
 from functools import reduce
-from itertools import chain
-from numbers import Integral
-from typing import Sequence, NamedTuple, Text, Iterable, Tuple, List, \
-    Mapping, Callable, Optional
+import re
 
-import numpy as np
-from pyrsistent import PVector, pvector
+from fn import F
 
-from sciner import intervals
+from sciner.intervals import Interval, Intervals
 
-OTHER = "OTHER"
-TITLE = "T"
-BODY = "A"
-ClassMapping = Mapping[Text, Integral]
-ClassifiedInterval = intervals.Interval[Integral]
-Annotation = Sequence[ClassifiedInterval]
-SentenceBorders = intervals.Intervals
-
-AbstractText = NamedTuple("Abstract",
-                          [("id", int), ("title", Text), ("body", Text)])
-AbstractAnnotation = NamedTuple("AbstractAnnotation", [("id", int),
-                                                       ("title", Annotation),
-                                                       ("body", Annotation)])
-AbstractSentenceBorders = NamedTuple("AbstractSentenceBorders",
-                                     [("id", int), ("title", SentenceBorders),
-                                      ("body", SentenceBorders)])
-Abstract = Tuple[AbstractText, Optional[AbstractAnnotation],
-                 Optional[AbstractSentenceBorders]]
-Record = Tuple[int, Text, Text, Optional[Annotation], Optional[SentenceBorders]]
+# patterns
+numeric = re.compile("[0-9]*\.?[0-9]+")
+wordlike = re.compile("[\w]+")
+misc = re.compile("[^\s\w]")
 
 
-class AnnotationError(ValueError):
-    pass
-
-
-def flatten_abstract(abstract: Abstract) -> List[Record]:
+def tokenise(patterns: List[Pattern], text: Text, mask=" ") -> Intervals:
     """
-    :return: list[(abstract id, source, text, annotation)]
+    Return intervals matched by `patterns`. The patterns are applied
+    in iteration order. Before applying pattern `i+1`, the function replaces
+    each region `r` matched by pattern `i` with `mask * len(r)`. This means
+    the output might be sensitive to pattern order.
+    :param patterns: a list of patterns to search for
+    :param text: a unicode string
+    :param mask: the masking value
+    :return: a list of intervals storing the corresponding string
     """
-    abstract_id, title, body = abstract[0]
-    anno_id, title_anno, body_anno = abstract[1]
-    borders_id, title_borders, body_borders = abstract[2]
-    if abstract_id != anno_id:
-        raise AnnotationError("Abstract ids do not match")
-    return [(abstract_id, TITLE, title, title_anno, title_borders),
-            (abstract_id, BODY, body, body_anno, body_borders)]
+    def repl(match) -> Text:
+        return mask * (match.end() - match.start())
+
+    def match_mask(acc: Tuple[List[Tuple[int, int]], Text],
+                   patt: Pattern) -> Tuple[List[Tuple[int, int]], Text]:
+        spans, s = acc
+        spans.extend(m.span() for m in patt.finditer(s))
+        return spans, patt.sub(repl, s)
+
+    return [Interval(start, stop, text[start:stop]) for start, stop in
+            sorted(reduce(match_mask, patterns, ([], text))[0])]
 
 
-def parse_mapping(classmaps: Iterable[str]) -> ClassMapping:
+def transform(transforms: Iterable[Tuple[Pattern, Union[Text, Callable]]],
+              text: Text) -> Text:
     """
-    :param classmaps:
-    :return:
-    >>> classmaps = ["a:1", "b:1", "c:2"]
-    >>> parse_mapping(classmaps) == dict(a=1, b=1, c=2)
-    True
+    :param transforms: pairs of patterns and replacements (refer to `re.sub`'s
+    documentation for more information on possible replacements);
+    :param text: text to transform
+    :return: transformed text
     """
-    try:
-        return {cls: int(val)
-                for cls, val in [classmap.split(":") for classmap in classmaps]}
-    except ValueError as err:
-        raise AnnotationError("Badly formatted mapping: {}".format(err))
-
-
-# def tointervals(tokeniser: Callable[[str], Iterable[str]], text: Text) \
-#         -> intervals.Intervals:
-#     # TODO docs
-#     def mark_boundaries(boundaries: PVector, token: str):
-#         if not boundaries:
-#             return boundaries.append(intervals.Interval(0, len(token), token))
-#         prev = boundaries[-1]
-#         start = prev.stop
-#         stop = start + len(token)
-#         return boundaries.append(intervals.Interval(start, stop, token))
-#
-#     if not text:
-#         return np.array([])
-#     all_tk = re.compile("\S+|\s+")
-#     ws = re.compile("\s")
-#     tokens = all_tk.findall(text)
-#     fine_grained = chain.from_iterable(
-#         tokeniser(tk) if not ws.match(tk) else [tk] for tk in tokens)
-#     intervals_ = reduce(mark_boundaries, fine_grained, pvector())
-#     ws_less = (iv for iv in intervals_ if not ws.match(iv.data))
-#     return np.array([iv.reload(i) for i, iv in enumerate(ws_less)])
+    return reduce(lambda s, t: t[0].sub(t[1], s), transforms, text)
 
 
 if __name__ == "__main__":

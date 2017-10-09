@@ -36,6 +36,7 @@ Record = Tuple[int, Text, Text, Optional[Annotation], Optional[SentenceBorders]]
 spacy_tokeniser = (F(spacy.load("en").tokenizer) >>
                    (map, lambda tk: tk.text) >>
                    (flatmap, re.compile(r"[&/|]|[^&/|]+").findall))
+fine_tokeniser = re.compile(r"[\w]+|[^\s\w]").findall
 
 
 class AnnotationError(ValueError):

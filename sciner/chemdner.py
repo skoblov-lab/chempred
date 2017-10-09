@@ -58,14 +58,20 @@ def parse_annotations(path: Text, mapping: ClassMapping, default: Integral=None)
     """
     def wrap_interval(record: Tuple[str, str, str, str, str, str]) \
             -> Interval:
-        _, _, start, stop, _, cls = record
+        _, _, start, stop, text, cls = record
         value = mapping.get(cls, default)
         return None if value is None else Interval(int(start), int(stop), value)
 
+    def parse_line(line):
+        id_, src, start, stop, text, val = line.split("\t")
+        return int(id_), src, int(start), int(stop), text, val
+
     with open(path) as buffer:
-        parsed_lines = (l.strip().split("\t") for l in buffer)
+        parsed_lines = map(parse_line, map(str.strip, buffer))
+        lines_sorted = sorted(
+            parsed_lines, key=lambda x: (-x[0], x[1], -x[2]), reverse=True)
         # separate abstracts
-        abstract_groups = groupby(parsed_lines, op.itemgetter(0))
+        abstract_groups = groupby(lines_sorted, op.itemgetter(0))
         # separate parts (title and body)
         part_groups = ((id_, groupby(group, op.itemgetter(1)))
                        for id_, group in abstract_groups)
@@ -95,8 +101,8 @@ def parse_borders(path: Text) -> List[AbstractSentenceBorders]:
 
 
 def align_abstracts(abstracts: Iterable[AbstractText],
-                    annotations: Iterable[AbstractAnnotation],
-                    borders: Iterable[AbstractSentenceBorders]) \
+                    annotations: Iterable[AbstractAnnotation]=None,
+                    borders: Iterable[AbstractSentenceBorders]=None) \
         -> Iterator[Abstract]:
     # TODO tests
     """
@@ -111,8 +117,11 @@ def align_abstracts(abstracts: Iterable[AbstractText],
     def empty_borders(id_: int) -> AbstractSentenceBorders:
         return AbstractSentenceBorders(id_, [], [])
 
+    annotations = annotations if annotations is not None else []
+    borders = borders if borders is not None else []
+
     anno_mapping = {anno.id: anno for anno in annotations}
-    borders_mapping = {b.id: b for b in borders}
+    borders_mapping = {b.id: b for b in borders or []}
 
     return ((abstract,
              anno_mapping.get(abstract.id, empty_anno(abstract.id)),

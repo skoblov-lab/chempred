@@ -23,6 +23,5 @@ setup(
               "fn",
               "pyrsistent",
               "keras",
-              "intervaltree",
               "scikit-learn", 'pandas', 'hypothesis', 'spacy']
 )

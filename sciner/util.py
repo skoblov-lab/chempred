@@ -3,7 +3,7 @@ import json
 import operator as op
 from functools import reduce
 from io import TextIOWrapper
-from itertools import chain
+from itertools import chain, repeat
 from typing import List, Tuple, Text, Mapping, \
     Callable, Union, Iterator, Iterable
 
@@ -90,6 +90,12 @@ class EmbeddingsWrapper(Mapping):
 
 
 flatmap = F(map) >> chain.from_iterable
+
+
+def flatzip(flat, nested):
+    flatrep = map(F(map, repeat), flat)
+    iterables = (*flatrep, *nested)
+    return (F(zip) >> F(map, lambda x: zip(*x)) >> chain.from_iterable)(*iterables)
 
 
 def join(arrays: List[np.ndarray], length: int, padval=0) \

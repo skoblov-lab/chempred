@@ -1,6 +1,8 @@
 import sys
 from typing import TypeVar, Container, Generic, Optional, Sequence, Iterable, \
-    List
+    List, overload
+
+import numpy as np
 
 _slots_supported = (sys.version_info >= (3, 6, 2) or
                     (3, 5, 3) <= sys.version_info < (3, 6))
@@ -19,6 +21,9 @@ class Interval(Container, Generic[T]):
 
     def __contains__(self, item: T) -> bool:
         return False if self.data is None or item is None else self.data == item
+
+    def __iter__(self):
+        return iter(range(self.start, self.stop))
 
     def __eq__(self, other: "Interval"):
         return (self.start, self.stop, self.data) == (other.start, other.stop, other.data)
@@ -45,18 +50,74 @@ class Interval(Container, Generic[T]):
 Intervals = Sequence[Interval]
 
 
-def extract(sequence: Sequence[T], intervals: Iterable[Interval]) \
+def extract(sequence: Sequence[T], ivs: Iterable[Interval], offset=0) \
         -> List[Sequence[T]]:
-    return [sequence[iv.start:iv.stop] for iv in intervals]
-
-
-def length(sample: Intervals) -> int:
-    # TODO docs
-    return 0 if not len(sample) else sample[-1].stop - sample[0].start
+    return [sequence[iv.start-offset:iv.stop-offset] for iv in ivs]
 
 
 def span(ivs: Intervals) -> Optional[Interval]:
+    """
+    Intervals must be presorted
+    :param ivs:
+    :return:
+    """
     return Interval(ivs[0].start, ivs[-1].stop) if len(ivs) else None
+
+
+@overload
+def unextract(ivs: Intervals, extracted: Sequence[Sequence[T]], fill: T) \
+        -> Sequence[T]:
+    pass
+
+
+@overload
+def unextract(ivs: Intervals, extracted: Sequence[np.ndarray], fill) \
+        -> Sequence[T]:
+    pass
+
+
+def unextract(ivs, extracted, fill):
+    if not len(ivs) or not len(extracted):
+        return None
+    if all(isinstance(ext, np.ndarray) for ext in extracted):
+        return _unextract_arr(ivs, extracted, fill)
+    if isinstance(extracted, Sequence):
+        return _unextract_sequence(ivs, extracted, fill)
+    raise ValueError("Extracted must be either a sequence of numpy arrays or "
+                     "a sequence of Sequence objects")
+
+
+def _unextract_sequence(ivs: Intervals, extracted: Sequence[Sequence[T]],
+                        fill: T) -> Sequence[T]:
+    sorted_ivs = sorted(ivs, key=lambda x: x.start)
+    res = [fill] * len(span(sorted_ivs))
+    offset = sorted_ivs[0].start
+    for iv, ext in zip(ivs, extracted):
+        if len(iv) != len(ext):
+            raise ValueError("Intervals and extracted data are not aligned "
+                             "with respect to length")
+        for i, val in zip(iv, ext):
+            res[i-offset] = val
+    return res
+
+
+def _unextract_arr(ivs: Intervals, extracted: Sequence[np.ndarray], fill) \
+        -> Optional[np.ndarray]:
+    ndims = set(map(np.ndim, extracted))
+    dtypes = set(ext.dtype for ext in extracted)
+    if not len(ndims) == len(dtypes) == 1:
+        raise ValueError("Arrays must be homogeneous")
+    if isinstance(fill, np.ndarray) and fill.shape != extracted[0].shape[1:]:
+        raise ValueError("fill is incompatible with extracted arrays")
+    sorted_ivs = sorted(ivs, key=lambda x: x.start)
+    res = np.array([fill]*len(span(sorted_ivs)), dtype=dtypes.pop())
+    offset = sorted_ivs[0].start
+    for iv, ext in zip(ivs, extracted):
+        if len(iv) != len(ext):
+            raise ValueError("Intervals and extracted data are not aligned "
+                             "with respect to length")
+        res[iv.start-offset:iv.stop-offset] = ext
+    return res
 
 
 if __name__ == "__main__":

@@ -1,33 +1,7 @@
 from keras import backend as K
 
 
-def specificity(y_true, y_pred):
-    labels_true = K.argmax(y_true, axis=-1)
-    labels_pred = K.argmax(y_pred, axis=-1)
-    negative_true = K.cast(K.equal(labels_true, 0), dtype=K.floatx())
-    negative_pred = K.cast(K.equal(labels_pred, 0), dtype=K.floatx())
-    positive_pred = K.cast(K.equal(labels_pred, 1), dtype=K.floatx())
-    true_negatives = K.sum(negative_true * negative_pred) + K.epsilon()
-    false_positives = K.sum(positive_pred * negative_true) + K.epsilon()
-    return true_negatives / (true_negatives + false_positives)
-
-
-def sensitivity(y_true, y_pred):
-    labels_true = K.argmax(y_true, axis=-1)
-    labels_pred = K.argmax(y_pred, axis=-1)
-    positive_true = K.cast(K.equal(labels_true, 1), dtype=K.floatx())
-    positive_pred = K.cast(K.equal(labels_pred, 1), dtype=K.floatx())
-    negative_pred = K.cast(K.equal(labels_pred, 0), dtype=K.floatx())
-    true_positives = K.sum(positive_true * positive_pred) + K.epsilon()
-    false_negatives = K.sum(positive_true * negative_pred) + K.epsilon()
-    return true_positives / (true_positives + false_negatives)
-
-
 def precision(y_true, y_pred):
-    """
-    Calculates the precision, a metric for multi-label classification of
-    how many selected items are relevant.
-    """
     true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
     predicted_positives = K.sum(K.round(K.clip(y_pred, 0, 1)))
     precision = true_positives / (predicted_positives + K.epsilon())
@@ -35,10 +9,6 @@ def precision(y_true, y_pred):
 
 
 def recall(y_true, y_pred):
-    """
-    Calculates the recall, a metric for multi-label classification of
-    how many relevant items are selected.
-    """
     true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
     possible_positives = K.sum(K.round(K.clip(y_true, 0, 1)))
     recall = true_positives / (possible_positives + K.epsilon())
@@ -80,3 +50,31 @@ def fmeasure(y_true, y_pred):
     Calculates the f-measure, the harmonic mean of precision and recall.
     """
     return fbeta_score(y_true, y_pred, beta=1)
+
+
+def recall_softmax(y_true, y_pred):
+    labels_true = K.argmax(y_true, axis=-1)
+    labels_pred = K.argmax(y_pred, axis=-1)
+    positive_true = K.cast(K.equal(labels_true, 1), dtype=K.floatx())
+    positive_pred = K.cast(K.equal(labels_pred, 1), dtype=K.floatx())
+    true_positives = K.sum(positive_true * positive_pred) + K.epsilon()
+    return true_positives / (K.sum(positive_true) + K.epsilon())
+
+
+def precision_softmax(y_true, y_pred):
+    labels_true = K.argmax(y_true, axis=-1)
+    labels_pred = K.argmax(y_pred, axis=-1)
+    positive_true = K.cast(K.equal(labels_true, 1), dtype=K.floatx())
+    positive_pred = K.cast(K.equal(labels_pred, 1), dtype=K.floatx())
+    true_positives = K.sum(positive_true * positive_pred) + K.epsilon()
+    return true_positives / (K.sum(positive_pred) + K.epsilon())
+
+
+def fmeasure_softmax(y_true, y_pred):
+    p = precision_softmax(y_true, y_pred)
+    r = recall_softmax(y_true, y_pred)
+    return 2 * p * r / (p + r)
+
+
+if __name__ == "__main__":
+    raise RuntimeError

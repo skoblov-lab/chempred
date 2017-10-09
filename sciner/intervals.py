@@ -37,6 +37,10 @@ class Interval(Container, Generic[T]):
     def __bool__(self):
         return bool(len(self))
 
+    def __and__(self, other: "Interval"):
+        first, second = sorted([self, other], key=lambda iv: iv.start)
+        return type(self)(first.start, second.stop, [first.data, second.data])
+
     def __repr__(self):
         return "{}(start={}, stop={}, data={})".format(type(self).__name__,
                                                        self.start,

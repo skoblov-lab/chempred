@@ -6,8 +6,10 @@ import numpy as np
 from hypothesis import given, note
 from hypothesis import settings, strategies as st
 
-from sciner import intervals, text, genia, sampling, util
-
+import sciner.preprocessing.preprocessing
+from sciner import intervals, util
+from sciner.corpora import genia, text
+from sciner.preprocessing import sampling
 
 MAX_TESTS = 1000
 
@@ -72,7 +74,7 @@ class TestSampling(unittest.TestCase):
         ivs = [intervals.Interval(arr[0], arr[-1]+1) for arr in
                np.split(np.arange(length), split_points)[1:-1]]
 
-        sample_anno = sampling.annotate_sample(ncls, anno, ivs)
+        sample_anno = sciner.preprocessing.preprocessing.annotate_sample(ncls, anno, ivs)
         sample_anno_cls = [set(iv_anno.nonzero()[-1])
                            for iv_anno in cast(Iterable[np.ndarray], sample_anno)]
         self.assertSequenceEqual([set(anno[iv.start:iv.stop]) for iv in ivs],

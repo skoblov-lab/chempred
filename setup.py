@@ -23,5 +23,5 @@ setup(
               "fn",
               "pyrsistent",
               "keras",
-              "scikit-learn", 'pandas', 'hypothesis', 'spacy']
+              "scikit-learn", "pandas", "hypothesis"]
 )

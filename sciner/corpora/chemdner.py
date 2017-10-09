@@ -5,14 +5,15 @@ Parsers, preprocessors and type annotations for the chemdner dataset.
 """
 
 import operator as op
-from itertools import groupby, starmap
+from itertools import groupby
 from numbers import Integral
-from typing import List, Tuple, Text, Iterable, Iterator, Optional
+from typing import List, Tuple, Text, Iterable, Iterator
 
 import pandas as pd
 from fn import F
 
-from sciner.text import TITLE, BODY, Abstract, AbstractAnnotation, AbstractText, \
+from sciner.corpora.text import TITLE, BODY, Abstract, AbstractAnnotation, \
+    AbstractText, \
     AbstractSentenceBorders, ClassMapping
 from sciner.intervals import Interval
 

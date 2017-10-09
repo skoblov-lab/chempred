@@ -5,11 +5,13 @@ their predictions
 
 """
 from functools import reduce
-from typing import Sequence, Tuple, Optional, Union, Callable
+from typing import Sequence, Tuple, Optional, Union, Callable, Mapping
 
+import numpy as np
 from keras import layers
+from sklearn.utils import class_weight
 
-from sciner import encoding
+from sciner.preprocessing import encoding
 
 NCHAR = encoding.MAXCHAR + 1
 
@@ -101,6 +103,51 @@ def build_rnn(nsteps: Sequence[int],
         return rnn
 
     return rec
+
+
+def balance_class_weights(y: np.ndarray, mask: Optional[np.ndarray]=None) \
+        -> Optional[Mapping[int, float]]:
+    # TODO update docs
+    # TODO tests
+    """
+    :param y: a numpy array encoding sample classes; samples are encoded along
+    the 0-axis
+    :param mask: a boolean array of shape compatible with `y`, wherein True
+    shows that the corresponding value(s) in `y` should be used to calculate
+    weights; if `None` the function will consider all values in `y`
+    :return: class weights
+    """
+    if not len(y):
+        raise ValueError("`y` is empty")
+    if y.ndim == 2:
+        y_flat = (y.flatten() if mask is None else
+                  np.concatenate([sample[mask] for sample, mask in zip(y, mask)]))
+    elif y.ndim == 3:
+        y_flat = (y.nonzero()[-1] if mask is None else
+                  y[mask].nonzero()[-1])
+    else:
+        raise ValueError("`y` should be either a 2D or a 3D array")
+    classes = np.unique(y_flat)
+    weights = class_weight.compute_class_weight("balanced", classes, y_flat)
+    weights_scaled = weights / weights.min()
+    return {cls: weight for cls, weight in zip(classes, weights_scaled)}
+
+
+def sample_weights(y: np.ndarray, class_weights: Mapping[int, float]) \
+        -> np.ndarray:
+    # TODO update docs
+    # TODO tests
+    """
+    :param y: a 2D array encoding sample classes; each sample is a row of
+    integers representing class code
+    :param class_weights: a class to weight mapping
+    :return: a 2D array of the same shape as `y`, wherein each position stores
+    a weight for the corresponding position in `y`
+    """
+    weights_mask = np.zeros(shape=y.shape, dtype=np.float32)
+    for cls, weight in class_weights.items():
+        weights_mask[y == cls] = weight
+    return weights_mask
 
 
 if __name__ == "__main__":

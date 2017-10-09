@@ -1,17 +1,14 @@
+import re
+from functools import reduce
+from itertools import chain
 from numbers import Integral
 from typing import Sequence, NamedTuple, Text, Iterable, Tuple, List, \
     Mapping, Callable, Optional
-from functools import reduce
-from itertools import chain
-from pyrsistent import PVector, pvector
-import re
 
 import numpy as np
-import spacy
-from fn import F
+from pyrsistent import PVector, pvector
 
 from sciner import intervals
-from sciner.util import flatmap
 
 OTHER = "OTHER"
 TITLE = "T"
@@ -33,9 +30,6 @@ Abstract = Tuple[AbstractText, Optional[AbstractAnnotation],
                  Optional[AbstractSentenceBorders]]
 Record = Tuple[int, Text, Text, Optional[Annotation], Optional[SentenceBorders]]
 
-spacy_tokeniser = (F(spacy.load("en").tokenizer) >>
-                   (map, lambda tk: tk.text) >>
-                   (flatmap, re.compile(r"[&/|]|[^&/|]+").findall))
 fine_tokeniser = re.compile(r"[\w]+|[^\s\w]").findall
 
 

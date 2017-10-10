@@ -57,7 +57,7 @@ class WordEncoder:
     def oov(self):
         return self._oov
 
-    def encode(self, words: Iterable[Text], vectors=True) -> np.ndarray:
+    def encode(self, words: Iterable[Text], vectors=False) -> np.ndarray:
         oov = self._vocab[self._oov]
         ids = [self._vocab.get(w, oov) for w in map(self._transform, words)]
         return self._vectors[ids] if vectors else np.array(ids, dtype=np.int32)

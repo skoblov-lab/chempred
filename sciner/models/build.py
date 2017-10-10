@@ -111,7 +111,7 @@ def build_word_embeddings(embeddings: np.ndarray, maxsteps, mask: bool):
 
 
 def build_char_embeddings(nchar: int, embsize: int, units: int, maxsteps: int,
-                          maxlen: bool, mask: bool, layer=layers.LSTM):
+                          maxlen: bool, dropout: float, mask: bool, layer=layers.LSTM):
     # TODO docs
     chars = layers.Input(shape=(None, maxsteps, maxlen), dtype="int32")
     embeddings = layers.embeddings.Embedding(input_dim=nchar,

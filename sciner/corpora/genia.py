@@ -10,7 +10,7 @@ from xml.etree.ElementTree import Element, parse
 from fn import F
 from pyrsistent import v, pvector
 
-from sciner.corpora.abstract import AbstractAnnotation, AbstractText, ClassMapping, \
+from sciner.corpora.corpora import AbstractAnnotation, AbstractText, ClassMapping, \
     AnnotationError, ClassifiedInterval
 from sciner.intervals import Interval
 

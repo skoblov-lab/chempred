@@ -432,7 +432,7 @@ class CRFLayer(Layer):
 
         return viterbi_sequences
 
-    def call(self, x, mask=[2,2]):
+    def call(self, x, mask=None):
         y_pred = self.viterbi_decode(x, mask)
         nb_classes = self.input_spec[0].shape[2]
         y_pred_one_hot = K.one_hot(y_pred, nb_classes)

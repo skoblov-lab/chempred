@@ -12,10 +12,10 @@ import numpy as np
 
 
 def cnn(nfilters: Sequence[int],
-              filter_width: Union[int, Sequence[int]],
-              dropout: Union[Optional[float], Sequence[Optional[float]]]=None,
-              padding: Union[str, Sequence[str]]="same",
-              name_template: str="conv{}") \
+        filter_width: Union[int, Sequence[int]],
+        dropout: Union[Optional[float], Sequence[Optional[float]]]=None,
+        padding: Union[str, Sequence[str]]="same",
+        name_template: str="conv{}") \
         -> Callable:
     # TODO extend documentation
     # TODO more tests
@@ -53,10 +53,10 @@ def cnn(nfilters: Sequence[int],
 
 
 def rnn(nsteps: Sequence[int],
-              inp_drop: Optional[Union[float, Sequence[float]]]=None,
-              rec_drop: Optional[Union[float, Sequence[float]]]=None,
-              bidirectional: Union[Optional[str], Sequence[Optional[str]]]=None,
-              stateful=False, layer=layers.LSTM) -> Callable:
+        inp_drop: Optional[Union[float, Sequence[float]]]=None,
+        rec_drop: Optional[Union[float, Sequence[float]]]=None,
+        bidirectional: Union[Optional[str], Sequence[Optional[str]]]=None,
+        stateful=False, layer=layers.LSTM) -> Callable:
     # TODO extend documentation
     # TODO add name template argument
     # TODO tests
@@ -114,7 +114,7 @@ def word_embeddings(nwords: int, vectors: np.ndarray, mask: bool):
 
 
 def char_embeddings(nchar: int, maxlen: int, embsize: int,
-                          dropout: float, mask: bool, layer=layers.LSTM):
+                    dropout: float, mask: bool, layer=layers.LSTM):
     # TODO docs
     def charemb(incomming):
         emb = layers.embeddings.Embedding(input_dim=nchar,

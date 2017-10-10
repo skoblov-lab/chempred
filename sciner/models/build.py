@@ -131,6 +131,8 @@ def build_char_embeddings(nchar: int, embsize: int, units: int,
             lambda x: K.reshape(x, shape=[-1, shape[1], 2 * units]))(embeddings)
         return embeddings
 
+    return charemb
+
 
 if __name__ == "__main__":
     raise RuntimeError

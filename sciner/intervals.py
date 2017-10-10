@@ -1,6 +1,6 @@
 import sys
 from typing import TypeVar, Container, Generic, Optional, Sequence, Iterable, \
-    List, overload
+    List, Iterator, overload
 
 import numpy as np
 
@@ -67,6 +67,10 @@ def span(ivs: Intervals) -> Optional[Interval]:
     :return:
     """
     return Interval(ivs[0].start, ivs[-1].stop) if len(ivs) else None
+
+
+def unload(intervals: Iterable[Interval[T]]) -> Iterator[T]:
+    return (iv.data for iv in intervals)
 
 
 @overload

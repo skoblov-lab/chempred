@@ -17,7 +17,7 @@ class F1score(callbacks.Callback):
 
     def __init__(self,
                  inputs: Sequence[np.ndarray],
-                 output: Sequence[np.ndarray],
+                 output: np.ndarray,
                  labels: Sequence[int],
                  mode: Text,
                  batchsize: int,
@@ -27,21 +27,23 @@ class F1score(callbacks.Callback):
 
         super().__init__()
         self.inputs = inputs
-        self.output = output
+        self.output = output.flatten()
         self.labels = labels
         self.epoch = None
-        self.best = -float("inf")
+        self.best = float("-inf")
         self.mode = mode
         self.batchsize = batchsize
         self.transform = transform
 
     def on_epoch_end(self, epoch, logs=None):
         self.epoch = epoch
-        pred = self.transform(self.model.predict(self.inputs, self.batchsize))
+        pred = self.transform(self.model.predict(self.inputs, self.batchsize)).flatten()
         score = metrics.f1_score(self.output, pred, self.labels, average=self.mode)
         if score > self.best:
-            print("F1 improved from {} to {}".format(self.best, score))
+            print("\nF1 improved from {} to {}".format(self.best, score))
             self.best = score
+        else:
+            print("\nF1 didn't improve")
 
 
 def precision(y_true, y_pred):

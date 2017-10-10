@@ -11,7 +11,7 @@ from keras import layers, backend as K
 import numpy as np
 
 
-def build_cnn(nfilters: Sequence[int],
+def cnn(nfilters: Sequence[int],
               filter_width: Union[int, Sequence[int]],
               dropout: Union[Optional[float], Sequence[Optional[float]]]=None,
               padding: Union[str, Sequence[str]]="same",
@@ -19,6 +19,7 @@ def build_cnn(nfilters: Sequence[int],
         -> Callable:
     # TODO extend documentation
     # TODO more tests
+    # TODO make name_template Optional
     """
 
     :param nfilters:
@@ -51,7 +52,7 @@ def build_cnn(nfilters: Sequence[int],
     return conv
 
 
-def build_rnn(nsteps: Sequence[int],
+def rnn(nsteps: Sequence[int],
               inp_drop: Optional[Union[float, Sequence[float]]]=None,
               rec_drop: Optional[Union[float, Sequence[float]]]=None,
               bidirectional: Union[Optional[str], Sequence[Optional[str]]]=None,
@@ -100,7 +101,7 @@ def build_rnn(nsteps: Sequence[int],
     return rec
 
 
-def build_word_embeddings(nwords: int, vectors: np.ndarray, mask: bool):
+def word_embeddings(nwords: int, vectors: np.ndarray, mask: bool):
     # TODO docs
     def wordemb(incomming):
         emb = layers.embeddings.Embedding(input_dim=nwords,
@@ -112,7 +113,7 @@ def build_word_embeddings(nwords: int, vectors: np.ndarray, mask: bool):
     return wordemb
 
 
-def build_char_embeddings(nchar: int, maxlen: int, embsize: int,
+def char_embeddings(nchar: int, maxlen: int, embsize: int,
                           dropout: float, mask: bool, layer=layers.LSTM):
     # TODO docs
     def charemb(incomming):

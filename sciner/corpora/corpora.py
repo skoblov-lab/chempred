@@ -1,12 +1,6 @@
-import re
-from functools import reduce
-from itertools import chain
-from numbers import Integral
 from typing import Sequence, NamedTuple, Text, Iterable, Tuple, List, \
-    Mapping, Callable, Optional
-
-import numpy as np
-from pyrsistent import PVector, pvector
+    Mapping, Optional
+from numbers import Integral
 
 from sciner import intervals
 

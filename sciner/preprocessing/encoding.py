@@ -6,6 +6,7 @@
 
 from typing import Mapping, Tuple, Text, Iterable, List
 from itertools import chain
+import re
 
 import numpy as np
 from frozendict import frozendict
@@ -56,10 +57,10 @@ class WordEncoder:
     def oov(self):
         return self._oov
 
-    def encode(self, words: Iterable[Text], ids=True) -> np.ndarray:
+    def encode(self, words: Iterable[Text], vectors=True) -> np.ndarray:
         oov = self._vocab[self._oov]
-        ids_ = [self._vocab.get(w, oov) for w in map(self._transform, words)]
-        return np.array(ids_, dtype=np.int32) if ids else self._vectors[ids_]
+        ids = [self._vocab.get(w, oov) for w in map(self._transform, words)]
+        return self._vectors[ids] if vectors else np.array(ids, dtype=np.int32)
 
     @staticmethod
     def _read_embeddings(path) -> Tuple[Mapping[str, int], np.ndarray]:
@@ -101,7 +102,9 @@ class CharEncoder:
     @staticmethod
     def _read_characters(path):
         with open(path) as lines:
-            characters = frozenset(chain.from_iterable(map(str.strip, lines)))
+            ws = re.compile("\s")
+            nows = (ws.sub("", l) for l in lines)
+            characters = frozenset(chain.from_iterable(map(str.strip, nows)))
             char_index = frozendict(
                 {char: i+1 for i, char in enumerate(characters)})
         if not characters:

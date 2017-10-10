@@ -1,7 +1,7 @@
 import operator as op
 from functools import reduce
 from itertools import chain, repeat
-from typing import List, Tuple, Optional, Mapping
+from typing import List, Tuple, Optional, Mapping, Union
 
 import numpy as np
 from fn import F
@@ -18,7 +18,7 @@ def flatzip(flat, nested):
     return (F(zip) >> F(map, lambda x: zip(*x)) >> chain.from_iterable)(*iterables)
 
 
-def join(arrays: List[np.ndarray], length: int, padval=0) \
+def join(arrays: List[np.ndarray], length: int, padval=0, trim=False) \
         -> Tuple[np.ndarray, np.ndarray]:
     """
     Join 1D or 2D arrays. The function uses zero-padding to bring all arrays to the
@@ -38,7 +38,7 @@ def join(arrays: List[np.ndarray], length: int, padval=0) \
     >>> all((arr == j[m]).all() for arr, j, m in zip(arrays, joined, masks))
     True
     """
-    if length < max(map(len, arrays)):
+    if length < max(map(len, arrays)) and not trim:
         raise ValueError("Some arrays are longer than `length`")
     ndim = set(arr.ndim for arr in arrays)
     if ndim not in ({1}, {2}):
@@ -50,7 +50,7 @@ def join(arrays: List[np.ndarray], length: int, padval=0) \
     joined = (
         np.repeat([padval], reduce(op.mul, shape)).reshape(shape).astype(dtype))
     for i, arr in enumerate(arrays):
-        joined[i, :len(arr)] = arr
+        joined[i, :len(arr)] = arr[:length]
         masks[i, :len(arr)] = True
     return joined, masks
 

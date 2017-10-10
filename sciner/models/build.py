@@ -113,8 +113,8 @@ def word_embeddings(nwords: int, vectors: np.ndarray, mask: bool):
     return wordemb
 
 
-def char_embeddings(nchar: int, maxlen: int, embsize: int,
-                    dropout: float, mask: bool, layer=layers.LSTM):
+def char_embeddings(nchar: int, maxlen: int, embsize: int, nunits: int,
+                    indrop: float, recdrop: float, mask: bool, layer=layers.LSTM):
     # TODO docs
     def charemb(incomming):
         emb = layers.embeddings.Embedding(input_dim=nchar,
@@ -124,19 +124,19 @@ def char_embeddings(nchar: int, maxlen: int, embsize: int,
         emb = layers.Lambda(
             lambda x: K.reshape(x, shape=(-1, shape[-2], embsize)))(emb)
 
-        halfsize = embsize // 2
-
-        forward = layer(halfsize,
+        forward = layer(nunits,
                         return_state=True,
-                        recurrent_dropout=dropout)(emb)[-2]
-        reverse = layer(halfsize,
+                        dropout=indrop,
+                        recurrent_dropout=recdrop)(emb)[-2]
+        reverse = layer(nunits,
                         return_state=True,
-                        recurrent_dropout=dropout,
+                        recurrent_dropout=recdrop,
+                        dropout=indrop,
                         go_backwards=True)(emb)[-2]
         emb = layers.concatenate([forward, reverse], axis=-1)
         # shape = (batch size, max sentence length, char hidden size)
         emb = layers.Lambda(
-            lambda x: K.reshape(x, shape=[-1, shape[1], 2 * halfsize]))(emb)
+            lambda x: K.reshape(x, shape=[-1, shape[1], 2 * nunits]))(emb)
         return emb
 
     return charemb

@@ -1,10 +1,10 @@
 """
 
-Author: Philipp Gross, https://github.com/phipleg/keras/blob/crf/keras/layers/crf.py
+Initially written by: Philipp Gross, https://github.com/phipleg/keras/blob/crf/keras/layers/crf.py
+Edited by: Ilia Korvigo
 
 """
 
-import tensorflow as tf
 from keras import backend as K
 from keras import initializers, regularizers, constraints
 from keras.engine import Layer, InputSpec

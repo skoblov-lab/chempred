@@ -12,7 +12,7 @@ from typing import List, Tuple, Text, Iterable, Iterator
 import pandas as pd
 from fn import F
 
-from sciner.corpora.corpora import TITLE, BODY, Abstract, AbstractAnnotation, \
+from sciner.corpora.corpus import TITLE, BODY, Abstract, AbstractAnnotation, \
     AbstractText, \
     AbstractSentenceBorders, ClassMapping
 from sciner.intervals import Interval

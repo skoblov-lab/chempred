@@ -3,9 +3,7 @@ from typing import Text, Tuple, Pattern, List, Iterable, Callable, Union
 from functools import reduce
 import re
 
-from fn import F
-
-from sciner.intervals import Interval, Intervals
+from sciner.intervals import Interval
 
 # patterns
 numeric = re.compile("[0-9]*\.?[0-9]+")
@@ -13,7 +11,7 @@ wordlike = re.compile("[\w]+")
 misc = re.compile("[^\s\w]")
 
 
-def tokenise(patterns: List[Pattern], text: Text, mask=" ") -> Intervals:
+def tokenise(patterns: List[Pattern], text: Text, mask=" ") -> List[Interval[Text]]:
     """
     Return intervals matched by `patterns`. The patterns are applied
     in iteration order. Before applying pattern `i+1`, the function replaces

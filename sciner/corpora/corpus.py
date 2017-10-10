@@ -10,7 +10,7 @@ BODY = "A"
 ClassMapping = Mapping[Text, Integral]
 ClassifiedInterval = intervals.Interval[Integral]
 Annotation = Sequence[ClassifiedInterval]
-SentenceBorders = intervals.Intervals
+SentenceBorders = Sequence[intervals.Interval]
 
 AbstractText = NamedTuple("Abstract",
                           [("id", int), ("title", Text), ("body", Text)])

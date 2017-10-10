@@ -2,7 +2,7 @@ from typing import Sequence, Iterator, Iterable, Callable
 
 import numpy as np
 
-from sciner.intervals import Interval, Intervals
+from sciner.intervals import Interval
 from sciner.preprocessing.encoding import EncodingError
 
 Sample = Sequence[Interval]
@@ -14,8 +14,8 @@ class AmbiguousAnnotation(EncodingError):
     pass
 
 
-def sample_windows(window: int, step: int, text_intervals: Intervals) \
-        -> Iterator[Intervals]:
+def sample_windows(window: int, step: int, text_intervals: Sequence[Interval]) \
+        -> Iterator[Sequence[Interval]]:
     # TODO update docs
     # TODO test
     """

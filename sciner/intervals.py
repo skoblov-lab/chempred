@@ -52,15 +52,12 @@ class Interval(Container, Generic[T]):
         return type(self)(self.start, self.stop, value)
 
 
-Intervals = Sequence[Interval]
-
-
 def extract(sequence: Sequence[T], ivs: Iterable[Interval], offset=0) \
         -> List[Sequence[T]]:
     return [sequence[iv.start-offset:iv.stop-offset] for iv in ivs]
 
 
-def span(ivs: Intervals) -> Optional[Interval]:
+def span(ivs: Sequence[Interval]) -> Optional[Interval]:
     """
     Intervals must be presorted
     :param ivs:
@@ -74,13 +71,13 @@ def unload(intervals: Iterable[Interval[T]]) -> Iterator[T]:
 
 
 @overload
-def unextract(ivs: Intervals, extracted: Sequence[Sequence[T]], fill: T) \
+def unextract(ivs: Sequence[Interval], extracted: Sequence[Sequence[T]], fill: T) \
         -> Sequence[T]:
     pass
 
 
 @overload
-def unextract(ivs: Intervals, extracted: Sequence[np.ndarray], fill) \
+def unextract(ivs: Sequence[Interval], extracted: Sequence[np.ndarray], fill) \
         -> Sequence[T]:
     pass
 
@@ -96,7 +93,8 @@ def unextract(ivs, extracted, fill):
                      "a sequence of Sequence objects")
 
 
-def _unextract_sequence(ivs: Intervals, extracted: Sequence[Sequence[T]],
+def _unextract_sequence(ivs: Sequence[Interval],
+                        extracted: Sequence[Sequence[T]],
                         fill: T) -> Sequence[T]:
     sorted_ivs = sorted(ivs, key=lambda x: x.start)
     res = [fill] * len(span(sorted_ivs))
@@ -110,7 +108,7 @@ def _unextract_sequence(ivs: Intervals, extracted: Sequence[Sequence[T]],
     return res
 
 
-def _unextract_arr(ivs: Intervals, extracted: Sequence[np.ndarray], fill) \
+def _unextract_arr(ivs: Sequence[Interval], extracted: Sequence[np.ndarray], fill) \
         -> Optional[np.ndarray]:
     ndims = set(map(np.ndim, extracted))
     dtypes = set(ext.dtype for ext in extracted)

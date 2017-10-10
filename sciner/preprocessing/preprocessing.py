@@ -1,11 +1,10 @@
 import operator as op
 from itertools import groupby
-from typing import Tuple, Text, Sequence, \
-    Optional
+from typing import Tuple, Text, Sequence, Optional
 
 import numpy as np
 
-from sciner.intervals import Interval, Intervals, span, extract
+from sciner.intervals import Interval, span, extract
 from sciner.preprocessing.encoding import EncodingError
 
 ProcessedSample = Tuple[int, Text, Sequence[Interval], Sequence[Text],
@@ -27,7 +26,7 @@ def group(ids, sources, *args):
 
 
 def annotate_sample(nlabels: int, annotation: np.ndarray,
-                    sample: Intervals, dtype=np.int32) -> np.ndarray:
+                    sample: Sequence[Interval], dtype=np.int32) -> np.ndarray:
     # TODO update docs
     """
     :param sample: a sequence of Intervals

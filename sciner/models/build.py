@@ -110,24 +110,26 @@ def build_word_embeddings(embeddings: np.ndarray, maxsteps, mask: bool):
     return embeddings
 
 
-def build_char_embeddings(nchar: int, embsize: int, units: int, maxsteps: int,
-                          maxlen: bool, dropout: float, mask: bool, layer=layers.LSTM):
+def build_char_embeddings(nchar: int, embsize: int, units: int,
+                          dropout: float, mask: bool, layer=layers.LSTM):
     # TODO docs
-    chars = layers.Input(shape=(None, maxsteps, maxlen), dtype="int32")
-    embeddings = layers.embeddings.Embedding(input_dim=nchar,
-                                             output_dim=embsize,
-                                             mask_zero=mask)(chars)
-    shape = K.shape(embeddings)
-    embeddings = layers.Lambda(
-        lambda x: K.reshape(x, shape=(-1, shape[-2], embsize)))(embeddings)
+    def charemb(incomming):
+        embeddings = layers.embeddings.Embedding(input_dim=nchar,
+                                                 output_dim=embsize,
+                                                 mask_zero=mask)(incomming)
+        shape = K.shape(embeddings)
+        embeddings = layers.Lambda(
+            lambda x: K.reshape(x, shape=(-1, shape[-2], embsize)))(embeddings)
 
-    forward = layer(units, return_state=True)(embeddings)[-2]
-    reverse = layer(units, return_state=True, go_backwards=True)(embeddings)[-2]
-    embeddings = layers.concatenate([forward, reverse], axis=-1)
-    # shape = (batch size, max sentence length, char hidden size)
-    embeddings = layers.Lambda(
-        lambda x: K.reshape(x, shape=[-1, shape[1], 2 * units]))(embeddings)
-    return embeddings
+        forward = layer(
+            units, return_state=True, recurrent_dropout=dropout)(embeddings)[-2]
+        reverse = layer(
+            units, return_state=True, recurrent_dropout=dropout, go_backwards=True)(embeddings)[-2]
+        embeddings = layers.concatenate([forward, reverse], axis=-1)
+        # shape = (batch size, max sentence length, char hidden size)
+        embeddings = layers.Lambda(
+            lambda x: K.reshape(x, shape=[-1, shape[1], 2 * units]))(embeddings)
+        return embeddings
 
 
 if __name__ == "__main__":

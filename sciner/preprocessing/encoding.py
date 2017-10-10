@@ -56,10 +56,10 @@ class WordEncoder:
     def oov(self):
         return self._oov
 
-    def encode(self, words: Iterable[Text]) -> np.ndarray:
+    def encode(self, words: Iterable[Text], ids=True) -> np.ndarray:
         oov = self._vocab[self._oov]
-        codes = [self._vocab.get(w, oov) for w in map(self._transform, words)]
-        return np.array(codes, dtype=np.int32)
+        ids_ = [self._vocab.get(w, oov) for w in map(self._transform, words)]
+        return np.array(ids_, dtype=np.int32) if ids else self._vectors[ids_]
 
     @staticmethod
     def _read_embeddings(path) -> Tuple[Mapping[str, int], np.ndarray]:

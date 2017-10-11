@@ -34,7 +34,7 @@ def annotate_sample(nlabels: int, annotation: np.ndarray,
     return encoded_token_anno
 
 
-def annotation_borders(annotation: np.ndarray) -> np.ndarray:
+def annotate_borders(annotation: np.ndarray) -> np.ndarray:
     if annotation.ndim != 1 or np.issubdtype(annotation.dtype, np.int):
         raise ValueError("`annotation` must be a 1D integer array")
 
@@ -43,7 +43,7 @@ def annotation_borders(annotation: np.ndarray) -> np.ndarray:
     runs = (oldmap(getpos, run)
             for label, run in groupby(enumerate(annotation), getlabel)
             if label)
-    borders = np.zeros(len(annotation))
+    borders = np.zeros(len(annotation), dtype=np.int8)
     for indices in runs:
         if len(indices) == 1:
             borders[indices[0]] = 3

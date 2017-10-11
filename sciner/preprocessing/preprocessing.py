@@ -43,7 +43,7 @@ def annotate_borders(annotation: np.ndarray) -> np.ndarray:
     runs = (oldmap(getpos, run)
             for label, run in groupby(enumerate(annotation), getlabel)
             if label)
-    borders = np.zeros(len(annotation), dtype=np.int8)
+    borders = np.zeros(len(annotation), dtype=annotation.dtype)
     for indices in runs:
         if len(indices) == 1:
             borders[indices[0]] = 3

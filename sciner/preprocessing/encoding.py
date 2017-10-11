@@ -122,13 +122,10 @@ def encode_annotation(annotations: Iterable[Interval], size: int) -> np.ndarray:
     :param size:
     :return:
     """
-    encoded_anno = np.zeros(size, dtype=np.uint8)
+    encoded_anno = np.zeros(size, dtype=np.int32)
     for anno in annotations:
         if anno.stop > size:
             raise EncodingError("annotation `size` is insufficient")
-        cls = anno.data
-        if not 0 <= cls <= MAXLABEL:
-            raise EncodingError("class codes must be in [0, {}]".format(MAXLABEL))
         encoded_anno[anno.start:anno.stop] = anno.data
     return encoded_anno
 

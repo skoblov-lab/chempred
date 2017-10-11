@@ -35,7 +35,7 @@ def annotate_sample(nlabels: int, annotation: np.ndarray,
 
 
 def annotate_borders(annotation: np.ndarray) -> np.ndarray:
-    if annotation.ndim != 1 or np.issubdtype(annotation.dtype, np.int):
+    if annotation.ndim != 1 or not np.issubdtype(annotation.dtype, np.int):
         raise ValueError("`annotation` must be a 1D integer array")
 
     getpos = op.itemgetter(0)

@@ -1,6 +1,6 @@
 import operator as op
 from functools import reduce
-from itertools import chain, repeat
+from itertools import chain, repeat, groupby
 from typing import List, Tuple, Optional, Mapping, Union
 
 import numpy as np
@@ -133,6 +133,20 @@ def sample_weights(y: np.ndarray, class_weights: Mapping[int, float]) \
     for cls, weight in class_weights.items():
         weights_mask[y == cls] = weight
     return weights_mask
+
+
+def group(ids, sources, *args):
+    """
+    Group args by id and source
+    :param ids:
+    :param sources:
+    :param args:
+    :return:
+    """
+    records = zip(ids, sources, *args)
+    id_groups = groupby(records, op.itemgetter(0))
+    return [[list(grp) for _, grp in src_grps] for src_grps in
+            (groupby(list(grp), op.itemgetter(1)) for _, grp in id_groups)]
 
 
 if __name__ == "__main__":

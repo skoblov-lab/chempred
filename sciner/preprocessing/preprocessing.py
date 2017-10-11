@@ -1,28 +1,14 @@
-import operator as op
-from itertools import groupby
 from typing import Tuple, Text, Sequence, Optional
+from itertools import groupby, chain
+import operator as op
 
 import numpy as np
 
 from sciner.intervals import Interval, span, extract
-from sciner.preprocessing.encoding import EncodingError
+from sciner.util import oldmap
 
 ProcessedSample = Tuple[int, Text, Sequence[Interval], Sequence[Text],
                         Optional[np.ndarray]]
-
-
-def group(ids, sources, *args):
-    """
-    Group args by id and source
-    :param ids:
-    :param sources:
-    :param args:
-    :return:
-    """
-    records = zip(ids, sources, *args)
-    id_groups = groupby(records, op.itemgetter(0))
-    return [[list(grp) for _, grp in src_grps] for src_grps in
-            (groupby(list(grp), op.itemgetter(1)) for _, grp in id_groups)]
 
 
 def annotate_sample(nlabels: int, annotation: np.ndarray,
@@ -34,17 +20,37 @@ def annotate_sample(nlabels: int, annotation: np.ndarray,
     :return: encoded annotation
     """
     if not np.issubdtype(dtype, np.int):
-        raise EncodingError("`dtype` must be integral")
+        raise ValueError("`dtype` must be integral")
     span_ = span(sample)
     if span_ is None:
-        raise EncodingError("The sample is empty")
+        raise ValueError("The sample is empty")
     if span_.stop > len(annotation):
-        raise EncodingError("The annotation doesn't fully cover the sample")
+        raise ValueError("The annotation doesn't fully cover the sample")
     tk_annotations = extract(annotation, sample)
     encoded_token_anno = np.zeros((len(sample), nlabels), dtype=np.int32)
     for i, tk_anno in enumerate(tk_annotations):
         encoded_token_anno[i, tk_anno] = 1
     return encoded_token_anno
+
+
+def annotation_borders(annotation: np.ndarray) -> np.ndarray:
+    if annotation.ndim != 1 or np.issubdtype(annotation.dtype, np.int):
+        raise ValueError("`annotation` must be a 1D integer array")
+
+    getpos = op.itemgetter(0)
+    getlabel = op.itemgetter(1)
+    runs = (oldmap(getpos, run)
+            for label, run in groupby(enumerate(annotation), getlabel)
+            if label)
+    borders = np.zeros(len(annotation))
+    for indices in runs:
+        if len(indices) == 1:
+            borders[indices[0]] = 3
+        else:
+            first, last = indices[0], indices[-1]
+            borders[first] = 1
+            borders[last] = 2
+    return borders
 
 
 if __name__ == "__main__":

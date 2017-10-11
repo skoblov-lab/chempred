@@ -45,12 +45,12 @@ def annotate_borders(annotation: np.ndarray) -> np.ndarray:
             if label)
     borders = np.zeros(len(annotation), dtype=annotation.dtype)
     for indices in runs:
-        if len(indices) == 1:
-            borders[indices[0]] = 3
-        else:
-            first, last = indices[0], indices[-1]
+        first, last = indices[0], indices[-1]
+        if first != last:
             borders[first] = 1
-            borders[last] = 2
+            borders[first+1:last+1] = 2
+        else:
+            borders[first] = 3
     return borders
 
 

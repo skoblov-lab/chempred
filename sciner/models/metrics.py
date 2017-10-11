@@ -44,10 +44,10 @@ class F1score(callbacks.Callback):
         template = "\nprecision - {:.3f} | recall - {:.3f} | F1 - {:.3f}"
         print(template.format(prec, rec, f1))
         if f1 > self.best:
-            print("\nF1 improved from {} to {}".format(self.best, f1))
+            print("F1 improved from {} to {}".format(self.best, f1))
             self.best = f1
         else:
-            print("\nF1 didn't improve")
+            print("F1 didn't improve")
 
 
 def precision(y_true, y_pred):

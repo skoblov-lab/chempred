@@ -84,8 +84,10 @@ class CharEncoder:
     Zero is reserved for the padding value
     """
 
-    def __init__(self, path):
-        self._chars = self._read_characters(path)
+    def __init__(self, text: Text):
+        if not text or not isinstance(text, Text):
+            raise ValueError("`text` must be a nonempty string")
+        self._chars = self._read_characters(text)
         self._oov = len(self._chars) + 1
 
     def __len__(self):
@@ -100,15 +102,10 @@ class CharEncoder:
         return self._chars
 
     @staticmethod
-    def _read_characters(path):
-        with open(path) as lines:
-            ws = re.compile("\s")
-            nows = (ws.sub("", l) for l in lines)
-            characters = frozenset(chain.from_iterable(map(str.strip, nows)))
-            char_index = frozendict(
-                {char: i+1 for i, char in enumerate(characters)})
-        if not characters:
-            raise EncodingError("file {} is empty".format(path))
+    def _read_characters(text):
+        nows = re.sub("\s", "", text)
+        char_index = frozendict(
+            {char: i+1 for i, char in enumerate(set(nows))})
         return char_index
 
     def encode(self, words: Iterable[Text]) -> List[np.ndarray]:

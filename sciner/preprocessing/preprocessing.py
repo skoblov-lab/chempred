@@ -14,6 +14,7 @@ ProcessedSample = Tuple[int, Text, Sequence[Interval], Sequence[Text],
 def annotate_sample(nlabels: int, annotation: np.ndarray,
                     sample: Sequence[Interval], dtype=np.int32) -> np.ndarray:
     # TODO update docs
+    # TODO pass spans instead of samples
     """
     :param sample: a sequence of Intervals
     :param dtype: output data type; it must be an integral numpy dtype

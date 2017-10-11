@@ -38,10 +38,14 @@ class F1score(callbacks.Callback):
     def on_epoch_end(self, epoch, logs=None):
         self.epoch = epoch
         pred = self.transform(self.model.predict(self.inputs, self.batchsize)).flatten()
-        score = metrics.f1_score(self.output, pred, self.labels, average=self.mode)
-        if score > self.best:
-            print("\nF1 improved from {} to {}".format(self.best, score))
-            self.best = score
+        f1 = metrics.f1_score(self.output, pred, self.labels, average=self.mode)
+        prec = metrics.precision_score(self.output, pred, self.labels, average=self.mode)
+        rec = metrics.recall_score(self.output, pred, self.labels, average=self.mode)
+        template = "\nprecision - {:.3f} | recall - {:.3f} | F1 - {:.3f}"
+        print(template.format(prec, rec, f1))
+        if f1 > self.best:
+            print("\nF1 improved from {} to {}".format(self.best, f1))
+            self.best = f1
         else:
             print("\nF1 didn't improve")
 

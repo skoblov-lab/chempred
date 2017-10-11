@@ -7,7 +7,7 @@ from sciner.intervals import Interval
 
 # patterns
 numeric = re.compile("[0-9]*\.?[0-9]+")
-wordlike = re.compile("[\w]+")
+wordlike = re.compile("\w+")
 misc = re.compile("[^\s\w]")
 
 

@@ -115,19 +115,24 @@ class CharEncoder:
 
 
 def encode_annotation(mapping, annotations: Iterable[Interval], size: int,
-                      default: int=0) -> np.ndarray:
+                      start_only: bool=False, default: int=0) -> np.ndarray:
     # TODO update docs
     """
-    Default class is 0.
+    :param mapping:
     :param annotations:
     :param size:
+    :param start_only: only encode the first character in an entity
+    :param default:
     :return:
     """
     encoded_anno = np.zeros(size, dtype=np.int32)
     for anno in annotations:
         if anno.stop > size:
             raise EncodingError("annotation `size` is insufficient")
-        encoded_anno[anno.start:anno.stop] = mapping.get(anno.data, default)
+        if start_only:
+            encoded_anno[anno.start] = mapping.get(anno.data, default)
+        else:
+            encoded_anno[anno.start:anno.stop] = mapping.get(anno.data, default)
     return encoded_anno
 
 

@@ -54,15 +54,9 @@ class Validator(callbacks.Callback):
         self.best = float("-inf") if mode == "max" else float("inf")
         self.prefix = prefix
 
-    def _save_model(self):
-        path = "{}-{:02d}-{:.3f}".format(self.prefix, self.epoch, self.best)
-        self.model.save_weights(path+".hdf5")
-        with open(path+".json", "w") as out:
-            print(self.model.to_json(), file=out)
-
     def _estimate_metrics(self):
         pred = self.transform(self.model.predict(self.inputs, self.batchsize))
-        return {name: f(self.output, pred) for name, f in self.metrics}
+        return {name: f(self.output, pred) for name, f in self.metrics.items()}
 
     @staticmethod
     def _format_score_log(scores: Mapping[Text, float]):
@@ -78,10 +72,11 @@ class Validator(callbacks.Callback):
         log = self._format_score_log(scores)
         print("\n" + log)
         if self.monitor and self._improved(scores[self.monitor]):
-            print("{} improved from {} to {}".format(
-                self.monitor, self.best, scores[self.monitor]), end="\n\n")
+            path = "{}-{:02d}-{:.3f}.hdf5".format(self.prefix, self.epoch, scores[self.monitor])
+            print("{} improved from {} to {}; saving weights to {}".format(
+                self.monitor, self.best, scores[self.monitor], path), end="\n\n")
             self.best = scores[self.monitor]
-            self._save_model()
+            self.model.save_weights(path)
         elif self.monitor:
             print("{} didn't improve".format(self.monitor), end="\n\n")
 

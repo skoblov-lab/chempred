@@ -3,51 +3,87 @@
 
 """
 
-from typing import Tuple, Sequence, Text, Callable
+from typing import Optional, Sequence, Text, Callable, Mapping
+from itertools import starmap
 
 from keras import callbacks, backend as K
-from sklearn import metrics
 from fn.func import identity
 import numpy as np
 
 
-class F1score(callbacks.Callback):
+class Validator(callbacks.Callback):
+    modes = ("max", "min")
 
-    modes = ("binary", "micro", "macro", "weighted", "samples")
+    # TODO docs
 
     def __init__(self,
                  inputs: Sequence[np.ndarray],
                  output: np.ndarray,
-                 labels: Sequence[int],
-                 mode: Text,
                  batchsize: int,
-                 transform: Callable[[np.ndarray], np.ndarray]=identity):
-        if mode not in self.modes:
-            raise ValueError("`mode` must be one of {}".format(self.modes))
-
+                 metrics: Mapping[Text, Callable[[np.ndarray, np.ndarray], float]],
+                 transform: Callable[[np.ndarray], np.ndarray]=identity,
+                 monitor: Optional[Text]=None,
+                 mode: Text="max",
+                 prefix: Text=None):
+        """
+        :param inputs:
+        :param output:
+        :param batchsize:
+        :param metrics: a mapping between names and functions; the functions
+        must have the following signature: f(true, predicted) -> float
+        :param transform:
+        :param monitor:
+        :param mode:
+        :param prefix:
+        """
         super().__init__()
+        if mode not in self.modes:
+            raise ValueError("`mode` must be either 'max' or 'min'")
+        if monitor and monitor not in metrics:
+            raise ValueError("`monitor` is not in metrics")
+        if monitor and not prefix:
+            raise ValueError("you must provide a path prefix when monitoring")
         self.inputs = inputs
-        self.output = output.flatten()
-        self.labels = labels
+        self.output = output
         self.epoch = None
-        self.best = float("-inf")
-        self.mode = mode
         self.batchsize = batchsize
+        self.metrics = metrics
+        self.mode = mode
         self.transform = transform
+        self.monitor = monitor
+        self.best = float("-inf") if mode == "max" else float("inf")
+        self.prefix = prefix
+
+    def _save_model(self):
+        path = "{}-{:02d}-{:.3f}".format(self.prefix, self.epoch, self.best)
+        self.model.save_weights(path+".hdf5")
+        with open(path+".json", "w") as out:
+            print(self.model.to_json(), file=out)
+
+    def _estimate_metrics(self):
+        pred = self.transform(self.model.predict(self.inputs, self.batchsize))
+        return {name: f(self.output, pred) for name, f in self.metrics}
+
+    @staticmethod
+    def _format_score_log(scores: Mapping[Text, float]):
+        template = "{} - {:.3f}"
+        return " | ".join(starmap(template.format, scores.items()))
+
+    def _improved(self, score: float):
+        return score > self.best if self.mode == "max" else score < self.best
 
     def on_epoch_end(self, epoch, logs=None):
         self.epoch = epoch
-        pred = self.transform(self.model.predict(self.inputs, self.batchsize)).flatten()
-        f1 = metrics.f1_score(self.output, pred, self.labels, average=self.mode)
-        prec = metrics.precision_score(self.output, pred, self.labels, average=self.mode)
-        rec = metrics.recall_score(self.output, pred, self.labels, average=self.mode)
-        template = "\nprecision - {:.3f} | recall - {:.3f} | F1 - {:.3f}"
-        print(template.format(prec, rec, f1))
-        if f1 > self.best:
-            print("F1 improved from {} to {}".format(self.best, f1), end="\n\n")
-            self.best = f1
-        else:
-            print("F1 didn't improve", end="\n\n")
+        scores = self._estimate_metrics()
+        log = self._format_score_log(scores)
+        print("\n" + log)
+        if self.monitor and self._improved(scores[self.monitor]):
+            print("{} improved from {} to {}".format(
+                self.monitor, self.best, scores[self.monitor]), end="\n\n")
+            self.best = scores[self.monitor]
+            self._save_model()
+        elif self.monitor:
+            print("{} didn't improve".format(self.monitor), end="\n\n")
 
 
 def precision(y_true, y_pred):

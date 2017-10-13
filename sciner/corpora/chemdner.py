@@ -13,8 +13,7 @@ import pandas as pd
 from fn import F
 
 from sciner.corpora.corpus import TITLE, BODY, Abstract, AbstractAnnotation, \
-    AbstractText, \
-    AbstractSentenceBorders, ClassMapping
+    AbstractText, AbstractSentenceBorders
 from sciner.intervals import Interval
 
 
@@ -34,18 +33,14 @@ def parse_abstracts(path: Text) -> List[AbstractText]:
                 for id_, title, body in parsed_buffer]
 
 
-def parse_annotations(path: Text, mapping: ClassMapping, default: Integral=None) \
-        -> List[AbstractAnnotation]:
+def parse_annotations(path: Text) -> List[AbstractAnnotation]:
     # TODO log empty annotations
     # TODO more tests
     """
     Read chemdner annotations
     :param path: path to a CHEMDNER-formatted annotation files
-    :param mapping: a class mapping
-    :param default: default class integer value for out-of-mapping classes; if
-    None is given, objects with out-of-mapping classes are discarded
     >>> path = "testdata/annotations.txt"
-    >>> anno = parse_annotations(path, {"SYSTEMATIC": 1}, 0)
+    >>> anno = parse_annotations(path)
     >>> ids = {21826085, 22080034, 22080035, 22080037}
     >>> all(id_ in ids for id_, *_ in anno)
     True
@@ -59,13 +54,12 @@ def parse_annotations(path: Text, mapping: ClassMapping, default: Integral=None)
     """
     def wrap_interval(record: Tuple[str, str, str, str, str, str]) \
             -> Interval:
-        _, _, start, stop, text, cls = record
-        value = mapping.get(cls, default)
-        return None if value is None else Interval(int(start), int(stop), value)
+        _, _, start, stop, text, label = record
+        return Interval(int(start), int(stop), label)
 
     def parse_line(line):
-        id_, src, start, stop, text, val = line.split("\t")
-        return int(id_), src, int(start), int(stop), text, val
+        id_, src, start, stop, text, label = line.split("\t")
+        return int(id_), src, int(start), int(stop), text, label
 
     with open(path) as buffer:
         parsed_lines = map(parse_line, map(str.strip, buffer))

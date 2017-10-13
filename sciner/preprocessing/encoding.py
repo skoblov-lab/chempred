@@ -114,7 +114,8 @@ class CharEncoder:
                 for w in words]
 
 
-def encode_annotation(annotations: Iterable[Interval], size: int) -> np.ndarray:
+def encode_annotation(mapping, annotations: Iterable[Interval], size: int,
+                      default: int=0) -> np.ndarray:
     # TODO update docs
     """
     Default class is 0.
@@ -126,7 +127,7 @@ def encode_annotation(annotations: Iterable[Interval], size: int) -> np.ndarray:
     for anno in annotations:
         if anno.stop > size:
             raise EncodingError("annotation `size` is insufficient")
-        encoded_anno[anno.start:anno.stop] = anno.data
+        encoded_anno[anno.start:anno.stop] = mapping.get(anno.data, default)
     return encoded_anno
 
 

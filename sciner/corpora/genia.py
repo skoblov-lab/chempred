@@ -11,7 +11,7 @@ from fn import F
 from pyrsistent import v, pvector
 
 from sciner.corpora.corpus import AbstractAnnotation, AbstractText, ClassMapping, \
-    AnnotationError, ClassifiedInterval
+    AnnotationError, LabeledInterval
 from sciner.intervals import Interval
 
 ANNO_PATT = re.compile("G#(\w+)")
@@ -78,7 +78,7 @@ def text_boundaries(texts: Iterable[Text]) -> List[Tuple[int, int]]:
 
 def parse_sentences(root: Element, mapping: ClassMapping,
                     default: Integral = None) \
-        -> Tuple[Text, List[ClassifiedInterval]]:
+        -> Tuple[Text, List[LabeledInterval]]:
     # TODO docs
     """
     Get text form `root` Element with given mapping dictionary.
@@ -87,7 +87,7 @@ def parse_sentences(root: Element, mapping: ClassMapping,
     :param default:
     :return:
     """
-    def wrap_interval(start: int, stop: int, levels: Sequence[LevelAnnotation]) -> ClassifiedInterval:
+    def wrap_interval(start: int, stop: int, levels: Sequence[LevelAnnotation]) -> LabeledInterval:
         """
         Wrap `start`, `stop` and `levels` into an Interval.
         :param start: start position

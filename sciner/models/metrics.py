@@ -3,8 +3,9 @@
 
 """
 
-from typing import Optional, Sequence, Text, Callable, Mapping
+from typing import Optional, Sequence, Text, Callable, Mapping, IO
 from itertools import starmap
+import sys
 
 from keras import callbacks, backend as K
 from fn.func import identity
@@ -24,7 +25,8 @@ class Validator(callbacks.Callback):
                  transform: Callable[[np.ndarray], np.ndarray]=identity,
                  monitor: Optional[Text]=None,
                  mode: Text="max",
-                 prefix: Text=None):
+                 prefix: Text=None,
+                 stream: IO=sys.stderr):
         """
         :param inputs:
         :param output:
@@ -53,6 +55,7 @@ class Validator(callbacks.Callback):
         self.monitor = monitor
         self.best = float("-inf") if mode == "max" else float("inf")
         self.prefix = prefix
+        self.stream = stream
 
     def _estimate_metrics(self):
         pred = self.transform(self.model.predict(self.inputs, self.batchsize))
@@ -70,16 +73,17 @@ class Validator(callbacks.Callback):
         self.epoch = epoch
         scores = self._estimate_metrics()
         log = self._format_score_log(scores)
-        print("\n" + log)
+        print("\n" + log, file=self.stream)
         if self.monitor and self._improved(scores[self.monitor]):
             path = "{}-{:02d}-{:.3f}.hdf5".format(self.prefix, self.epoch, scores[self.monitor])
             print("{} improved from {} to {}; saving weights to {}".format(
-                self.monitor, self.best, scores[self.monitor], path), end="\n\n")
+                self.monitor, self.best, scores[self.monitor], path),
+                end="\n\n", file=self.stream)
             self.best = scores[self.monitor]
             self.model.save_weights(path)
         elif self.monitor:
-            print("{} didn't improve".format(self.monitor), end="\n\n")
-
+            print("{} didn't improve".format(self.monitor), end="\n\n", file=self.stream)
+        self.stream.flush()
 
 def precision(y_true, y_pred):
     true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))

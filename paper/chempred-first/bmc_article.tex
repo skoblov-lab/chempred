@@ -459,10 +459,10 @@ We thus focused on using frozen word-vectors exclusively.
 There was not observable advantage in using LSTM cells over GRUs; on the contrary, GRUs trained faster and performed better.
 Likewise, CRF layers seemed to have little to no effect on the performance other than slowing down the training process.
 On the other hand, convolutional layers greatly improved performance, as did the attention-loop in the multi-output topology described earlier.
-Figure \ref{fig:network}{1} contains complete information on the final model's hyper-parameters and topology.
-During training the best model (the multi-output model with an attention loop depicted in figure \ref{fig:network}{1}) reached the F1-score of 91\% in entity beginning detection and 94\% in chemical entity part detection on the validation split.
+Figure \ref{fig:network} contains complete information on the final model's hyper-parameters and topology.
+During training the best model (the multi-output model with an attention loop depicted in figure \ref{fig:network}) reached the F1-score of 91\% in entity beginning detection and 94\% in chemical entity part detection on the validation split.
 The undetected entity parts were mostly single-token entities for which the start-token detection failed as well, which was consistent with the way the attention loop was supposed to work.
-We then evaluated this model on the CHEMDNER test dataset, yielding the F1-score of 90.6\% in entity beginning detection and 93.5\% in chemical entity part detection.
+We then evaluated this model on the CHEMDNER test dataset, yielding the F1-score of 90.6\% in entity beginning detection and 93.6\% in chemical entity part detection.
 Thus we conclude that the model demonstrates near human-level performance.
  
 \subsection*{Accessibility and the user interface}
@@ -564,10 +564,10 @@ This work was carried out in collaboration between the Laboratory of Functional 
 \section*{Figures}
 
 \begin{figure}[h!]
-  \label{fig:network}
   \caption{\csentence{Model architecture.}
       The figure illustrates the topology and hyper-parameters used in the best-performing model, except for the input dropout rates (0.3 in convolutional and 0.1 in recurrent layers) and recurrent dropout rates (0.1 in all recurrent layers).
    The encircled multiplication sign represents a time-step-wise multiplication node}.
+   \label{fig:network}
 \end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

@@ -15,7 +15,7 @@ if sys.version_info < (3, 5, 2):
 
 setup(
     name="sciner",
-    version="0.5dev",
+    version="0.1dev",
     packages=find_packages("./"),
     scripts=["chem-pred"],
     requires=["numpy",
@@ -23,9 +23,5 @@ setup(
               "fn",
               "pyrsistent",
               "keras",
-              "scikit-learn",
-              "pandas",
-              "hypothesis",
-              "frozendict",
-              "tensorflow", 'spacy']
+              "scikit-learn", 'pandas', 'hypothesis', 'spacy']
 )

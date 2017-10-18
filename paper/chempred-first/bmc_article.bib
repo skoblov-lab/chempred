@@ -1,0 +1,485 @@
+@article{Gal2015,
+abstract = {Recurrent neural networks (RNNs) stand at the forefront of many recent developments in deep learning. Yet a major difficulty with these models is their tendency to overfit, with dropout shown to fail when applied to recurrent layers. Recent results at the intersection of Bayesian modelling and deep learning offer a Bayesian interpretation of common deep learning techniques such as dropout. This grounding of dropout in approximate Bayesian inference suggests an extension of the theoretical results, offering insights into the use of dropout with RNN models. We apply this new variational inference based dropout technique in LSTM and GRU models, assessing it on language modelling and sentiment analysis tasks. The new approach outperforms existing techniques, and to the best of our knowledge improves on the single model state-of-the-art in language modelling with the Penn Treebank (73.4 test perplexity). This extends our arsenal of variational tools in deep learning.},
+archivePrefix = {arXiv},
+arxivId = {1512.05287},
+author = {Gal, Yarin and Ghahramani, Zoubin},
+doi = {10.1201/9781420049176},
+eprint = {1512.05287},
+file = {:Users/ilia/Documents/Mendeley Desktop/2015/Unknown/Gal, Ghahramani/2015 - A Theoretically Grounded Application of Dropout in Recurrent Neural Networks.pdf:pdf},
+isbn = {9789537619084},
+issn = {0302-9743},
+mendeley-groups = {machine learning},
+pmid = {21803542},
+title = {{A Theoretically Grounded Application of Dropout in Recurrent Neural Networks}},
+url = {http://arxiv.org/abs/1512.05287},
+year = {2015}
+}
+
+@article{Eppel2017,
+abstract = {Convolutional neural networks have emerged as the leading method for the classification and segmentation of images. In some cases, it is desirable to focus the attention of the net on a specific region in the image; one such case is the recognition of the contents of transparent vessels, where the vessel region in the image is already known. This work presents a valve filter approach for focusing the attention of the net on a region of interest (ROI). In this approach, the ROI is inserted into the net as a binary map. The net uses a different set of convolution filters for the ROI and background image regions, resulting in a different set of features being extracted from each region. More accurately, for each filter used on the image, a corresponding valve filter exists that acts on the ROI map and determines the regions in which the corresponding image filter will be used. This valve filter effectively acts as a valve that inhibits specific features in different image regions according to the ROI map. In addition, a new data set for images of materials in glassware vessels in a chemistry laboratory setting is presented. This data set contains a thousand images with pixel-wise annotation according to categories ranging from filled and empty to the exact phase of the material inside the vessel. The results of the valve filter approach and fully convolutional neural nets (FCN) with no ROI input are compared based on this data set.},
+archivePrefix = {arXiv},
+arxivId = {1708.08711},
+author = {Eppel, Sagi},
+eprint = {1708.08711},
+file = {:Users/ilia/Documents/Mendeley Desktop/2017/arXiv preprint/Eppel/2017 - Setting an attention region for convolutional neural networks using region selective features, for recognition of materials withi.pdf:pdf},
+journal = {arXiv preprint},
+mendeley-groups = {machine learning},
+title = {{Setting an attention region for convolutional neural networks using region selective features, for recognition of materials within glass vessels}},
+url = {http://arxiv.org/abs/1708.08711},
+year = {2017}
+}
+@article{Huang2015,
+abstract = {In this paper, we propose a variety of Long Short-Term Memory (LSTM) based models for sequence tagging. These models include LSTM networks, bidirectional LSTM (BI-LSTM) networks, LSTM with a Conditional Random Field (CRF) layer (LSTM-CRF) and bidirectional LSTM with a CRF layer (BI-LSTM-CRF). Our work is the first to apply a bidirectional LSTM CRF (denoted as BI-LSTM-CRF) model to NLP benchmark sequence tagging data sets. We show that the BI-LSTM-CRF model can efficiently use both past and future input features thanks to a bidirectional LSTM component. It can also use sentence level tag information thanks to a CRF layer. The BI-LSTM-CRF model can produce state of the art (or close to) accuracy on POS, chunking and NER data sets. In addition, it is robust and has less dependence on word embedding as compared to previous observations.},
+archivePrefix = {arXiv},
+arxivId = {1508.01991},
+author = {Huang, Zhiheng and Xu, Wei and Yu, Kai},
+eprint = {1508.01991},
+file = {:Users/ilia/Documents/Mendeley Desktop/2015/Unknown/Huang, Xu, Yu/2015 - Bidirectional LSTM-CRF Models for Sequence Tagging.pdf:pdf},
+mendeley-groups = {machine learning},
+title = {{Bidirectional LSTM-CRF Models for Sequence Tagging}},
+url = {http://arxiv.org/abs/1508.01991},
+year = {2015}
+}
+
+@article{Ling2015,
+abstract = {We introduce a model for constructing vector representations of words by composing characters using bidirectional LSTMs. Relative to traditional word representation models that have independent vectors for each word type, our model requires only a single vector per character type and a fixed set of parameters for the compositional model. Despite the compactness of this model and, more importantly, the arbitrary nature of the form-function relationship in language, our "composed" word representations yield state-of-the-art results in language modeling and part-of-speech tagging. Benefits over traditional baselines are particularly pronounced in morphologically rich languages (e.g., Turkish).},
+archivePrefix = {arXiv},
+arxivId = {1508.02096},
+author = {Ling, Wang and Lu{\'{i}}s, Tiago and Marujo, Lu{\'{i}}s and Astudillo, Ram{\'{o}}n Fernandez and Amir, Silvio and Dyer, Chris and Black, Alan W. and Trancoso, Isabel},
+doi = {10.18653/v1/D15-1176},
+eprint = {1508.02096},
+file = {:Users/ilia/Documents/Mendeley Desktop/2015/arXiv preprint/Ling et al/2015 - Finding Function in Form Compositional Character Models for Open Vocabulary Word Representation.pdf:pdf},
+isbn = {9781941643327},
+journal = {arXiv preprint},
+mendeley-groups = {machine learning},
+title = {{Finding Function in Form: Compositional Character Models for Open Vocabulary Word Representation}},
+url = {http://arxiv.org/abs/1508.02096},
+year = {2015}
+}
+
+@article{Sutskever2014,
+abstract = {Deep Neural Networks (DNNs) are powerful models that have achieved excel-lent performance on difficult learning tasks. Although DNNs work well whenever large labeled training sets are available, they cannot be used to map sequences to sequences. In this paper, we present a general end-to-end approach to sequence learning that makes minimal assumptions on the sequence structure. Our method uses a multilayered Long Short-Term Memory (LSTM) to map the input sequence to a vector of a fixed dimensionality, and then another deep LSTM to decode the target sequence from the vector. Our main result is that on an English to French translation task from the WMT-14 dataset, the translations produced by the LSTM achieve a BLEU score of 34.8 on the entire test set, where the LSTM's BLEU score was penalized on out-of-vocabulary words. Additionally, the LSTM did not have difficulty on long sentences. For comparison, a phrase-based SMT system achieves a BLEU score of 33.3 on the same dataset. When we used the LSTM to rerank the 1000 hypotheses produced by the aforementioned SMT system, its BLEU score increases to 36.5, which is close to the previous state of the art. The LSTM also learned sensible phrase and sentence representations that are sensitive to word order and are relatively invariant to the active and the passive voice. Fi-nally, we found that reversing the order of the words in all source sentences (but not target sentences) improved the LSTM's performance markedly, because doing so introduced many short term dependencies between the source and the target sentence which made the optimization problem easier.},
+archivePrefix = {arXiv},
+arxivId = {1409.3215},
+author = {Sutskever, Ilya and Vinyals, Oriol and Le, Quoc V},
+doi = {10.1007/s10107-014-0839-0},
+eprint = {1409.3215},
+file = {:Users/ilia/Documents/Mendeley Desktop/2014/Advances in Neural Information Processing Systems (NIPS)/Sutskever, Vinyals, Le/2014 - Sequence to sequence learning with neural networks.pdf:pdf},
+isbn = {1409.3215},
+issn = {09205691},
+journal = {Advances in Neural Information Processing Systems (NIPS)},
+mendeley-groups = {machine learning},
+pages = {3104--3112},
+pmid = {2079951},
+title = {{Sequence to sequence learning with neural networks}},
+url = {http://papers.nips.cc/paper/5346-sequence-to-sequence-learning-with-neural},
+year = {2014}
+}
+
+@article{Lopez2017,
+abstract = {Convolutional Neural Network (CNNs) are typically associated with Computer Vision. CNNs are responsible for major breakthroughs in Image Classification and are the core of most Computer Vision systems today. More recently CNNs have been applied to problems in Natural Language Processing and gotten some interesting results. In this paper, we will try to explain the basics of CNNs, its different variations and how they have been applied to NLP.},
+archivePrefix = {arXiv},
+arxivId = {1703.03091},
+author = {Lopez, Marc Moreno and Kalita, Jugal},
+eprint = {1703.03091},
+file = {:Users/ilia/Documents/Mendeley Desktop/2017/Unknown/Lopez, Kalita/2017 - Deep Learning applied to NLP.pdf:pdf},
+mendeley-groups = {machine learning},
+title = {{Deep Learning applied to NLP}},
+url = {http://arxiv.org/abs/1703.03091},
+year = {2017}
+}
+@article{Lu2015,
+abstract = {BACKGROUND: The chemical compound and drug name recognition plays an important role in chemical text mining, and it is the basis for automatic relation extraction and event identification in chemical information processing. So a high-performance named entity recognition system for chemical compound and drug names is necessary.$\backslash$n$\backslash$nMETHODS: We developed a CHEMDNER system based on mixed conditional random fields (CRF) with word clustering for chemical compound and drug name recognition. For the word clustering, we used Brown's hierarchical algorithm and Skip-gram model based on deep learning with massive PubMed articles including titles and abstracts.$\backslash$n$\backslash$nRESULTS: This system achieved the highest F-score of 88.20{\%} for the CDI task and the second highest F-score of 87.11{\%} for the CEM task in BioCreative IV. The performance was further improved by multi-scale clustering based on deep learning, achieving the F-score of 88.71{\%} for CDI and 88.06{\%} for CEM.$\backslash$n$\backslash$nCONCLUSIONS: The mixed CRF model represents both the internal complexity and external contexts of the entities, and the model is integrated with word clustering to capture domain knowledge with PubMed articles including titles and abstracts. The domain knowledge helps to ensure the performance of the entity recognition, even without fine-grained linguistic features and manually designed rules.},
+author = {Lu, Yanan and Ji, Donghong and Yao, Xiaoyuan and Wei, Xiaomei and Liang, Xiaohui},
+doi = {10.1186/1758-2946-7-S1-S4},
+file = {:Users/ilia/Documents/Mendeley Desktop/2015/Journal of Cheminformatics/Lu et al/2015 - CHEMDNER system with mixed conditional random fields and multi-scale word clustering.pdf:pdf},
+issn = {17582946},
+journal = {Journal of Cheminformatics},
+mendeley-groups = {chemdner},
+pmid = {25810775},
+title = {{CHEMDNER system with mixed conditional random fields and multi-scale word clustering}},
+volume = {7},
+year = {2015}
+}
+@article{Leaman2015,
+abstract = {Chemical compounds and drugs are an important class of entities in biomedical research with great potential in a wide range of applications, including clinical medicine. Locating chemical named entities in the literature is a useful step in chemical text mining pipelines for identifying the chemical mentions, their properties, and their relationships as discussed in the literature. We introduce the tmChem system, a chemical named entity recognizer created by combining two independent machine learning models in an ensemble. We use the corpus released as part of the recent CHEMDNER task to develop and evaluate tmChem, achieving a micro-averaged f-measure of 0.8739 on the CEM subtask (mention-level evaluation) and 0.8745 f-measure on the CDI subtask (abstract-level evaluation). We also report a high-recall combination (0.9212 for CEM and 0.9224 for CDI). tmChem achieved the highest f-measure reported in the CHEMDNER task for the CEM subtask, and the high recall variant achieved the highest recall on both the CEM and CDI tasks. We report that tmChem is a state-of-the-art tool for chemical named entity recognition and that performance for chemical named entity recognition has now tied (or exceeded) the performance previously reported for genes and diseases. Future research should focus on tighter integration between the named entity recognition and normalization steps for improved performance. The source code and a trained model for both models of tmChem is available at: $\backslash$n                  http://www.ncbi.nlm.nih.gov/CBBresearch/Lu/Demo/tmChem$\backslash$n                  $\backslash$n                . The results of running tmChem (Model 2) on PubMed are available in PubTator: $\backslash$n                  http://www.ncbi.nlm.nih.gov/CBBresearch/Lu/Demo/PubTator},
+author = {Leaman, Robert and Wei, Chih-Hsuan and Lu, Zhiyong and Hunter, LE and Neveol, A and Dogan, R Islamaj and Lu, Z and Dogan, R Islamaj and Murray, GC and Neveol, A and Lu, Z and Rocktaschel, T and Weidlich, M and Leser, U and Smith, L and Tanabe, LK and Ando, RJ and Kuo, CJ and Chung, IF and Hsu, CN and Lin, YS and Klinger, R and Friedrich, CM and Ganchev, K and Torii, M and Liu, H and Haddow, B and Struble, CA and Povinelli, RJ and Vlachos, A and Baumgartner, WA and Hunter, L and Carpenter, B and Tsai, RT and Dai, HJ and Liu, F and Chen, Y and Sun, C and Katrenko, S and Adriaans, P and Blaschke, C and Torres, R and Neves, M and Nakov, P and Wei, CH and Kao, HY and Lu, Z and Doğan, R Islamaj and Lu, Z and Wei, CH and Kao, HY and Lu, Z and Leaman, R and Doğan, RI and Lu, Z and Vazquez, M and Krallinger, M and Leitner, F and Valencia, A and Eltyeb, S and Salim, N and Hettne, KM and Stierum, RH and Schuemie, MJ and Hendriksen, PJ and Schijvenaars, BJ and Mulligen, EM and Kleinjans, J and Kors, JA and Klinger, R and Kolarik, C and Fluck, J and Hofmann-Apitius, M and Friedrich, CM and Jessop, DM and Adams, SE and Willighagen, EL and Hawizy, L and Murray-Rust, P and Kolarik, C and Klinger, R and Friedrich, CM and Hoffmann-Apitius, M and Fluck, J and Rebholz-Schuhmann, D and Yepes, A Jimeno and Li, C and Kafkas, S and Lewin, I and Kang, N and Corbett, P and Milward, D and Buyko, E and Beisswanger, E and Hornbostel, K and Kouznetsov, A and Witte, R and Laurila, JB and Baker, CJ and Kuo, CJ and Clematide, S and Rinaldi, F and Farkas, R and Mora, G and Hara, K and Furlong, LI and Rautschka, M and Neves, ML and Pascual-Montano, A and Wei, Q and Collier, N and Chowdhury, MF and Lavelli, A and Berlanga, R and Rebholz-Schuhmann, D and Yepes, AJ Jimeno and Mulligen, EM Van and Kang, N and Kors, J and Milward, D and Corbett, P and Buyko, E and Beisswanger, E and Hahn, U and Krallinger, M and Leitner, F and Rabal, O and Vazquez, M and Oyarzabal, J and Valencia, A and Leaman, R and Wei, CH and Lu, Z and Krallinger, M and Rabal, O and Leitner, F and Vazquez, M and Salgado, D and Lu, Z and Leaman, R and Lu, Y and Ji, D and Lowe, DM and Sayle, RA and Batista-Navarro, RT and Rak, R and Huber, T and Rocktaschel, T and Matos, S and Campos, D and Tang, B and Xu, H and Munkhdalai, T and Ryu, KH and Ramanan, SV and Nathan, S and Zitnik, S and Bajec, M and Weber, L and Irmer, M and Akhondi, SA and Kors, JA and Xu, S and An, X and Sikdar, UK and Ekbal, A and Yoshioka, M and Dieb, TM and Choi, M and Verspoor, K and Khabsa, M and Giles, CL and Liu, H and Ravikumar, KE and Lamurias, A and Couto, FM and Dai, H and Tsai, RT and Ata, C and Can, T and Usie, A and Alves, R and Segura-Bedmar, I and Martinez, P and Oryzabal, J and Valencia, A and Hastie, T and Tibshirani, R and Friedman, J and Leaman, R and Gonzalez, G and Wei, C-H and Harris, BR and Kao, H-Y and Lu, Z and Timberlake, KC and Porter, MF and Lowe, DM and Corbett, PT and Murray-Rust, P and Glen, RC and Sohn, S and Comeau, DC and Kim, W and Wilbur, WJ and Hsu, CN and Chang, YM and Kuo, CJ and Lin, YS and Huang, HS and Chung, IF and Pearl, J and Coletti, MH and Bleich, HL and de Matos, P and Dekker, A and Ennis, M and Hastings, J and Haug, K and Turner, S and Steinbeck, C and Chae, J and Jung, Y and Lee, T and Jung, S and Huh, C and Kim, G and Kim, H and Oh, H and Buyko, E and Tomanek, K and Hahn, U and Zhang, S and Elhadad, N and Leaman, JR and Wei, CH and Harris, BR and Li, D and Berardini, TZ and Huala, E and Kao, HY and Lu, Z and Lu, Z and Kao, HY and Wei, CH and Huang, M and Liu, J and Kuo, CJ and Hsu, CN and Tsai, RT and Dai, HJ and Okazaki, N and Cho, HC and Gerner, M and Solt, I and Agarwal, S and Liu, F and Vishnyakova, D and Ruch, P and Romacker, M and Rinaldi, F and Bhattacharya, S and Srinivasan, P and Liu, H and Torii, M and Matos, S and Campos, D and Verspoor, K and Livingston, KM and Wilbur, WJ},
+doi = {10.1186/1758-2946-7-S1-S3},
+file = {:Users/ilia/Downloads/1758-2946-7-S1-S3-3.pdf:pdf},
+issn = {1758-2946},
+journal = {Journal of Cheminformatics},
+keywords = {Computational Biology/Bioinformatics,Computer Applications in Chemistry,Documentation and Information in Chemistry,Theoretical and Computational Chemistry},
+mendeley-groups = {NLP/NER/chem},
+number = {Suppl 1},
+pages = {S3},
+pmid = {25810774},
+title = {{tmChem: a high performance approach for chemical named entity recognition and normalization}},
+url = {http://jcheminf.springeropen.com/articles/10.1186/1758-2946-7-S1-S3},
+volume = {7},
+year = {2015}
+}
+@article{Akhondi2015,
+abstract = {BACKGROUND: The past decade has seen an upsurge in the number of publications in chemistry. The ever-swelling volume of available documents makes it increasingly hard to extract relevant new information from such unstructured texts. The BioCreative CHEMDNER challenge invites the development of systems for the automatic recognition of chemicals in text (CEM task) and for ranking the recognized compounds at the document level (CDI task). We investigated an ensemble approach where dictionary-based named entity recognition is used along with grammar-based recognizers to extract compounds from text. We assessed the performance of ten different commercial and publicly available lexical resources using an open source indexing system (Peregrine), in combination with three different chemical compound recognizers and a set of regular expressions to recognize chemical database identifiers. The effect of different stop-word lists, case-sensitivity matching, and use of chunking information was also investigated. We focused on lexical resources that provide chemical structure information. To rank the different compounds found in a text, we used a term confidence score based on the normalized ratio of the term frequencies in chemical and non-chemical journals.$\backslash$n$\backslash$nRESULTS: The use of stop-word lists greatly improved the performance of the dictionary-based recognition, but there was no additional benefit from using chunking information. A combination of ChEBI and HMDB as lexical resources, the LeadMine tool for grammar-based recognition, and the regular expressions, outperformed any of the individual systems. On the test set, the F-scores were 77.8{\%} (recall 71.2{\%}, precision 85.8{\%}) for the CEM task and 77.6{\%} (recall 71.7{\%}, precision 84.6{\%}) for the CDI task. Missed terms were mainly due to tokenization issues, poor recognition of formulas, and term conjunctions.$\backslash$n$\backslash$nCONCLUSIONS: We developed an ensemble system that combines dictionary-based and grammar-based approaches for chemical named entity recognition, outperforming any of the individual systems that we considered. The system is able to provide structure information for most of the compounds that are found. Improved tokenization and better recognition of specific entity types is likely to further improve system performance.},
+author = {Akhondi, Saber A. and Hettne, Kristina M. and {Van Der Horst}, Eelke and {Van Mulligen}, Erik M. and Kors, Jan A.},
+doi = {10.1186/1758-2946-7-S1-S10},
+file = {:Users/ilia/Downloads/1758-2946-7-S1-S10.pdf:pdf},
+issn = {17582946},
+journal = {Journal of Cheminformatics},
+mendeley-groups = {NLP/NER/chem},
+number = {Suppl 1},
+pages = {1--11},
+pmid = {25810767},
+title = {{Recognition of chemical entities: Combining dictionary-based and grammar-based approaches}},
+volume = {7},
+year = {2015}
+}
+@article{Khabsa2015,
+abstract = {Background: As we are witnessing a great interest in identifying and extracting chemical entities in academic articles, many approaches have been proposed to solve this problem. In this work we describe a probabilistic framework that allows for the output of multiple information extraction systems to be combined in a systematic way. The identified entities are assigned a probability score that reflects the extractors' confidence, without the need for each individual extractor to generate a probability score. We quantitively compared the performance of multiple chemical tokenizers to measure the effect of tokenization on extraction accuracy. Later, a single Conditional Random Fields (CRF) extractor that utilizes the best performing tokenizer is built using a unique collection of features such as word embeddings and Soundex codes, which, to the best of our knowledge, has not been explored in this context before, Results: The ensemble of multiple extractors outperforms each extractor's individual performance during the CHEMDNER challenge. When the runs were optimized to favor recall, the ensemble approach achieved the second highest recall on unseen entities. As for the single CRF model with novel features, the extractor achieves an F1 score of 83.3{\%} on the test set, without any post processing or abbreviation matching. Conclusions: Ensemble information extraction is effective when multiple stand alone extractors are to be used, and produces higher performance than individual off the shelf extractors. The novel features introduced in the single CRF model are sufficient to achieve very competitive F1 score using a simple standalone extractor. Background},
+author = {Khabsa, Madian and Giles, C. Lee},
+doi = {10.1186/1758-2946-7-S1-S12},
+file = {:Users/ilia/Downloads/1758-2946-7-S1-S12.pdf:pdf},
+issn = {17582946},
+journal = {Journal of Cheminformatics},
+mendeley-groups = {NLP/NER/chem},
+number = {Suppl 1},
+pages = {1--9},
+pmid = {25810769},
+title = {{Chemical entity extraction using CRF and an ensemble of extractors}},
+volume = {7},
+year = {2015}
+}
+@article{Dai2015,
+abstract = {BACKGROUND: The functions of chemical compounds and drugs that affect biological processes and their particular effect on the onset and treatment of diseases have attracted increasing interest with the advancement of research in the life sciences. To extract knowledge from the extensive literatures on such compounds and drugs, the organizers of BioCreative IV administered the CHEMical Compound and Drug Named Entity Recognition (CHEMDNER) task to establish a standard dataset for evaluating state-of-the-art chemical entity recognition methods. METHODS: This study introduces the approach of our CHEMDNER system. Instead of emphasizing the development of novel feature sets for machine learning, this study investigates the effect of various tag schemes on the recognition of the names of chemicals and drugs by using conditional random fields. Experiments were conducted using combinations of different tokenization strategies and tag schemes to investigate the effects of tag set selection and tokenization method on the CHEMDNER task. RESULTS: This study presents the performance of CHEMDNER of three more representative tag schemes-IOBE, IOBES, and IOB12E-when applied to a widely utilized IOB tag set and combined with the coarse-/fine-grained tokenization methods. The experimental results thus reveal that the fine-grained tokenization strategy performance best in terms of precision, recall and F-scores when the IOBES tag set was utilized. The IOBES model with fine-grained tokenization yielded the best-F-scores in the six chemical entity categories other than the "Multiple" entity category. Nonetheless, no significant improvement was observed when a more representative tag schemes was used with the coarse or fine-grained tokenization rules. The best F-scores that were achieved using the developed system on the test dataset of the CHEMDNER task were 0.833 and 0.815 for the chemical documents indexing and the chemical entity mention recognition tasks, respectively. CONCLUSIONS: The results herein highlight the importance of tag set selection and the use of different tokenization strategies. Fine-grained tokenization combined with the tag set IOBES most effectively recognizes chemical and drug names. To the best of the authors' knowledge, this investigation is the first comprehensive investigation use of various tag set schemes combined with different tokenization strategies for the recognition of chemical entities.},
+author = {Dai, Hong Jie and Lai, Po Ting and Chang, Yung Chun and Tsai, Richard Tzong Han},
+doi = {10.1186/1758-2946-7-S1-S14},
+file = {:Users/ilia/Downloads/1758-2946-7-S1-S14.pdf:pdf},
+issn = {17582946},
+journal = {Journal of Cheminformatics},
+mendeley-groups = {NLP/NER/chem},
+number = {Suppl 1},
+pages = {1--10},
+pmid = {25810771},
+title = {{Enhancing of chemical compound and drug name recognition using representative tag scheme and fine-grained tokenization}},
+volume = {7},
+year = {2015}
+}
+@article{Xu2015,
+abstract = {BACKGROUND: In order to improve information access on chemical compounds and drugs (chemical entities) described in text repositories, it is very crucial to be able to identify chemical entity mentions (CEMs) automatically within text. The CHEMDNER challenge in BioCreative IV was specially designed to promote the implementation of corresponding systems that are able to detect mentions of chemical compounds and drugs, which has two subtasks: CDI (Chemical Document Indexing) and CEM. RESULTS: Our system processing pipeline consists of three major components: pre-processing (sentence detection, tokenization), recognition (CRF-based approach), and post-processing (rule-based approach and format conversion). In our post-challenge system, the cost parameter in CRF model was optimized by 10-fold cross validation with grid search, and word representations feature induced by Brown clustering method was introduced. For the CEM subtask, our official runs were ranked in top position by obtaining maximum 88.79{\%} precision, 69.08{\%} recall and 77.70{\%} balanced F-measure, which were improved further to 88.43{\%} precision, 76.48{\%} recall and 82.02{\%} balanced F-measure in our post-challenge system. CONCLUSIONS: In our system, instead of extracting a CEM as a whole, we regarded it as a sequence labeling problem. Though our current system has much room for improvement, our system is valuable in showing that the performance in term of balanced F-measure can be improved largely by utilizing large amounts of relatively inexpensive un-annotated PubMed abstracts and optimizing the cost parameter in CRF model. From our practice and lessons, if one directly utilizes some open-source natural language processing (NLP) toolkits, such as OpenNLP, Standford CoreNLP, false positive (FP) rate may be very high. It is better to develop some additional rules to minimize the FP rate if one does not want to re-train the related models. Our CEM recognition system is available at: http://www.SciTeMiner.org/XuShuo/Demo/CEM.},
+author = {Xu, Shuo and An, Xin and Zhu, Lijun and Zhang, Yunliang and Zhang, Haodong},
+doi = {10.1186/1758-2946-7-S1-S11},
+file = {:Users/ilia/Downloads/1758-2946-7-S1-S11.pdf:pdf},
+isbn = {17582946 (Electronic)},
+issn = {17582946},
+journal = {Journal of Cheminformatics},
+mendeley-groups = {NLP/NER/chem},
+number = {Suppl 1},
+pages = {1--9},
+pmid = {25810768},
+title = {{A CRF-based system for recognizing chemical entity mentions (CEMs) in biomedical literature}},
+volume = {7},
+year = {2015}
+}
+@article{Tang2015,
+abstract = {BACKGROUND:Chemical compounds and drugs (together called chemical entities) embedded in scientific articles are crucial for many information extraction tasks in the biomedical domain. However, only a very limited number of chemical entity recognition systems are publically available, probably due to the lack of large manually annotated corpora. To accelerate the development of chemical entity recognition systems, the Spanish National Cancer Research Center (CNIO) and The University of Navarra organized a challenge on Chemical and Drug Named Entity Recognition (CHEMDNER). The CHEMDNER challenge contains two individual subtasks: 1) Chemical Entity Mention recognition (CEM); and 2) Chemical Document Indexing (CDI). Our study proposes machine learning-based systems for the CEM task.METHODS:The 2013 CHEMDNER challenge organizers provided a manually annotated 10,000 UTF8-encoded PubMed abstracts according to a predefined annotation guideline: a training set of 3,500 abstracts, a development set of 3,500 abstracts and a test set of 3,000 abstracts. We developed machine learning-based systems, based on conditional random fields (CRF) and structured support vector machines (SSVM) respectively, for the CEM task for this data set. The effects of three types of word representation (WR) features, generated by Brown clustering, random indexing and skip-gram, on both two machine learning-based systems were also investigated. The performance of our system was evaluated on the test set using scripts provided by the CHEMDNER challenge organizers. Primary evaluation measures were micro Precision, Recall, and F-measure.RESULTS:Our best system was among the top ranked systems with an official micro F-measure of 85.05{\%}. Fixing a bug caused by inconsistent features marginally improved the performance (micro F-measure of 85.20{\%}) of the system.CONCLUSIONS:The SSVM-based CEM systems outperformed the CRF-based CEM systems when using the same features. Each type of the WR feature was beneficial to the CEM task. Both the CRF-based and SSVM-based systems using the all three types of WR features showed better performance than the systems using only one type of the WR feature.},
+author = {Tang, Buzhou and Feng, Yudong and Wang, Xiaolong and Wu, Yonghui and Zhang, Yaoyun and Jiang, Min and Wang, Jingqi and Xu, Hua},
+doi = {10.1186/1758-2946-7-S1-S8},
+file = {:Users/ilia/Downloads/1758-2946-7-S1-S8.pdf:pdf},
+isbn = {17582946 (Electronic)},
+issn = {17582946},
+journal = {Journal of Cheminformatics},
+mendeley-groups = {NLP/NER/chem},
+number = {Suppl 1},
+pages = {4--9},
+pmid = {25810779},
+title = {{A comparison of conditional random fields and structured support vector machines for chemical entity recognition in biomedical literature}},
+volume = {7},
+year = {2015}
+}
+@article{Krallinger2015,
+abstract = {The automatic extraction of chemical information from text requires the recognition of chemical entity mentions as one of its key steps. When developing supervised named entity recognition (NER) systems, the availability of a large, manually annotated text corpus is desirable. Furthermore, large corpora permit the robust evaluation and comparison of different approaches that detect chemicals in documents. We present the CHEMDNER corpus, a collection of 10,000 PubMed abstracts that contain a total of 84,355 chemical entity mentions labeled manually by expert chemistry literature curators, following annotation guidelines specifically defined for this task. The abstracts of the CHEMDNER corpus were selected to be representative for all major chemical disciplines. Each of the chemical entity mentions was manually labeled according to its structure-associated chemical entity mention (SACEM) class: abbreviation, family, formula, identifier, multiple, systematic and trivial. The difficulty and consistency of tagging chemicals in text was measured using an agreement study between annotators, obtaining a percentage agreement of 91. For a subset of the CHEMDNER corpus (the test set of 3,000 abstracts) we provide not only the Gold Standard manual annotations, but also mentions automatically detected by the 26 teams that participated in the BioCreative IV CHEMDNER chemical mention recognition task. In addition, we release the CHEMDNER silver standard corpus of automatically extracted mentions from 17,000 randomly selected PubMed abstracts. A version of the CHEMDNER corpus in the BioC format has been generated as well. We propose a standard for required minimum information about entity annotations for the construction of domain specific corpora on chemical and drug entities. The CHEMDNER corpus and annotation guidelines are available at: http://www.biocreative.org/resources/biocreative-iv/chemdner-corpus/.},
+author = {Krallinger, Martin and Rabal, Obdulia and Leitner, Florian and Vazquez, Miguel and Salgado, David and Lu, Zhiyong and Leaman, Robert and Lu, Yanan and Ji, Donghong and Lowe, Daniel M. and Sayle, Roger A. and Batista-Navarro, Riza Theresa and Rak, Rafal and Huber, Torsten and Rockt{\"{a}}schel, Tim and Matos, S{\'{e}}rgio and Campos, David and Tang, Buzhou and Xu, Hua and Munkhdalai, Tsendsuren and Ryu, Keun Ho and Ramanan, S. V. and Nathan, Senthil and {\v{Z}}itnik, Slavko and Bajec, Marko and Weber, Lutz and Irmer, Matthias and Akhondi, Saber A. and Kors, Jan A. and Xu, Shuo and An, Xin and Sikdar, Utpal Kumar and Ekbal, Asif and Yoshioka, Masaharu and Dieb, Thaer M. and Choi, Miji and Verspoor, Karin and Khabsa, Madian and Giles, C. Lee and Liu, Hongfang and Ravikumar, Komandur Elayavilli and Lamurias, Andre and Couto, Francisco M. and Dai, Hong Jie and Tsai, Richard Tzong Han and Ata, Caglar and Can, Tolga and Usi{\'{e}}, Anabel and Alves, Rui and Segura-Bedmar, Isabel and Mart{\'{i}}nez, Paloma and Oyarzabal, Julen and Valencia, Alfonso},
+doi = {10.1186/1758-2946-7-S1-S2},
+file = {:Users/ilia/Downloads/1758-2946-7-S1-S2-3.pdf:pdf},
+issn = {17582946},
+journal = {Journal of Cheminformatics},
+mendeley-groups = {NLP/NER/chem},
+number = {Suppl 1},
+pages = {1--17},
+pmid = {25810773},
+title = {{The CHEMDNER corpus of chemicals and drugs and its annotation principles}},
+volume = {7},
+year = {2015}
+}
+@article{Lowe2015,
+abstract = {BACKGROUND: Chemical entity recognition has traditionally been performed by machine learning approaches. Here we describe an approach using grammars and dictionaries. This approach has the advantage that the entities found can be directly related to a given grammar or dictionary, which allows the type of an entity to be known and, if an entity is misannotated, indicates which resource should be corrected. As recognition is driven by what is expected, if spelling errors occur, they can be corrected. Correcting such errors is highly useful when attempting to lookup an entity in a database or, in the case of chemical names, converting them to structures.$\backslash$n$\backslash$nRESULTS: Our system uses a mixture of expertly curated grammars and dictionaries, as well as dictionaries automatically derived from public resources. We show that the heuristics developed to filter our dictionary of trivial chemical names (from PubChem) yields a better performing dictionary than the previously published Jochem dictionary. Our final system performs post-processing steps to modify the boundaries of entities and to detect abbreviations. These steps are shown to significantly improve performance (2.6{\%} and 4.0{\%} F1-score respectively). Our complete system, with incremental post-BioCreative workshop improvements, achieves 89.9{\%} precision and 85.4{\%} recall (87.6{\%} F1-score) on the CHEMDNER test set.$\backslash$n$\backslash$nCONCLUSIONS: Grammar and dictionary approaches can produce results at least as good as the current state of the art in machine learning approaches. While machine learning approaches are commonly thought of as "black box" systems, our approach directly links the output entities to the input dictionaries and grammars. Our approach also allows correction of errors in detected entities, which can assist with entity resolution.},
+author = {Lowe, Daniel M. and Sayle, Roger A.},
+doi = {10.1186/1758-2946-7-S1-S5},
+file = {:Users/ilia/Downloads/1758-2946-7-S1-S5.pdf:pdf},
+issn = {17582946},
+journal = {Journal of Cheminformatics},
+mendeley-groups = {NLP/NER/chem},
+number = {Suppl 1},
+pages = {1--9},
+pmid = {25810776},
+title = {{LeadMine: A grammar and dictionary driven approach to entity recognition}},
+volume = {7},
+year = {2015}
+}
+@article{Lu2015,
+abstract = {BACKGROUND: The chemical compound and drug name recognition plays an important role in chemical text mining, and it is the basis for automatic relation extraction and event identification in chemical information processing. So a high-performance named entity recognition system for chemical compound and drug names is necessary.$\backslash$n$\backslash$nMETHODS: We developed a CHEMDNER system based on mixed conditional random fields (CRF) with word clustering for chemical compound and drug name recognition. For the word clustering, we used Brown's hierarchical algorithm and Skip-gram model based on deep learning with massive PubMed articles including titles and abstracts.$\backslash$n$\backslash$nRESULTS: This system achieved the highest F-score of 88.20{\%} for the CDI task and the second highest F-score of 87.11{\%} for the CEM task in BioCreative IV. The performance was further improved by multi-scale clustering based on deep learning, achieving the F-score of 88.71{\%} for CDI and 88.06{\%} for CEM.$\backslash$n$\backslash$nCONCLUSIONS: The mixed CRF model represents both the internal complexity and external contexts of the entities, and the model is integrated with word clustering to capture domain knowledge with PubMed articles including titles and abstracts. The domain knowledge helps to ensure the performance of the entity recognition, even without fine-grained linguistic features and manually designed rules.},
+author = {Lu, Yanan and Ji, Donghong and Yao, Xiaoyuan and Wei, Xiaomei and Liang, Xiaohui},
+doi = {10.1186/1758-2946-7-S1-S4},
+file = {:Users/ilia/Downloads/1758-2946-7-S1-S4.pdf:pdf},
+issn = {17582946},
+journal = {Journal of Cheminformatics},
+mendeley-groups = {NLP,NLP/NER,NLP/NER/chem},
+pmid = {25810775},
+title = {{CHEMDNER system with mixed conditional random fields and multi-scale word clustering}},
+volume = {7},
+year = {2015}
+}
+@article{Mikolov2013,
+abstract = {We propose two novel model architectures for computing continuous vector representations of words from very large data sets. The quality of these representations is measured in a word similarity task, and the results are compared to the previously best performing techniques based on different types of neural networks. We observe large improvements in accuracy at much lower computational cost, i.e. it takes less than a day to learn high quality word vectors from a 1.6 billion words data set. Furthermore, we show that these vectors provide state-of-the-art performance on our test set for measuring syntactic and semantic word similarities.},
+archivePrefix = {arXiv},
+arxivId = {1301.3781},
+author = {Mikolov, Tomas and Chen, Kai and Corrado, Greg and Dean, Jeffrey},
+doi = {10.1162/153244303322533223},
+eprint = {1301.3781},
+file = {:Users/ilia/Downloads/1301.3781.pdf:pdf},
+isbn = {1532-4435},
+issn = {15324435},
+mendeley-groups = {NLP/Embeddings},
+pages = {1--12},
+pmid = {18244602},
+title = {{Efficient Estimation of Word Representations in Vector Space}},
+url = {http://arxiv.org/abs/1301.3781},
+year = {2013}
+}
+@article{Pennington2014,
+abstract = {Recent methods for learning vector space representations of words have succeeded in capturing fine-grained semantic and syntactic regularities using vector arith- metic, but the origin of these regularities has remained opaque. We analyze and make explicit the model properties needed for such regularities to emerge in word vectors. The result is a new global log- bilinear regression model that combines the advantages of the two major model families in the literature: global matrix factorization and local context window methods. Our model efficiently leverages statistical information by training only on the nonzero elements in a word-word co- occurrence matrix, rather than on the en- tire sparse matrix or on individual context windows in a large corpus. On a recent word analogy task our model obtains 75{\%} accuracy, an improvement of 11{\%} over Mikolov et al. (2013). It also outperforms related word vector models on similarity tasks and named entity recognition.},
+archivePrefix = {arXiv},
+arxivId = {1504.06654},
+author = {Pennington, Jeffrey and Socher, Richard and Manning, Christopher},
+doi = {10.3115/v1/D14-1162},
+eprint = {1504.06654},
+file = {:Users/ilia/Downloads/glove.pdf:pdf},
+isbn = {9781937284961},
+issn = {10495258},
+journal = {Proceedings of the 2014 Conference on Empirical Methods in Natural Language Processing (EMNLP)},
+mendeley-groups = {NLP/Embeddings},
+pages = {1532--1543},
+pmid = {1710995},
+title = {{Glove: Global Vectors for Word Representation}},
+url = {http://aclweb.org/anthology/D14-1162},
+year = {2014}
+}
+@article{Wieting2016,
+abstract = {We present Charagram embeddings, a simple approach for learning character-based compositional models to embed textual sequences. A word or sentence is represented using a character n-gram count vector, followed by a single nonlinear transformation to yield a low-dimensional embedding. We use three tasks for evaluation: word similarity, sentence similarity, and part-of-speech tagging. We demonstrate that Charagram embeddings outperform more complex architectures based on character-level recurrent and convolutional neural networks, achieving new state-of-the-art performance on several similarity tasks.},
+archivePrefix = {arXiv},
+arxivId = {1607.02789},
+author = {Wieting, John and Bansal, Mohit and Gimpel, Kevin and Livescu, Karen},
+eprint = {1607.02789},
+file = {:Users/ilia/Downloads/1607.02789.pdf:pdf},
+journal = {Emnlp-2016},
+mendeley-groups = {NLP/Embeddings},
+pages = {1504--1515},
+title = {{Charagram: Embedding Words and Sentences via Character n-grams}},
+url = {http://arxiv.org/abs/1607.02789},
+year = {2016}
+}
+@article{Mikolov2013a,
+abstract = {The recently introduced continuous Skip-gram model is an efficient method for learning high-quality distributed vector representations that capture a large number of precise syntactic and semantic word relationships. In this paper we present several extensions that improve both the quality of the vectors and the training speed. By subsampling of the frequent words we obtain significant speedup and also learn more regular word representations. We also describe a simple alternative to the hierarchical softmax called negative sampling. An inherent limitation of word representations is their indifference to word order and their inability to represent idiomatic phrases. For example, the meanings of "Canada" and "Air" cannot be easily combined to obtain "Air Canada". Motivated by this example, we present a simple method for finding phrases in text, and show that learning good vector representations for millions of phrases is possible.},
+archivePrefix = {arXiv},
+arxivId = {1310.4546},
+author = {Mikolov, Tomas and Sutskever, Ilya and Chen, Kai and Corrado, Greg and Dean, Jeffrey},
+eprint = {1310.4546},
+file = {:Users/ilia/Downloads/1310.4546.pdf:pdf},
+mendeley-groups = {NLP/Embeddings},
+month = {oct},
+title = {{Distributed Representations of Words and Phrases and their Compositionality}},
+url = {http://arxiv.org/abs/1310.4546},
+year = {2013}
+}
+@article{Bojanowski2016,
+abstract = {Continuous word representations, trained on large unlabeled corpora are useful for many natural language processing tasks. Popular models that learn such representations ignore the morphology of words, by assigning a distinct vector to each word. This is a limitation, especially for languages with large vocabularies and many rare words. In this paper, we propose a new approach based on the skipgram model, where each word is represented as a bag of character {\$}n{\$}-grams. A vector representation is associated to each character {\$}n{\$}-gram; words being represented as the sum of these representations. Our method is fast, allowing to train models on large corpora quickly and allows us to compute word representations for words that did not appear in the training data. We evaluate our word representations on nine different languages, both on word similarity and analogy tasks. By comparing to recently proposed morphological word representations, we show that our vectors achieve state-of-the-art performance on these tasks.},
+archivePrefix = {arXiv},
+arxivId = {1607.04606},
+author = {Bojanowski, Piotr and Grave, Edouard and Joulin, Armand and Mikolov, Tomas},
+doi = {1511.09249v1},
+eprint = {1607.04606},
+file = {:Users/ilia/Downloads/1607.04606.pdf:pdf},
+isbn = {9781577357384},
+issn = {10450823},
+mendeley-groups = {NLP/Embeddings},
+pmid = {1000303116},
+title = {{Enriching Word Vectors with Subword Information}},
+url = {http://arxiv.org/abs/1607.04606},
+year = {2016}
+}
+@article{Zheng2015,
+abstract = {Pixel-level labelling tasks, such as semantic segmentation and depth estimation from single RGB image, play a central role in image understanding. Recent approaches have attempted to harness the capabilities of deep learning techniques for image recognition to tackle pixel-level labelling tasks. To solve this problem, we introduce a new form of convolutional neural network, called CRF-RNN, which expresses a Conditional Random Field (CRF) as a Recurrent Neural Network (RNN). Our short network can be plugged in as a part of a deep Convolutional Neural Network (CNN) to obtain an end-to-end system that has desirable properties of both CNNs and CRFs. Importantly, our system fully integrates CRF modelling with CNNs, making it possible to train the whole system end-to-end with the usual back-propagation algorithm. We apply this framework to the problem of semantic image segmentation, obtaining competitive results with the state-of-the-art without the need of introducing any post-processing method for object delineation.},
+archivePrefix = {arXiv},
+arxivId = {arXiv:1502.03240v1},
+author = {Zheng, Shuai and Jayasumana, Sadeep and Romera-Paredes, Bernardino and Vineet, Vibhav and Su, Zhizhong and Du, Dalong and Huang, Chang and Torr, Philip},
+doi = {10.1109/ICCV.2015.179},
+eprint = {arXiv:1502.03240v1},
+file = {:Users/ilia/Downloads/CRFasRNN.pdf:pdf},
+isbn = {978-1-4673-8391-2},
+issn = {15505499},
+journal = {arXiv.org},
+mendeley-groups = {NLP},
+pages = {2015},
+title = {{Conditional Random Fields as Recurrent Neural Networks}},
+url = {http://arxiv.org/abs/1502.03240v1{\%}5Cnfile:///Files/6C/6CB8A464-5750-4AAE-8859-75978D231F5D.pdf},
+volume = {cs.CV},
+year = {2015}
+}
+@article{Cheng2016,
+abstract = {In this paper we address the question of how to render sequence-level networks better at handling structured input. We propose a machine reading simulator which processes text incrementally from left to right and performs shallow reasoning with memory and attention. The reader extends the Long Short-Term Memory architecture with a memory network in place of a single memory cell. This enables adaptive memory usage during recurrence with neural attention, offering a way to weakly induce relations among tokens. The system is initially designed to process a single sequence but we also demonstrate how to integrate it with an encoder-decoder architecture. Experiments on language modeling, sentiment analysis, and natural language inference show that our model matches or outperforms the state of the art.},
+archivePrefix = {arXiv},
+arxivId = {1601.06733},
+author = {Cheng, Jianpeng and Dong, Li and Lapata, Mirella},
+eprint = {1601.06733},
+file = {:Users/ilia/Downloads/1601.06733.pdf:pdf},
+mendeley-groups = {NLP},
+title = {{Long Short-Term Memory-Networks for Machine Reading}},
+url = {http://arxiv.org/abs/1601.06733},
+year = {2016}
+}
+@article{Chung2014,
+abstract = {In this paper we compare different types of recurrent units in recurrent neural networks (RNNs). Especially, we focus on more sophisticated units that implement a gating mechanism, such as a long short-term memory (LSTM) unit and a recently proposed gated recurrent unit (GRU). We evaluate these recurrent units on the tasks of polyphonic music modeling and speech signal modeling. Our experiments revealed that these advanced recurrent units are indeed better than more traditional recurrent units such as tanh units. Also, we found GRU to be comparable to LSTM.},
+archivePrefix = {arXiv},
+arxivId = {1412.3555},
+author = {Chung, Junyoung and Gulcehre, Caglar and Cho, KyungHyun and Bengio, Yoshua},
+eprint = {1412.3555},
+file = {:Users/ilia/Downloads/1412.3555.pdf:pdf},
+mendeley-groups = {NLP},
+pages = {1--9},
+title = {{Empirical Evaluation of Gated Recurrent Neural Networks on Sequence Modeling}},
+url = {http://arxiv.org/abs/1412.3555},
+year = {2014}
+}
+@article{Berglund2015,
+abstract = {Bidirectional recurrent neural networks (RNN) are trained to predict both in the positive and negative time directions simultaneously. They have not been used commonly in unsupervised tasks, because a probabilistic interpretation of the model has been difficult. Recently, two different frameworks, GSN and NADE, provide a connection between reconstruction and probabilistic modeling, which makes the interpretation possible. As far as we know, neither GSN or NADE have been studied in the context of time series before. As an example of an unsupervised task, we study the problem of filling in gaps in high-dimensional time series with complex dynamics. Although unidirectional RNNs have recently been trained successfully to model such time series, inference in the negative time direction is non-trivial. We propose two probabilistic interpretations of bidirectional RNNs that can be used to reconstruct missing gaps efficiently. Our experiments on text data show that both proposed methods are much more accurate than unidirectional reconstructions, although a bit less accurate than a computationally complex bidirectional Bayesian inference on the unidirectional RNN. We also provide results on music data for which the Bayesian inference is computationally infeasible, demonstrating the scalability of the proposed methods.},
+archivePrefix = {arXiv},
+arxivId = {1504.01575},
+author = {Berglund, Mathias and Raiko, Tapani and Honkala, Mikko and K{\"{a}}rkk{\"{a}}inen, Leo and Vetek, Akos and Karhunen, Juha},
+eprint = {1504.01575},
+file = {:Users/ilia/Downloads/1504.01575.pdf:pdf},
+mendeley-groups = {NLP},
+pages = {1--10},
+title = {{Bidirectional Recurrent Neural Networks as Generative Models - Reconstructing Gaps in Time Series}},
+url = {http://arxiv.org/abs/1504.01575},
+year = {2015}
+}
+@article{Jozefowicz2015,
+abstract = {The Recurrent Neural Network (RNN) is an extremely powerful sequence model that is often difficult to train. The Long Short-Term Memory (LSTM) is a specific RNN architecture whose design makes it much easier to train. While wildly successful in practice, the LSTM's architecture appears to be ad-hoc so it is not clear if it is optimal, and the significance of its individual components is unclear. In this work, we aim to determine whether the LSTM architecture is optimal or whether much better architectures exist. We conducted a thorough architecture search where we evaluated over ten thousand different RNN architectures, and identified an architecture that outperforms both the LSTM and the recently-introduced Gated Recurrent Unit (GRU) on some but not all tasks. We found that adding a bias of 1 to the LSTM's forget gate closes the gap between the LSTM and the GRU.},
+archivePrefix = {arXiv},
+arxivId = {1512.03385},
+author = {Jozefowicz, Rafal and Zaremba, Wojciech and Sutskever, Ilya},
+doi = {10.1109/CVPR.2015.7298761},
+eprint = {1512.03385},
+isbn = {9781937284978},
+issn = {1045-9227},
+journal = {Proceedings of The 32nd International Conference on Machine Learning},
+mendeley-groups = {NLP},
+pages = {2342--2350},
+pmid = {18267787},
+title = {{An Empirical Exploration of Recurrent Network Architectures}},
+volume = {37},
+year = {2015}
+}
+@article{Kingma2014,
+abstract = {We introduce Adam, an algorithm for first-order gradient-based optimization of stochastic objective functions, based on adaptive estimates of lower-order moments. The method is straightforward to implement, is computationally efficient, has little memory requirements, is invariant to diagonal rescaling of the gradients, and is well suited for problems that are large in terms of data and/or parameters. The method is also appropriate for non-stationary objectives and problems with very noisy and/or sparse gradients. The hyper-parameters have intuitive interpretations and typically require little tuning. Some connections to related algorithms, on which Adam was inspired, are discussed. We also analyze the theoretical convergence properties of the algorithm and provide a regret bound on the convergence rate that is comparable to the best known results under the online convex optimization framework. Empirical results demonstrate that Adam works well in practice and compares favorably to other stochastic optimization methods. Finally, we discuss AdaMax, a variant of Adam based on the infinity norm.},
+archivePrefix = {arXiv},
+arxivId = {1412.6980},
+author = {Kingma, Diederik P. and Ba, Jimmy},
+doi = {http://doi.acm.org.ezproxy.lib.ucf.edu/10.1145/1830483.1830503},
+eprint = {1412.6980},
+file = {:Users/ilia/Downloads/1412.6980.pdf:pdf},
+isbn = {9781450300728},
+issn = {09252312},
+mendeley-groups = {Deep learning},
+pages = {1--15},
+title = {{Adam: A Method for Stochastic Optimization}},
+url = {http://arxiv.org/abs/1412.6980},
+year = {2014}
+}
+@article{scikit-learn,
+ title={Scikit-learn: Machine Learning in {P}ython},
+ author={Pedregosa, F. and Varoquaux, G. and Gramfort, A. and Michel, V.
+         and Thirion, B. and Grisel, O. and Blondel, M. and Prettenhofer, P.
+         and Weiss, R. and Dubourg, V. and Vanderplas, J. and Passos, A. and
+         Cournapeau, D. and Brucher, M. and Perrot, M. and Duchesnay, E.},
+ journal={Journal of Machine Learning Research},
+ volume={12},
+ pages={2825--2830},
+ year={2011}
+}
+@article{Saetre2007,
+abstract = {This report summarizes the participation of the Tsujii-lab group in the 2006 BioCreative2 text mining challenge 1 . It describes the systems used, the results attained, and the lessons learned. The basic idea was to see how well the AKANE system could perform on a full-text Protein-Protein Interaction (PPI) Information Extraction (IE) task. AKANE system is a recently devel-oped, sentence-level PPI system that achieved a 57.3 F-score on the AImed corpus. In order to use the AKANE system for the BioCreative task, the given training data had to be preprocessed. The BioCreative training data contained just a list of interacting protein pair identifiers for each given full-text article, while the expected input for the AKANE system is annotated sentences like in the AImed corpus. In order to transform the full-text articles into AImed sentence-level annotations, the text was first stripped of all HTML coding to get a plain text representation. Then, each mention of protein names were tagged by a Named Entity Recognizer (NER), and all interacting and co-occurring pairs in single sentences were used for training. A pipeline architecture was made to deal with each of these challenges. Some postprocessing was also necessary, in order to trans-form the results from the AKANE system into the expected format for the BioCreative2 challenge. The postprocessing included filtering and ranking the results, and balancing precision and recall to maximize the F-score.},
+author = {S{\ae}tre, Rune and Yoshida, Kazuhiro and Yakushiji, Akane and Miyao, Yusuke and Matsubayashi, Yuichiro and Ohta, Tomoko},
+file = {:Users/ilia/Documents/Mendeley Desktop/2007/Proceedings of the Second BioCreative Challenge Evaluation Workshop/S{\ae}tre et al/2007 - AKANE System Protein-Protein Interaction Pairs in the BioCreAtIvE2 Challenge , PPI-IPS subtask.pdf:pdf},
+journal = {Proceedings of the Second BioCreative Challenge Evaluation Workshop},
+keywords = {bionlp,natural language processing,protein-protein interaction},
+mendeley-groups = {genia},
+number = {January},
+pages = {4--6},
+title = {{AKANE System : Protein-Protein Interaction Pairs in the BioCreAtIvE2 Challenge , PPI-IPS subtask}},
+year = {2007}
+}
+
+@misc{chollet2015keras,
+  title={Keras},
+  author={Chollet, Fran\c{c}ois and others},
+  year={2015},
+  publisher={GitHub},
+  howpublished={\url{https://github.com/fchollet/keras}},
+}
+@misc{tensorflow2015-whitepaper,
+title={ {TensorFlow}: Large-Scale Machine Learning on Heterogeneous Systems},
+url={https://www.tensorflow.org/},
+note={Software available from tensorflow.org},
+author={
+    Mart\'{\i}n~Abadi and
+    Ashish~Agarwal and
+    Paul~Barham and
+    Eugene~Brevdo and
+    Zhifeng~Chen and
+    Craig~Citro and
+    Greg~S.~Corrado and
+    Andy~Davis and
+    Jeffrey~Dean and
+    Matthieu~Devin and
+    Sanjay~Ghemawat and
+    Ian~Goodfellow and
+    Andrew~Harp and
+    Geoffrey~Irving and
+    Michael~Isard and
+    Yangqing Jia and
+    Rafal~Jozefowicz and
+    Lukasz~Kaiser and
+    Manjunath~Kudlur and
+    Josh~Levenberg and
+    Dan~Man\'{e} and
+    Rajat~Monga and
+    Sherry~Moore and
+    Derek~Murray and
+    Chris~Olah and
+    Mike~Schuster and
+    Jonathon~Shlens and
+    Benoit~Steiner and
+    Ilya~Sutskever and
+    Kunal~Talwar and
+    Paul~Tucker and
+    Vincent~Vanhoucke and
+    Vijay~Vasudevan and
+    Fernanda~Vi\'{e}gas and
+    Oriol~Vinyals and
+    Pete~Warden and
+    Martin~Wattenberg and
+    Martin~Wicke and
+    Yuan~Yu and
+    Xiaoqiang~Zheng},
+  year={2015},
+}

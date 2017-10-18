@@ -1,98 +1,24 @@
-import csv
-import json
 import operator as op
 from functools import reduce
-from io import TextIOWrapper
-from itertools import chain
-from typing import List, Tuple, Text, Mapping, \
-    Callable, Union, Iterator, Iterable
+from itertools import chain, repeat, groupby
+from typing import List, Tuple, Optional, Mapping, Union
 
 import numpy as np
-import pandas as pd
 from fn import F
+from sklearn.utils import class_weight
 
-
-class Config(dict):
-    """
-    Model configurations
-    """
-    def __init__(self, config: Union[TextIOWrapper, Mapping]):
-        """
-        :param config: an opened json file or a mapping
-        """
-        super(Config, self).__init__(config if isinstance(config, Mapping) else
-                                     json.load(config))
-
-    def __getitem__(self, item):
-        retval = self.get(item)
-        if retval is None:
-            raise KeyError("No {} configuration".format(item))
-        return retval
-
-    def get(self, item, default=None):
-        """
-        :param item: item to search for
-        :param default: default value
-        :return:
-        >>> config = Config(open("testdata/config-detector.json"))
-        >>> config["bidirectional"]
-        True
-        >>> config.get("epochs")
-        >>> from_dict = Config(json.load(open("testdata/config-detector.json")))
-        >>> from_mapping = Config(from_dict)
-        >>> from_mapping["nsteps"]
-        [200, 200, 200, 200]
-        >>> from_mapping.update({"lstm": {"nsteps": [300, 300]}})
-        >>> isinstance(from_mapping, Config)
-        True
-        >>> from_mapping["nsteps"]
-        [300, 300]
-        """
-        to_visit = list(self.items())
-        while to_visit:
-            key, value = to_visit.pop()
-            if key == item:
-                return value
-            if isinstance(value, Mapping):
-                to_visit.extend(value.items())
-        return default
-
-
-class EmbeddingsWrapper(Mapping):
-    def __init__(self, embeddings: Text, transform: Callable[[Text], Text],
-                 oov="<unk>"):
-        embeddings = pd.read_table(embeddings, sep=" ", index_col=0,
-                                   header=None, quoting=csv.QUOTE_NONE)
-        self.vectors = embeddings.as_matrix()
-        self.token_index = {tk: i for i, tk in enumerate(embeddings.index)}
-        self.transform = transform
-        if oov not in self.token_index:
-            raise ValueError("there is no `oov` among the embeddings")
-        self.oov = oov
-
-    def __getitem__(self, tokens: Union[Text, Iterable[Text]]):
-        tokens_ = [tokens] if isinstance(tokens, Text) else tokens
-        index = self.token_index
-        oov_idx = self.token_index[self.oov]
-        transform = self.transform
-        return self.vectors[[index.get(transform(tk), oov_idx)
-                             for tk in tokens_]]
-
-    def __iter__(self) -> Iterator[Text]:
-        return iter(self.token_index)
-
-    def __len__(self) -> int:
-        return len(self.token_index)
-
-    def get(self, token: Text):
-        tk = self.transform(token)
-        return self.vectors[self.token_index.get(tk, self.token_index[self.oov])]
-
-
+homogenous = F(map) >> set >> len >> F(op.eq, 1)
 flatmap = F(map) >> chain.from_iterable
+oldmap = F(map) >> list
 
 
-def join(arrays: List[np.ndarray], length: int, padval=0) \
+def flatzip(flat, nested):
+    flatrep = map(F(map, repeat), flat)
+    iterables = (*flatrep, *nested)
+    return (F(zip) >> F(map, lambda x: zip(*x)) >> chain.from_iterable)(*iterables)
+
+
+def join(arrays: List[np.ndarray], length: int, padval=0, trim=False) \
         -> Tuple[np.ndarray, np.ndarray]:
     """
     Join 1D or 2D arrays. The function uses zero-padding to bring all arrays to the
@@ -112,7 +38,7 @@ def join(arrays: List[np.ndarray], length: int, padval=0) \
     >>> all((arr == j[m]).all() for arr, j, m in zip(arrays, joined, masks))
     True
     """
-    if length < max(map(len, arrays)):
+    if length < max(map(len, arrays)) and not trim:
         raise ValueError("Some arrays are longer than `length`")
     ndim = set(arr.ndim for arr in arrays)
     if ndim not in ({1}, {2}):
@@ -124,7 +50,7 @@ def join(arrays: List[np.ndarray], length: int, padval=0) \
     joined = (
         np.repeat([padval], reduce(op.mul, shape)).reshape(shape).astype(dtype))
     for i, arr in enumerate(arrays):
-        joined[i, :len(arr)] = arr
+        joined[i, :len(arr)] = arr[:length]
         masks[i, :len(arr)] = True
     return joined, masks
 
@@ -162,6 +88,65 @@ def maskfalse(array: np.ndarray, mask: np.ndarray) -> np.ndarray:
     copy = array.copy()
     copy[~mask] = 0
     return copy
+
+
+def balance_class_weights(y: np.ndarray, mask: Optional[np.ndarray]=None) \
+        -> Optional[Mapping[int, float]]:
+    # TODO update docs
+    # TODO tests
+    """
+    :param y: a numpy array encoding sample classes; samples are encoded along
+    the 0-axis
+    :param mask: a boolean array of shape compatible with `y`, wherein True
+    shows that the corresponding value(s) in `y` should be used to calculate
+    weights; if `None` the function will consider all values in `y`
+    :return: class weights
+    """
+    if not len(y):
+        raise ValueError("`y` is empty")
+    if y.ndim == 2:
+        y_flat = (y.flatten() if mask is None else
+                  np.concatenate([sample[mask] for sample, mask in zip(y, mask)]))
+    elif y.ndim == 3:
+        y_flat = (y.nonzero()[-1] if mask is None else
+                  y[mask].nonzero()[-1])
+    else:
+        raise ValueError("`y` should be either a 2D or a 3D array")
+    classes = np.unique(y_flat)
+    weights = class_weight.compute_class_weight("balanced", classes, y_flat)
+    weights_scaled = weights / weights.min()
+    return {cls: weight for cls, weight in zip(classes, weights_scaled)}
+
+
+def sample_weights(y: np.ndarray, class_weights: Mapping[int, float]) \
+        -> np.ndarray:
+    # TODO update docs
+    # TODO tests
+    """
+    :param y: a 2D array encoding sample classes; each sample is a row of
+    integers representing class code
+    :param class_weights: a class to weight mapping
+    :return: a 2D array of the same shape as `y`, wherein each position stores
+    a weight for the corresponding position in `y`
+    """
+    weights_mask = np.zeros(shape=y.shape, dtype=np.float32)
+    for cls, weight in class_weights.items():
+        weights_mask[y == cls] = weight
+    return weights_mask
+
+
+def group(ids, sources, *args):
+    """
+    Group args by id and source
+    :param ids:
+    :param sources:
+    :param args:
+    :return:
+    """
+    records = zip(ids, sources, *args)
+    id_groups = groupby(records, op.itemgetter(0))
+    return [[list(grp) for _, grp in src_grps] for src_grps in
+            (groupby(list(grp), op.itemgetter(1)) for _, grp in id_groups)]
 
 
 if __name__ == "__main__":

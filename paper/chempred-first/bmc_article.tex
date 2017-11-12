@@ -408,7 +408,6 @@ To further improve performance, it is common to use bidirectional RNNs (biRNNs),
 Finally, we used a time-distributed fully connected network with the sigmoid activation function to generate label probabilities.
 In TDD the same \say{small} multi-layer perceptron (MLP) is applied to each time-step in the transformed input sequence.
 
-
 All the models we trained had two input nodes for token identifiers and token strings. 
 The token strings were encoded as raw unicode character sequences with no preprocessing. 
 Although recurrent neural networks can handle inputs with heterogenous lengths, for computational efficiency and to incorporate CNNs we joined all encoded sentences into a single array, where each row represented a single sentence.
@@ -434,6 +433,10 @@ We've selected these hyper-parameters by simultaneously training and validating 
 During training, we used the Adam update function \cite{Kingma2014} and minimised the binary cross-entropy loss on minibatches of 32 sentences.
 We applied gradient clipping to make the convergence more stable.
 Once the validation loss stoped improving, we increased the batch size to 200 samples 
+
+\subsection*{Benchmarks}
+
+...
 
 \section*{Results and discussion}
 

@@ -19,12 +19,12 @@ Python virtual environment (`virtualenv` or `conda`).
 
 You can obtain the trained model from the publication at
 https://1drv.ms/u/s!AlQ-UsUDf6TWgs4if4XEQ4mpz-TJog. 
-We've included a basic CLI tool for the model to make predictions. The tool 
-requires a plain text file with one sentence per line. We recommend using 
-GeniaSS to break your text into separate sentences, because that's what the 
-model is used to.
+We've included a basic CLI tool for the model to run inference: `chempred-example.py`, 
+which will be installed with the package. The tool requires a plain text file with 
+one sentence per line. We recommend using GeniaSS to break your text into separate 
+sentences, because that's what the model is used to.
 
-We've added a Jupyter notebook `chempred-example.ipynb` to guide you through 
+We've added a Jupyter notebook `chempred-training-example.ipynb` to guide you through 
 the steps needed to train and validate the model.
 
 Feel free to open issues here whenever problems occur.

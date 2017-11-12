@@ -11,7 +11,8 @@ wordlike = re.compile("\w+")
 misc = re.compile("[^\s\w]")
 
 
-def tokenise(patterns: List[Pattern], text: Text, mask=" ") -> List[Interval[Text]]:
+def ptokenise(patterns: List[Pattern], text: Text, mask=" ") \
+        -> List[Interval[Text]]:
     """
     Return intervals matched by `patterns`. The patterns are applied
     in iteration order. Before applying pattern `i+1`, the function replaces
@@ -35,9 +36,11 @@ def tokenise(patterns: List[Pattern], text: Text, mask=" ") -> List[Interval[Tex
             sorted(reduce(match_mask, patterns, ([], text))[0])]
 
 
-def transform(transforms: Iterable[Tuple[Pattern, Union[Text, Callable]]],
-              text: Text) -> Text:
+def ptransform(transforms: Iterable[Tuple[Pattern, Union[Text, Callable]]],
+               text: Text) -> Text:
     """
+    Pattern transform. The patterns are applied in iteration order with no
+    intermediate masking.
     :param transforms: pairs of patterns and replacements (refer to `re.sub`'s
     documentation for more information on possible replacements);
     :param text: text to transform

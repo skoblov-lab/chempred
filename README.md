@@ -27,4 +27,6 @@ sentences, because that's what the model is used to.
 We've added a Jupyter notebook `chempred-training-example.ipynb` to guide you through 
 the steps needed to train and validate the model.
 
+You might be also interested in `bench.ipynb` and `bench.tgz` to see our benchmark pipeline.
+
 Feel free to open issues here whenever problems occur.

@@ -436,7 +436,22 @@ Once the validation loss stoped improving, we increased the batch size to 200 sa
 
 \subsection*{Benchmarks}
 
-...
+We've attempted to compare our model with the best-performing tools (F1 $\geq 80\%$) submitted for the CHEMNDER task, including the model presented by Lu et al. \cite{Lu2015}, Khabsa et al. \cite{Khabsa2015}, tmChem \cite{Leaman2015}, BANNER-CHEMDNER \cite{Munkhdalai2015}, LeadMine \cite{Lowe2015}, Becas \cite{Campos} among others. 
+Unfortunately, we were only able to get results for tmChem and becas-chemicals: some tools were no longer available (e.g. \cite{Lu2015}), never openly published at all (e.g. LeadMine, a commercial tool) or they didn't provide a trained model.
+We also included ChemDataExtractor \cite{Swain2016}, a recently introduced and highly promising solution.
+The tool is technically very much akin to the model by Lu et al. \cite{Lu2015} (both utilise unsupervised word-clustering and CRFs), which is no longer openly available.
+We experienced no problems using ChemDataExtractor and Becas: both provide well documented software packages and APIs for their training models.
+Things were not as simple with tmChem.
+Technically, there are several ways to access tmChem: (1) building a standalone copy implemented in C++ and Perl, (2) using a RESTful API (e.g. via \verb|curl|) or (3) downloading pre-annotated PubMed abstracts.
+Since tmChem sources were configured for compilation on a different Linux system they took effort to compile on our machine.
+More importantly, the tool produced underwhelming (nearly random) results.
+We then tried to download pre-annotated texts, i.e. PubMed abstracts. 
+We soon found out the results were not compatible with CHEMDNER test annotations, due to minor alterations in text formatting and content.
+Finally, we were able to submit raw texts from the CHEMDNER testing abstracts to the RESTful API via \verb|curl|.
+Nevertheless, some abstracts were not processed successfully even though we repeated the requests up to five times upon failure, leaving us with roughly 2k successfully annotated abstracts out of 3k.
+Our tmChem benchmarks were thus evaluated for a subset of the CHEMDNER testing dataset, which could've affected the F1-score if the subset was not random.
+Since our model does not detect identifiers, we masked them in all annotations.
+We've published the complete benchmark pipeline with commentaries in the project's repository \cite{GitHub}.
 
 \section*{Results and discussion}
 
@@ -467,6 +482,10 @@ During training the best model (the multi-output model with an attention loop de
 The undetected entity parts were mostly single-token entities for which the start-token detection failed as well, which was consistent with the way the attention loop was supposed to work.
 We then evaluated this model on the CHEMDNER test dataset, yielding the F1-score of 90.6\% in entity beginning detection and 93.6\% in chemical entity part detection.
 Thus we conclude that the model demonstrates near human-level performance.
+We've compared our model to several available alternatives, of which tmChem and Becas have participated in the CHEMDNER task and claimed exceptionally high performance.
+The results are presented in table \cite{tab:performance}.
+Unfortunately, tmChem and Becas felt short of their claims, demonstrating subpar performance.
+At the same time, ChemDataExtractor performed extremely well, though our model outperformed it significantly, especially at entity part detection.
  
 \subsection*{Accessibility and the user interface}
 
@@ -579,19 +598,18 @@ This work was carried out in collaboration between the Laboratory of Functional 
 %%                               %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%% Use of \listoftables is discouraged.
-%%
-%\section*{Tables}
-%\begin{table}[h!] \label{tab:perf}
-%\caption{Performance indicators estimated for the final ChemPred model. We provide performance estimations for independent context windows and the reconstructed}
-%      \begin{tabular}{cccc}
-%        \hline
-%           & raw  &B2   & B3\\ \hline
-%        A1 & 0.1 & 0.2 & 0.3\\
-%        A2 & ... & ..  & .\\
-%        A3 & ..  & .   & .\\ \hline
-%      \end{tabular}
-%\end{table}
+\begin{table}[h!]
+\centering
+\caption{F1 scores estimated for our final model and several alternatives.}
+\label{tab:performance}
+\begin{tabular}{lll}
+                  & Entity beginning detection, \% & Entity part detection, \% \\
+Becas             & 53.8                           & 49.6                      \\
+tmChem            & 64.1                           & 68.1                      \\
+ChemDataExtractor & 90.3                           & 91.7                      \\
+Our Model         & 91.1                           & 93.6                     
+\end{tabular}
+\end{table}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%                               %%

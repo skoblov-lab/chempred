@@ -4,7 +4,7 @@ This is a simple example CLI for the ChemPred model submitted for publication in
 the Journal of Cheminformatics. All the configurations are hard-coded for the
 model we present in the publication, though it is not hard to customise the
 CLI and the functions. If you ever need assistance, don't hesitate to contact
-the developers (e.g. the corresponding author).
+the developers (e.g. the corresponding author) via the issue tracker.
 
 """
 
@@ -47,7 +47,8 @@ def readlines(path: str,
 
 
 @click.command("chempred-example", help=__doc__)
-@click.option("-s", "--sentences", type=str, required=True)
+@click.option("-s", "--sentences", type=str, required=True,
+              help="a plain-text file with one sentence per line")
 @click.option("-b", "--beginnings", type=str, required=True,
               help="output file for detected entity-beginnings")
 @click.option("-p", "--parts", type=str, required=True,
